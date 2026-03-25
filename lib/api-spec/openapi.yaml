@@ -1,15 +1,20 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Architecture Review Process Portal API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: requests
+    description: Architecture Review Requests
+  - name: sessions
+    description: ARC Sessions
+  - name: outcomes
+    description: Review Outcomes
 paths:
   /healthz:
     get:
@@ -24,6 +29,170 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /requests:
+    get:
+      operationId: listRequests
+      tags: [requests]
+      summary: List all ARRs
+      responses:
+        "200":
+          description: List of architecture review requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ArchitectureRequest"
+    post:
+      operationId: createRequest
+      tags: [requests]
+      summary: Submit a new ARR
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateArchitectureRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArchitectureRequest"
+
+  /requests/{id}:
+    get:
+      operationId: getRequest
+      tags: [requests]
+      summary: Get a specific ARR
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Architecture review request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArchitectureRequest"
+    patch:
+      operationId: updateRequest
+      tags: [requests]
+      summary: Update ARR status or details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateArchitectureRequest"
+      responses:
+        "200":
+          description: Updated request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArchitectureRequest"
+
+  /sessions:
+    get:
+      operationId: listSessions
+      tags: [sessions]
+      summary: List all ARC sessions
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ArcSession"
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Schedule a new ARC session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateArcSession"
+      responses:
+        "201":
+          description: Created session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArcSession"
+
+  /sessions/{id}:
+    patch:
+      operationId: updateSession
+      tags: [sessions]
+      summary: Update session details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateArcSession"
+      responses:
+        "200":
+          description: Updated session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArcSession"
+
+  /outcomes:
+    get:
+      operationId: listOutcomes
+      tags: [outcomes]
+      summary: List all review outcomes
+      responses:
+        "200":
+          description: List of outcomes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReviewOutcome"
+    post:
+      operationId: createOutcome
+      tags: [outcomes]
+      summary: Record a review outcome
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewOutcome"
+      responses:
+        "201":
+          description: Created outcome
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewOutcome"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +203,270 @@ components:
       required:
         - status
 
+    ArchitectureRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        requestType:
+          type: string
+          enum: [new_technology, replacement_migration, new_capability, expansion, ma_assessment]
+        phase:
+          type: string
+          enum: [ph1, ph2, ph3]
+        submittedBy:
+          type: string
+        businessUnit:
+          type: string
+        status:
+          type: string
+          enum: [submitted, ea_triage, specifications_required, arc_scheduled, arc_review, approved, approved_with_conditions, deferred, rejected]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        eaAssignee:
+          type: string
+          nullable: true
+        architectureSpecifications:
+          type: string
+          nullable: true
+        scopeNotes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - requestType
+        - phase
+        - submittedBy
+        - businessUnit
+        - status
+        - priority
+        - createdAt
+        - updatedAt
+
+    CreateArchitectureRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        requestType:
+          type: string
+          enum: [new_technology, replacement_migration, new_capability, expansion, ma_assessment]
+        phase:
+          type: string
+          enum: [ph1, ph2, ph3]
+        submittedBy:
+          type: string
+        businessUnit:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        architectureSpecifications:
+          type: string
+          nullable: true
+      required:
+        - title
+        - description
+        - requestType
+        - phase
+        - submittedBy
+        - businessUnit
+        - priority
+
+    UpdateArchitectureRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [submitted, ea_triage, specifications_required, arc_scheduled, arc_review, approved, approved_with_conditions, deferred, rejected]
+        eaAssignee:
+          type: string
+          nullable: true
+        architectureSpecifications:
+          type: string
+          nullable: true
+        scopeNotes:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+
+    ArcSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        requestId:
+          type: integer
+        scheduledDate:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Duration in minutes
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+        attendees:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - requestId
+        - scheduledDate
+        - duration
+        - status
+        - attendees
+        - createdAt
+
+    CreateArcSession:
+      type: object
+      properties:
+        requestId:
+          type: integer
+        scheduledDate:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+        attendees:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+          nullable: true
+      required:
+        - requestId
+        - scheduledDate
+        - duration
+        - attendees
+
+    UpdateArcSession:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+        notes:
+          type: string
+          nullable: true
+        scheduledDate:
+          type: string
+          format: date-time
+
+    ReviewOutcome:
+      type: object
+      properties:
+        id:
+          type: integer
+        requestId:
+          type: integer
+        sessionId:
+          type: integer
+          nullable: true
+        decision:
+          type: string
+          enum: [approved, approved_with_conditions, deferred, rejected, escalated]
+        outcomeType:
+          type: string
+          enum: [adr_update, deviation, risk_ownership, lt_escalation, standard]
+        adrReference:
+          type: string
+          nullable: true
+        exceptionOwner:
+          type: string
+          nullable: true
+        remediationPlan:
+          type: string
+          nullable: true
+        riskOwner:
+          type: string
+          nullable: true
+        escalationReason:
+          type: string
+          nullable: true
+        nextSteps:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+      required:
+        - id
+        - requestId
+        - decision
+        - outcomeType
+        - createdAt
+        - createdBy
+
+    CreateReviewOutcome:
+      type: object
+      properties:
+        requestId:
+          type: integer
+        sessionId:
+          type: integer
+          nullable: true
+        decision:
+          type: string
+          enum: [approved, approved_with_conditions, deferred, rejected, escalated]
+        outcomeType:
+          type: string
+          enum: [adr_update, deviation, risk_ownership, lt_escalation, standard]
+        adrReference:
+          type: string
+          nullable: true
+        exceptionOwner:
+          type: string
+          nullable: true
+        remediationPlan:
+          type: string
+          nullable: true
+        riskOwner:
+          type: string
+          nullable: true
+        escalationReason:
+          type: string
+          nullable: true
+        nextSteps:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdBy:
+          type: string
+      required:
+        - requestId
+        - decision
+        - outcomeType
+        - createdBy

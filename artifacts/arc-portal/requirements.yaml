@@ -1,0 +1,16 @@
+packages:
+  "framer-motion": "For page transitions and micro-interactions"
+  "recharts": "For dashboard analytics and visualizations"
+  "date-fns": "For elegant date formatting"
+  "clsx": "For conditional class names"
+  "tailwind-merge": "For merging tailwind classes safely"
+  "lucide-react": "For beautiful consistent iconography"
+
+images:
+  - path: "artifacts/arc-portal/public/images/dashboard-hero.png"
+    description: "Abstract soft gradient background with geometric architectural shapes, light theme, professional enterprise, deep royal blue and violet subtle glow with transparent overlays"
+    aspect_ratio: "16:9"
+
+notes:
+  - API client is imported from `@workspace/api-client-react`
+  - Assume all React Query hooks are fully generated and available

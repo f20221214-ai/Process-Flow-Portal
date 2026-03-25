@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Architecture Review Portal"
+version = "1.0.0"
+id = "artifacts/arc-portal"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21509
+
+[services.development]
+run = "pnpm --filter @workspace/arc-portal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/arc-portal", "run", "build" ]
+publicDir = "artifacts/arc-portal/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21509"
+BASE_PATH = "/"
