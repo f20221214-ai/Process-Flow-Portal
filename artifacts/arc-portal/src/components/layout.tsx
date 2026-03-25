@@ -60,9 +60,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <p className="text-xs text-slate-600 mb-3 leading-relaxed">
             Need help understanding the architecture review phases? Read the enterprise guidelines.
           </p>
-          <a href="#" className="text-xs font-semibold text-primary hover:underline flex items-center">
+          <Link href="/process-guide" className="text-xs font-semibold text-primary hover:underline flex items-center">
             Read Docs <ArrowRightIcon className="w-3 h-3 ml-1" />
-          </a>
+          </Link>
         </div>
       </aside>
 
