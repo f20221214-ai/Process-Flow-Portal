@@ -36,7 +36,7 @@ export default function Dashboard() {
             className="absolute inset-0 w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-primary/80 to-transparent flex flex-col justify-center p-8 text-white">
-            <h1 className="text-3xl md:text-4xl font-display font-bold">Architecture Review Portal</h1>
+            <h1 className="text-3xl md:text-4xl font-display font-bold">Architecture Review Process (Demo)</h1>
             <p className="mt-2 text-blue-50 max-w-xl text-sm md:text-base leading-relaxed">
               Streamline enterprise architecture requests, manage reviews, and track technical decisions across all business units.
             </p>
