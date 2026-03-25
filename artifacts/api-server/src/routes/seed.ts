@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { jiraInitiativesTable, architectureRequestsTable, kpiMetricsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -130,8 +131,24 @@ router.get("/admin/seed-demo", async (req, res) => {
         eaRegulatoryRiskRating: "medium", eaAiRiskRating: "none",
         eaOverallComplexity: "high", eaOverallRiskLevel: "high", eaReviewType: "deep_dive",
         eaRequiredArchitectureViews: '["Application Architecture","Security Architecture","Integration Architecture","Infrastructure Architecture","Data Architecture"]',
-        eaRequiredSmes: '["OT/IT Security SME","SAP Integration Architect","Industrial Networking SME","Regulatory/GMP SME"]',
+        eaRequiredSmes: '["OT/IT Security SME","SAP Integration Architect","Industrial Networking SME","Regulatory / GMP SME"]',
         eaArcSchedule: "2026-04-08 09:00:00",
+        scopeNotes: `EA triage completed 12 March 2026. Classified as MISSION CRITICAL / DEEP DIVE — highest risk profile in the current ARR portfolio.
+
+Primary risk vectors:
+
+1. OT/IT Security Boundary: Bridging OT (SCADA/OPC-UA) and IT (SAP ERP) networks is a significant security boundary crossing. A dedicated DMZ with protocol break (OPC-UA Proxy → REST/MQTT) is mandatory per the enterprise security standard. The OT/IT Security SME from Cyber Risk must participate in ARC — this is a non-negotiable attendance requirement.
+
+2. SAP ERP Integration Pattern: The proposed real-time production order confirmation via SAP PP/QM IDocs has not been used at this scale in our environment. The SAP Integration Architect must review the proposed design against the enterprise integration platform (MuleSoft) and confirm whether a new integration pattern approval is required.
+
+3. Regulatory / GMP (FDA 21 CFR Part 11): North American sites producing regulated medical devices must comply with FDA 21 CFR Part 11 for electronic batch records. The MES vendor's Part 11 validation pack must be reviewed by the Regulatory/GMP SME before ARC sign-off can be granted.
+
+4. Data Sovereignty (EU GDPR): Production batch records for EU sites must not be replicated to US-hosted cloud components. The data residency architecture must be explicitly documented in the Integration view — this has not yet been addressed in the submission.
+
+5. Vendor shortlist: Project has shortlisted Sight Machine and Rockwell FactoryTalk. EA will assess both against enterprise reference architecture as part of the ARC review — vendor scoring matrix to be presented at the session.
+
+ARC Review confirmed: 8 April 2026, 09:00 AEST (Conference Room B / Teams bridge).
+Required attendees: James Walker (PM), Deepak Sharma (SA), Angela Ross (Sponsor), OT/IT Security SME, SAP Integration Architect, Industrial Networking SME, Regulatory/GMP SME.`,
         jiraInitiativeId: jiraMap["MES-001"] || null, jiraKey: "MES-001", phase: "ph1",
         createdAt: new Date(Date.now() - 42 * 24 * 60 * 60 * 1000),
         updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -143,7 +160,7 @@ router.get("/admin/seed-demo", async (req, res) => {
         submittedBy: "priya.nair@company.com",
         sponsorProductOwner: "Karen Lewis (CFO Office)",
         solutionArchitect: null,
-        requestType: "new_capability", status: "submitted", priority: "high",
+        requestType: "new_capability", status: "ea_triage", priority: "high",
         businessContext: "ATO and several EU member states have issued mandates requiring businesses to exchange invoices electronically. Non-compliance will result in penalties and potential loss of government contracts.",
         businessValueHypothesis: '["Achieve full compliance with ATO e-invoicing mandate by January 2027","Reduce invoice processing cost per document by 30%","Enable Straight-Through Processing (STP) for 80% of supplier invoices"]',
         businessCapability: '["Finance & Accounts Payable","Accounts Receivable","Regulatory Compliance"]',
@@ -155,9 +172,34 @@ router.get("/admin/seed-demo", async (req, res) => {
         integrationImpactLevel: "medium", integrationImpactDetails: "Integrates with SAP S/4HANA (FI module), Peppol Access Point provider, EU national e-invoicing platforms.",
         regulatoryImpactLevel: "high", regulatoryImpactDetails: "ATO Peppol accreditation required. EU: EN 16931 standard. Australia: RCTI rules, GST compliance. Privacy Act 2025 applies.",
         aiImpactLevel: "none",
+        eaAssignee: "Mehak Suri",
+        eaSecurityRiskRating: "medium", eaDataComplexityRating: "high", eaIntegrationComplexityRating: "medium",
+        eaRegulatoryRiskRating: "high", eaAiRiskRating: "none",
+        eaOverallComplexity: "high", eaOverallRiskLevel: "high", eaReviewType: "deep_dive",
+        eaRequiredArchitectureViews: '["Application Architecture","Data Architecture","Integration Architecture","Compliance & Regulatory","Infrastructure / Cloud Architecture"]',
+        eaRequiredSmes: '["SAP Integration Architect","Data Privacy SME (GDPR / Privacy Act)","Compliance & Legal SME","Security Architect"]',
+        scopeNotes: `Initial triage completed 18 March 2026. Classified as HIGH RISK / DEEP DIVE based on dual-jurisdiction regulatory exposure and direct SAP S/4HANA integration dependency.
+
+Key concerns identified:
+
+1. Regulatory dual-track risk: ATO Peppol accreditation requires a certified Access Point (AP). AP provider selection has not been confirmed — this is on the critical path to go-live by Dec 2026.
+
+2. GDPR / Privacy Act data residency: Invoice PII (ABN, bank account details) must not leave the jurisdiction of origin. Cloud hosting region selection for ANZ vs. EU instances must be validated before vendor is engaged.
+
+3. SAP S/4HANA coupling: The proposed approach (SOAP/RFC via middleware) conflicts with the enterprise API-first standard. An architecture exception will likely be required and must be raised before ARC.
+
+4. Supplier onboarding gap: 1,200 suppliers require Peppol network onboarding. No self-service portal has been proposed — this must be addressed in the solution architecture.
+
+Pre-ARC deliverables required from project team:
+- Draft solution architecture (Application + Integration views)
+- Peppol Access Point provider shortlist with vendor assessment
+- Data residency and GDPR DPIA outline
+- SAP integration approach paper and exception request (if proceeding with SOAP/RFC)
+
+ARC review targeting Q2 2026 pending receipt of above.`,
         jiraInitiativeId: jiraMap["EINV-001"] || null, jiraKey: "EINV-001", phase: "ph1",
-        createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
       },
       {
         title: "AI Personalisation Engine – Marketing Pilot",
@@ -199,7 +241,73 @@ router.get("/admin/seed-demo", async (req, res) => {
     }
     results.architectureRequests = requestsInserted;
 
-    // 4. Seed KPIs if empty
+    // 4. Always enrich E-Invoicing and MES with full EA triage content (idempotent update)
+    const einvEnrich = {
+      status: "ea_triage",
+      eaAssignee: "Mehak Suri",
+      eaSecurityRiskRating: "medium",
+      eaDataComplexityRating: "high",
+      eaIntegrationComplexityRating: "medium",
+      eaRegulatoryRiskRating: "high",
+      eaAiRiskRating: "none",
+      eaOverallComplexity: "high",
+      eaOverallRiskLevel: "high",
+      eaReviewType: "deep_dive",
+      eaRequiredArchitectureViews: JSON.stringify(["Application Architecture","Data Architecture","Integration Architecture","Compliance & Regulatory","Infrastructure / Cloud Architecture"]),
+      eaRequiredSmes: JSON.stringify(["SAP Integration Architect","Data Privacy SME (GDPR / Privacy Act)","Compliance & Legal SME","Security Architect"]),
+      scopeNotes: `Initial triage completed 18 March 2026. Classified as HIGH RISK / DEEP DIVE based on dual-jurisdiction regulatory exposure and direct SAP S/4HANA integration dependency.
+
+Key concerns identified:
+
+1. Regulatory dual-track risk: ATO Peppol accreditation requires a certified Access Point (AP). AP provider selection has not been confirmed — this is on the critical path to go-live by Dec 2026.
+
+2. GDPR / Privacy Act data residency: Invoice PII (ABN, bank account details) must not leave the jurisdiction of origin. Cloud hosting region selection for ANZ vs. EU instances must be validated before vendor is engaged.
+
+3. SAP S/4HANA coupling: The proposed approach (SOAP/RFC via middleware) conflicts with the enterprise API-first standard. An architecture exception will likely be required and must be raised before ARC.
+
+4. Supplier onboarding gap: 1,200 suppliers require Peppol network onboarding. No self-service portal has been proposed — this must be addressed in the solution architecture.
+
+Pre-ARC deliverables required from project team:
+- Draft solution architecture (Application + Integration views)
+- Peppol Access Point provider shortlist with vendor assessment
+- Data residency and GDPR DPIA outline
+- SAP integration approach paper and exception request (if proceeding with SOAP/RFC)
+
+ARC review targeting Q2 2026 pending receipt of above.`,
+      updatedAt: new Date(),
+    };
+
+    const mesEnrich = {
+      scopeNotes: `EA triage completed 12 March 2026. Classified as MISSION CRITICAL / DEEP DIVE — highest risk profile in the current ARR portfolio.
+
+Primary risk vectors:
+
+1. OT/IT Security Boundary: Bridging OT (SCADA/OPC-UA) and IT (SAP ERP) networks is a significant security boundary crossing. A dedicated DMZ with protocol break (OPC-UA Proxy → REST/MQTT) is mandatory per the enterprise security standard. The OT/IT Security SME from Cyber Risk must participate in ARC — this is a non-negotiable attendance requirement.
+
+2. SAP ERP Integration Pattern: The proposed real-time production order confirmation via SAP PP/QM IDocs has not been used at this scale in our environment. The SAP Integration Architect must review the proposed design against the enterprise integration platform (MuleSoft) and confirm whether a new integration pattern approval is required.
+
+3. Regulatory / GMP (FDA 21 CFR Part 11): North American sites producing regulated medical devices must comply with FDA 21 CFR Part 11 for electronic batch records. The MES vendor's Part 11 validation pack must be reviewed by the Regulatory/GMP SME before ARC sign-off can be granted.
+
+4. Data Sovereignty (EU GDPR): Production batch records for EU sites must not be replicated to US-hosted cloud components. The data residency architecture must be explicitly documented in the Integration view — this has not yet been addressed in the submission.
+
+5. Vendor shortlist: Project has shortlisted Sight Machine and Rockwell FactoryTalk. EA will assess both against enterprise reference architecture as part of the ARC review — vendor scoring matrix to be presented at the session.
+
+ARC Review confirmed: 8 April 2026, 09:00 AEST (Conference Room B / Teams bridge).
+Required attendees: James Walker (PM), Deepak Sharma (SA), Angela Ross (Sponsor), OT/IT Security SME, SAP Integration Architect, Industrial Networking SME, Regulatory/GMP SME.`,
+      updatedAt: new Date(),
+    };
+
+    const einvUpdated = await db.update(architectureRequestsTable)
+      .set(einvEnrich as any)
+      .where(eq(architectureRequestsTable.jiraKey, "EINV-001"))
+      .returning();
+    const mesUpdated = await db.update(architectureRequestsTable)
+      .set(mesEnrich as any)
+      .where(eq(architectureRequestsTable.jiraKey, "MES-001"))
+      .returning();
+    results.enriched = einvUpdated.length + mesUpdated.length;
+
+    // 5. Seed KPIs if empty
     const existingKpis = await db.select().from(kpiMetricsTable).limit(1);
     if (existingKpis.length === 0) {
       await db.insert(kpiMetricsTable).values(KPI_SEED);
