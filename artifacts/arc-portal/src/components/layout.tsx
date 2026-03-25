@@ -23,7 +23,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="p-2 bg-primary/10 rounded-xl">
             <Hexagon className="w-6 h-6 fill-primary/20" />
           </div>
-          <span className="font-display font-bold text-xl tracking-tight text-foreground">ARC Portal</span>
+          <span className="font-display font-bold text-xl tracking-tight text-foreground">Architecture Review Process (Demo)</span>
         </div>
         
         <div className="px-4 pb-4">
