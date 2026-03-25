@@ -8,9 +8,24 @@ import { useGetRequest, useUpdateRequest, useListSessions, useListOutcomes } fro
 import { format } from "date-fns";
 import { formatLabel } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity } from "lucide-react";
+import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity, Sparkles } from "lucide-react";
+
 import { useQuery } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
+
+/** Mirror of the server-side deriveEaBaseline — used as client-side fallback for older requests. */
+function deriveEaBaseline(req: { securityImpactLevel?: string; dataImpactLevel?: string; integrationImpactLevel?: string; regulatoryImpactLevel?: string; aiImpactLevel?: string; }) {
+  const toRating = (l?: string) => l === "high" ? "high" : l === "medium" ? "medium" : "low";
+  const levels = [req.securityImpactLevel, req.dataImpactLevel, req.integrationImpactLevel, req.regulatoryImpactLevel, req.aiImpactLevel];
+  return {
+    eaSecurityRiskRating:          toRating(req.securityImpactLevel),
+    eaDataComplexityRating:        toRating(req.dataImpactLevel),
+    eaIntegrationComplexityRating: toRating(req.integrationImpactLevel),
+    eaRegulatoryRiskRating:        toRating(req.regulatoryImpactLevel),
+    eaAiRiskRating:                toRating(req.aiImpactLevel),
+    eaOverallRiskLevel:            levels.includes("high") ? "high" : levels.includes("medium") ? "medium" : "low",
+  };
+}
 
 export default function RequestDetail() {
   const [, params] = useRoute("/requests/:id");
@@ -23,6 +38,7 @@ export default function RequestDetail() {
   const updateMutation = useUpdateRequest();
 
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
+  const [ratingWasAutoCalc, setRatingWasAutoCalc] = useState(false);
 
   // Fetch JIRA Initiative if linked
   const { data: initiatives } = useQuery<JiraInitiative[]>({
@@ -57,21 +73,31 @@ export default function RequestDetail() {
   // Initialize Triage form when request loads
   React.useEffect(() => {
     if (request) {
+      // If the DB already has EA ratings saved (from server-side auto-calc or manual EA edits) use those.
+      // For older requests that pre-date auto-calc, derive client-side as a baseline.
+      const hasStoredRatings = !!(
+        request.eaSecurityRiskRating ||
+        request.eaDataComplexityRating ||
+        request.eaOverallRiskLevel
+      );
+      const baseline = hasStoredRatings ? null : deriveEaBaseline(request as any);
+      if (!hasStoredRatings) setRatingWasAutoCalc(true);
+
       setTriageData({
         eaAssignee: request.eaAssignee || "",
         scopeNotes: request.scopeNotes || "",
         status: request.status,
-        eaSecurityRiskRating: request.eaSecurityRiskRating || "",
-        eaDataComplexityRating: request.eaDataComplexityRating || "",
-        eaIntegrationComplexityRating: request.eaIntegrationComplexityRating || "",
-        eaRegulatoryRiskRating: request.eaRegulatoryRiskRating || "",
-        eaAiRiskRating: request.eaAiRiskRating || "",
-        eaOverallComplexity: request.eaOverallComplexity || "",
-        eaOverallRiskLevel: request.eaOverallRiskLevel || "",
-        eaReviewType: request.eaReviewType || "",
-        eaRequiredArchitectureViews: request.eaRequiredArchitectureViews || "",
-        eaRequiredSmes: request.eaRequiredSmes || "",
-        eaArcSchedule: request.eaArcSchedule || "",
+        eaSecurityRiskRating:          request.eaSecurityRiskRating          || baseline?.eaSecurityRiskRating          || "",
+        eaDataComplexityRating:        request.eaDataComplexityRating        || baseline?.eaDataComplexityRating        || "",
+        eaIntegrationComplexityRating: request.eaIntegrationComplexityRating || baseline?.eaIntegrationComplexityRating || "",
+        eaRegulatoryRiskRating:        request.eaRegulatoryRiskRating        || baseline?.eaRegulatoryRiskRating        || "",
+        eaAiRiskRating:                request.eaAiRiskRating                || baseline?.eaAiRiskRating                || "",
+        eaOverallComplexity:           request.eaOverallComplexity           || "",
+        eaOverallRiskLevel:            request.eaOverallRiskLevel            || baseline?.eaOverallRiskLevel            || "",
+        eaReviewType:                  request.eaReviewType                  || "",
+        eaRequiredArchitectureViews:   request.eaRequiredArchitectureViews   || "",
+        eaRequiredSmes:                request.eaRequiredSmes                || "",
+        eaArcSchedule:                 request.eaArcSchedule                 || "",
       });
     }
   }, [request]);
@@ -372,10 +398,30 @@ export default function RequestDetail() {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="pt-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-xs text-indigo-900 font-semibold">Risk & Complexity Ratings</Label>
+                      {ratingWasAutoCalc ? (
+                        <span className="flex items-center gap-1 text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                          <Sparkles className="w-3 h-3" /> auto-calculated baseline
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          EA reviewed
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-indigo-600/70 mb-3">
+                      {ratingWasAutoCalc
+                        ? "Pre-populated from the submitter's impact assessment. Review and adjust as needed before saving."
+                        : "Ratings have been reviewed and saved by the EA team."}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs text-indigo-900">Security Risk</Label>
-                      <Select value={triageData.eaSecurityRiskRating} onChange={e => setTriageData({...triageData, eaSecurityRiskRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaSecurityRiskRating} onChange={e => { setTriageData({...triageData, eaSecurityRiskRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -385,7 +431,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">Data Complexity</Label>
-                      <Select value={triageData.eaDataComplexityRating} onChange={e => setTriageData({...triageData, eaDataComplexityRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaDataComplexityRating} onChange={e => { setTriageData({...triageData, eaDataComplexityRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -395,7 +441,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">Integration Comp.</Label>
-                      <Select value={triageData.eaIntegrationComplexityRating} onChange={e => setTriageData({...triageData, eaIntegrationComplexityRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaIntegrationComplexityRating} onChange={e => { setTriageData({...triageData, eaIntegrationComplexityRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -404,7 +450,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">Regulatory Risk</Label>
-                      <Select value={triageData.eaRegulatoryRiskRating} onChange={e => setTriageData({...triageData, eaRegulatoryRiskRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaRegulatoryRiskRating} onChange={e => { setTriageData({...triageData, eaRegulatoryRiskRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -413,7 +459,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">AI Risk</Label>
-                      <Select value={triageData.eaAiRiskRating} onChange={e => setTriageData({...triageData, eaAiRiskRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaAiRiskRating} onChange={e => { setTriageData({...triageData, eaAiRiskRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -422,7 +468,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">Overall Risk</Label>
-                      <Select value={triageData.eaOverallRiskLevel} onChange={e => setTriageData({...triageData, eaOverallRiskLevel: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaOverallRiskLevel} onChange={e => { setTriageData({...triageData, eaOverallRiskLevel: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>

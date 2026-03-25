@@ -16,6 +16,46 @@ function serializeRequest(r: typeof architectureRequestsTable.$inferSelect) {
   };
 }
 
+/** Map a submitter impact level to an EA risk/complexity rating baseline. */
+function impactToRating(level: string | undefined | null): string {
+  switch (level) {
+    case "high":   return "high";
+    case "medium": return "medium";
+    default:       return "low";   // covers "low", "none", undefined
+  }
+}
+
+/** Derive baseline EA ratings from the submitter's impact assessment. */
+function deriveEaBaseline(body: {
+  securityImpactLevel?: string;
+  dataImpactLevel?: string;
+  integrationImpactLevel?: string;
+  regulatoryImpactLevel?: string;
+  aiImpactLevel?: string;
+}) {
+  const levels = [
+    body.securityImpactLevel,
+    body.dataImpactLevel,
+    body.integrationImpactLevel,
+    body.regulatoryImpactLevel,
+    body.aiImpactLevel,
+  ];
+  const overallRisk = levels.includes("high")
+    ? "high"
+    : levels.includes("medium")
+    ? "medium"
+    : "low";
+
+  return {
+    eaSecurityRiskRating:          impactToRating(body.securityImpactLevel),
+    eaDataComplexityRating:        impactToRating(body.dataImpactLevel),
+    eaIntegrationComplexityRating: impactToRating(body.integrationImpactLevel),
+    eaRegulatoryRiskRating:        impactToRating(body.regulatoryImpactLevel),
+    eaAiRiskRating:                impactToRating(body.aiImpactLevel),
+    eaOverallRiskLevel:            overallRisk,
+  };
+}
+
 router.get("/requests", async (req, res) => {
   try {
     const requests = await db.select().from(architectureRequestsTable).orderBy(architectureRequestsTable.createdAt);
@@ -35,6 +75,8 @@ router.post("/requests", async (req, res) => {
       const [initiative] = await db.select().from(jiraInitiativesTable).where(eq(jiraInitiativesTable.id, body.jiraInitiativeId));
       if (initiative) jiraKey = initiative.jiraKey;
     }
+
+    const eaBaseline = deriveEaBaseline(body);
 
     const [created] = await db.insert(architectureRequestsTable).values({
       title: body.title,
@@ -69,6 +111,13 @@ router.post("/requests", async (req, res) => {
       architectureSpecifications: body.architectureSpecifications ?? null,
       jiraInitiativeId: body.jiraInitiativeId ?? null,
       jiraKey,
+      // EA baseline — pre-calculated from submitter's impact assessment
+      eaSecurityRiskRating:          eaBaseline.eaSecurityRiskRating,
+      eaDataComplexityRating:        eaBaseline.eaDataComplexityRating,
+      eaIntegrationComplexityRating: eaBaseline.eaIntegrationComplexityRating,
+      eaRegulatoryRiskRating:        eaBaseline.eaRegulatoryRiskRating,
+      eaAiRiskRating:                eaBaseline.eaAiRiskRating,
+      eaOverallRiskLevel:            eaBaseline.eaOverallRiskLevel,
     }).returning();
 
     res.status(201).json(serializeRequest(created));
