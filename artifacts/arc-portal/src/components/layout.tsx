@@ -92,7 +92,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center space-x-2 cursor-pointer p-1 pr-3 hover:bg-secondary rounded-full transition-colors border border-transparent hover:border-border/50">
               <UserCircle className="w-8 h-8 text-primary" />
               <div className="hidden md:block text-left">
-                <div className="text-sm font-semibold leading-tight">Jane Doe</div>
+                <div className="text-sm font-semibold leading-tight">Mehak Suri</div>
                 <div className="text-xs text-muted-foreground leading-tight">Enterprise Architect</div>
               </div>
             </div>
