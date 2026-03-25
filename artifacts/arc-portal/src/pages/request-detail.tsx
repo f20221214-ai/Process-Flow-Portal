@@ -14,16 +14,54 @@ import { useQuery } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
 
 /** Mirror of the server-side deriveEaBaseline — used as client-side fallback for older requests. */
-function deriveEaBaseline(req: { securityImpactLevel?: string; dataImpactLevel?: string; integrationImpactLevel?: string; regulatoryImpactLevel?: string; aiImpactLevel?: string; }) {
+function deriveEaBaseline(req: {
+  securityImpactLevel?: string; dataImpactLevel?: string;
+  integrationImpactLevel?: string; regulatoryImpactLevel?: string; aiImpactLevel?: string;
+  requestType?: string; businessCriticality?: string; deploymentModel?: string;
+}) {
   const toRating = (l?: string) => l === "high" ? "high" : l === "medium" ? "medium" : "low";
   const levels = [req.securityImpactLevel, req.dataImpactLevel, req.integrationImpactLevel, req.regulatoryImpactLevel, req.aiImpactLevel];
+  const overallRisk = levels.includes("high") ? "high" : levels.includes("medium") ? "medium" : "low";
+
+  const highComplexityTypes = ["cloud_migration", "new_application", "application_replacement", "technology_selection"];
+  const isMissionCritical = req.businessCriticality === "mission_critical";
+  const isBusinessCritical = req.businessCriticality === "business_critical";
+  const isHighComplexityType = highComplexityTypes.includes(req.requestType ?? "");
+  let eaReviewType: string;
+  if (overallRisk === "high" || isMissionCritical) eaReviewType = "deep_dive";
+  else if (overallRisk === "medium" || isBusinessCritical || isHighComplexityType) eaReviewType = "standard";
+  else eaReviewType = "lightweight";
+
+  const isCloud = ["cloud_vendor", "cloud_mccain", "hybrid"].includes(req.deploymentModel ?? "") || req.requestType === "cloud_migration";
+  const present = (l?: string) => !!l && l !== "none";
+  const significant = (l?: string) => l === "medium" || l === "high";
+
+  const views = ["Solution Architecture"];
+  if (present(req.securityImpactLevel))    views.push("Security Architecture");
+  if (present(req.dataImpactLevel))        views.push("Data Architecture");
+  if (present(req.integrationImpactLevel)) views.push("Integration Architecture");
+  if (present(req.regulatoryImpactLevel))  views.push("Compliance & Regulatory");
+  if (present(req.aiImpactLevel))          views.push("AI/ML Architecture");
+  if (isCloud)                             views.push("Infrastructure / Cloud Architecture");
+
+  const smes: string[] = [];
+  if (significant(req.securityImpactLevel))    smes.push("Security Architect");
+  if (significant(req.dataImpactLevel))        smes.push("Data Architect");
+  if (significant(req.integrationImpactLevel)) smes.push("Integration Architect");
+  if (significant(req.regulatoryImpactLevel))  smes.push("Compliance / Legal");
+  if (significant(req.aiImpactLevel))          smes.push("AI/ML Specialist");
+  if (isCloud)                                 smes.push("Cloud Platform Engineer");
+
   return {
     eaSecurityRiskRating:          toRating(req.securityImpactLevel),
     eaDataComplexityRating:        toRating(req.dataImpactLevel),
     eaIntegrationComplexityRating: toRating(req.integrationImpactLevel),
     eaRegulatoryRiskRating:        toRating(req.regulatoryImpactLevel),
     eaAiRiskRating:                toRating(req.aiImpactLevel),
-    eaOverallRiskLevel:            levels.includes("high") ? "high" : levels.includes("medium") ? "medium" : "low",
+    eaOverallRiskLevel:            overallRisk,
+    eaReviewType,
+    eaRequiredArchitectureViews:   views.join(", "),
+    eaRequiredSmes:                smes.length > 0 ? smes.join(", ") : "Enterprise Architect",
   };
 }
 
@@ -75,13 +113,17 @@ export default function RequestDetail() {
     if (request) {
       // If the DB already has EA ratings saved (from server-side auto-calc or manual EA edits) use those.
       // For older requests that pre-date auto-calc, derive client-side as a baseline.
-      const hasStoredRatings = !!(
+      // A request has "stored" EA data if any of the key fields were previously saved
+      const hasStoredBaseline = !!(
         request.eaSecurityRiskRating ||
         request.eaDataComplexityRating ||
-        request.eaOverallRiskLevel
+        request.eaOverallRiskLevel ||
+        request.eaReviewType ||
+        request.eaRequiredArchitectureViews ||
+        request.eaRequiredSmes
       );
-      const baseline = hasStoredRatings ? null : deriveEaBaseline(request as any);
-      if (!hasStoredRatings) setRatingWasAutoCalc(true);
+      const baseline = hasStoredBaseline ? null : deriveEaBaseline(request as any);
+      if (!hasStoredBaseline) setRatingWasAutoCalc(true);
 
       setTriageData({
         eaAssignee: request.eaAssignee || "",
@@ -94,9 +136,9 @@ export default function RequestDetail() {
         eaAiRiskRating:                request.eaAiRiskRating                || baseline?.eaAiRiskRating                || "",
         eaOverallComplexity:           request.eaOverallComplexity           || "",
         eaOverallRiskLevel:            request.eaOverallRiskLevel            || baseline?.eaOverallRiskLevel            || "",
-        eaReviewType:                  request.eaReviewType                  || "",
-        eaRequiredArchitectureViews:   request.eaRequiredArchitectureViews   || "",
-        eaRequiredSmes:                request.eaRequiredSmes                || "",
+        eaReviewType:                  request.eaReviewType                  || baseline?.eaReviewType                  || "",
+        eaRequiredArchitectureViews:   request.eaRequiredArchitectureViews   || baseline?.eaRequiredArchitectureViews   || "",
+        eaRequiredSmes:                request.eaRequiredSmes                || baseline?.eaRequiredSmes                || "",
         eaArcSchedule:                 request.eaArcSchedule                 || "",
       });
     }
@@ -480,7 +522,11 @@ export default function RequestDetail() {
 
                   <div className="pt-2">
                     <Label className="text-xs text-indigo-900">Review Type</Label>
-                    <Select value={triageData.eaReviewType} onChange={e => setTriageData({...triageData, eaReviewType: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                    <Select
+                      value={triageData.eaReviewType}
+                      onChange={e => { setTriageData({...triageData, eaReviewType: e.target.value}); setRatingWasAutoCalc(false); }}
+                      className="border-indigo-200 h-9 text-sm"
+                    >
                       <option value="">-- Select Review Type --</option>
                       <option value="lightweight">Lightweight</option>
                       <option value="standard">Standard</option>
@@ -490,20 +536,20 @@ export default function RequestDetail() {
 
                   <div>
                     <Label className="text-xs text-indigo-900">Required Architecture Views</Label>
-                    <Input 
-                      value={triageData.eaRequiredArchitectureViews} 
-                      onChange={e => setTriageData({...triageData, eaRequiredArchitectureViews: e.target.value})}
-                      placeholder="e.g. C4, Sequence, Data"
+                    <Input
+                      value={triageData.eaRequiredArchitectureViews}
+                      onChange={e => { setTriageData({...triageData, eaRequiredArchitectureViews: e.target.value}); setRatingWasAutoCalc(false); }}
+                      placeholder="e.g. Solution Architecture, Security Architecture"
                       className="border-indigo-200 h-9 text-sm"
                     />
                   </div>
 
                   <div>
                     <Label className="text-xs text-indigo-900">Required SMEs</Label>
-                    <Input 
-                      value={triageData.eaRequiredSmes} 
-                      onChange={e => setTriageData({...triageData, eaRequiredSmes: e.target.value})}
-                      placeholder="e.g. SecOps, Network"
+                    <Input
+                      value={triageData.eaRequiredSmes}
+                      onChange={e => { setTriageData({...triageData, eaRequiredSmes: e.target.value}); setRatingWasAutoCalc(false); }}
+                      placeholder="e.g. Security Architect, Data Architect"
                       className="border-indigo-200 h-9 text-sm"
                     />
                   </div>

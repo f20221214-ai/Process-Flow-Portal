@@ -25,13 +25,16 @@ function impactToRating(level: string | undefined | null): string {
   }
 }
 
-/** Derive baseline EA ratings from the submitter's impact assessment. */
+/** Derive full EA baseline from the submitter's impact assessment and request metadata. */
 function deriveEaBaseline(body: {
   securityImpactLevel?: string;
   dataImpactLevel?: string;
   integrationImpactLevel?: string;
   regulatoryImpactLevel?: string;
   aiImpactLevel?: string;
+  requestType?: string;
+  businessCriticality?: string;
+  deploymentModel?: string;
 }) {
   const levels = [
     body.securityImpactLevel,
@@ -46,6 +49,45 @@ function deriveEaBaseline(body: {
     ? "medium"
     : "low";
 
+  // --- Review Type ---
+  const highComplexityTypes = ["cloud_migration", "new_application", "application_replacement", "technology_selection"];
+  const isMissionCritical = body.businessCriticality === "mission_critical";
+  const isBusinessCritical = body.businessCriticality === "business_critical";
+  const isHighComplexityType = highComplexityTypes.includes(body.requestType ?? "");
+
+  let eaReviewType: string;
+  if (overallRisk === "high" || isMissionCritical) {
+    eaReviewType = "deep_dive";
+  } else if (overallRisk === "medium" || isBusinessCritical || isHighComplexityType) {
+    eaReviewType = "standard";
+  } else {
+    eaReviewType = "lightweight";
+  }
+
+  // --- Required Architecture Views ---
+  const isCloud = ["cloud_vendor", "cloud_mccain", "hybrid"].includes(body.deploymentModel ?? "")
+    || body.requestType === "cloud_migration";
+  const present = (l?: string) => !!l && l !== "none";
+
+  const views: string[] = ["Solution Architecture"];
+  if (present(body.securityImpactLevel))    views.push("Security Architecture");
+  if (present(body.dataImpactLevel))        views.push("Data Architecture");
+  if (present(body.integrationImpactLevel)) views.push("Integration Architecture");
+  if (present(body.regulatoryImpactLevel))  views.push("Compliance & Regulatory");
+  if (present(body.aiImpactLevel))          views.push("AI/ML Architecture");
+  if (isCloud)                              views.push("Infrastructure / Cloud Architecture");
+
+  // --- Required SMEs ---
+  const significant = (l?: string) => l === "medium" || l === "high";
+
+  const smes: string[] = [];
+  if (significant(body.securityImpactLevel))    smes.push("Security Architect");
+  if (significant(body.dataImpactLevel))        smes.push("Data Architect");
+  if (significant(body.integrationImpactLevel)) smes.push("Integration Architect");
+  if (significant(body.regulatoryImpactLevel))  smes.push("Compliance / Legal");
+  if (significant(body.aiImpactLevel))          smes.push("AI/ML Specialist");
+  if (isCloud)                                  smes.push("Cloud Platform Engineer");
+
   return {
     eaSecurityRiskRating:          impactToRating(body.securityImpactLevel),
     eaDataComplexityRating:        impactToRating(body.dataImpactLevel),
@@ -53,6 +95,9 @@ function deriveEaBaseline(body: {
     eaRegulatoryRiskRating:        impactToRating(body.regulatoryImpactLevel),
     eaAiRiskRating:                impactToRating(body.aiImpactLevel),
     eaOverallRiskLevel:            overallRisk,
+    eaReviewType,
+    eaRequiredArchitectureViews:   views.join(", "),
+    eaRequiredSmes:                smes.length > 0 ? smes.join(", ") : "Enterprise Architect",
   };
 }
 
@@ -118,6 +163,9 @@ router.post("/requests", async (req, res) => {
       eaRegulatoryRiskRating:        eaBaseline.eaRegulatoryRiskRating,
       eaAiRiskRating:                eaBaseline.eaAiRiskRating,
       eaOverallRiskLevel:            eaBaseline.eaOverallRiskLevel,
+      eaReviewType:                  eaBaseline.eaReviewType,
+      eaRequiredArchitectureViews:   eaBaseline.eaRequiredArchitectureViews,
+      eaRequiredSmes:                eaBaseline.eaRequiredSmes,
     }).returning();
 
     res.status(201).json(serializeRequest(created));
