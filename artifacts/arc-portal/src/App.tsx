@@ -14,6 +14,7 @@ import OutcomesPage from "./pages/outcomes";
 import JiraInitiatives from "./pages/jira-initiatives";
 import KpisPage from "./pages/kpis";
 import ProcessGuidePage from "./pages/process-guide";
+import AdminPage from "./pages/admin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/outcomes" component={OutcomesPage} />
       <Route path="/kpis" component={KpisPage} />
       <Route path="/process-guide" component={ProcessGuidePage} />
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, FileText, Calendar, ShieldCheck, FileSpreadsheet, Hexagon, Bell, Search, UserCircle, Layers, BarChart3 } from "lucide-react";
+import { LayoutDashboard, FileText, Calendar, ShieldCheck, FileSpreadsheet, Hexagon, Bell, Search, UserCircle, Layers, BarChart3, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -52,7 +52,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        <div className="mt-auto p-4 m-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100">
+        <div className="px-4 pb-2">
+          <Link
+            href="/admin"
+            className={cn(
+              "flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 group",
+              location === "/admin"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+          >
+            <Settings className="w-4 h-4" />
+            <span>Demo Setup</span>
+          </Link>
+        </div>
+
+        <div className="p-4 m-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100">
           <div className="flex items-center space-x-2 text-primary mb-2">
             <FileSpreadsheet className="w-4 h-4" />
             <span className="font-bold text-sm">Process Guide</span>
