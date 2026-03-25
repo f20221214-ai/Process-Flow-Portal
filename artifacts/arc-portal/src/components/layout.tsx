@@ -7,15 +7,10 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/requests", label: "All Requests", icon: FileText },
   { href: "/jira", label: "JIRA Initiatives", icon: Layers },
-  { href: "/requests/new", label: "Submit Request", icon: PlusCircleIcon },
   { href: "/sessions", label: "ARC Sessions", icon: Calendar },
   { href: "/outcomes", label: "Review Outcomes", icon: ShieldCheck },
   { href: "/kpis", label: "KPI Dashboard", icon: BarChart3 },
 ];
-
-function PlusCircleIcon(props: any) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>;
-}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
