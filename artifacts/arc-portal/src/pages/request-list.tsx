@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
-import { Card, Button, StatusBadge, PriorityBadge, Input } from "@/components/ui-primitives";
+import { Card, StatusBadge, PriorityBadge, Input } from "@/components/ui-primitives";
 import { useListRequests } from "@workspace/api-client-react";
 import { format } from "date-fns";
-import { Search, Filter, Plus, ArrowRight } from "lucide-react";
+import { Search, Filter, ArrowRight } from "lucide-react";
 import { formatLabel } from "@/lib/utils";
 import { Link } from "wouter";
 
@@ -23,14 +23,9 @@ export default function RequestList() {
   return (
     <Layout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-display font-bold">Architecture Requests</h1>
-            <p className="text-muted-foreground mt-1">Manage and track all enterprise architecture reviews.</p>
-          </div>
-          <Button href="/requests/new" className="shrink-0 gap-2">
-            <Plus className="w-4 h-4" /> New Request
-          </Button>
+        <div>
+          <h1 className="text-3xl font-display font-bold">Architecture Requests</h1>
+          <p className="text-muted-foreground mt-1">Manage and track all enterprise architecture reviews.</p>
         </div>
 
         <Card className="p-4 flex flex-col md:flex-row gap-4 bg-card/50 backdrop-blur-sm">
