@@ -10,9 +10,11 @@ export type ArchitectureRequestRequestType =
   (typeof ArchitectureRequestRequestType)[keyof typeof ArchitectureRequestRequestType];
 
 export const ArchitectureRequestRequestType = {
-  new_technology: "new_technology",
-  replacement_migration: "replacement_migration",
+  new_application: "new_application",
+  major_enhancement: "major_enhancement",
   new_capability: "new_capability",
-  expansion: "expansion",
-  ma_assessment: "ma_assessment",
+  cloud_migration: "cloud_migration",
+  application_replacement: "application_replacement",
+  application_decommissioning: "application_decommissioning",
+  technology_selection: "technology_selection",
 } as const;

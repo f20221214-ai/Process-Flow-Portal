@@ -37,20 +37,13 @@ export type ArchitectureRequestRequestType =
   (typeof ArchitectureRequestRequestType)[keyof typeof ArchitectureRequestRequestType];
 
 export const ArchitectureRequestRequestType = {
-  new_technology: "new_technology",
-  replacement_migration: "replacement_migration",
+  new_application: "new_application",
+  major_enhancement: "major_enhancement",
   new_capability: "new_capability",
-  expansion: "expansion",
-  ma_assessment: "ma_assessment",
-} as const;
-
-export type ArchitectureRequestPhase =
-  (typeof ArchitectureRequestPhase)[keyof typeof ArchitectureRequestPhase];
-
-export const ArchitectureRequestPhase = {
-  ph1: "ph1",
-  ph2: "ph2",
-  ph3: "ph3",
+  cloud_migration: "cloud_migration",
+  application_replacement: "application_replacement",
+  application_decommissioning: "application_decommissioning",
+  technology_selection: "technology_selection",
 } as const;
 
 export type ArchitectureRequestStatus =
@@ -78,19 +71,157 @@ export const ArchitectureRequestPriority = {
   critical: "critical",
 } as const;
 
+export type ArchitectureRequestBusinessValueHypothesisItem =
+  (typeof ArchitectureRequestBusinessValueHypothesisItem)[keyof typeof ArchitectureRequestBusinessValueHypothesisItem];
+
+export const ArchitectureRequestBusinessValueHypothesisItem = {
+  increased_revenue: "increased_revenue",
+  reduced_costs: "reduced_costs",
+  reduced_risk: "reduced_risk",
+  improved_experience: "improved_experience",
+} as const;
+
+export type ArchitectureRequestBusinessCriticality =
+  | (typeof ArchitectureRequestBusinessCriticality)[keyof typeof ArchitectureRequestBusinessCriticality]
+  | null;
+
+export const ArchitectureRequestBusinessCriticality = {
+  mission_critical: "mission_critical",
+  business_critical: "business_critical",
+  business_operational: "business_operational",
+  administrative_service: "administrative_service",
+} as const;
+
+export type ArchitectureRequestCostEstimate =
+  | (typeof ArchitectureRequestCostEstimate)[keyof typeof ArchitectureRequestCostEstimate]
+  | null;
+
+export const ArchitectureRequestCostEstimate = {
+  small: "small",
+  medium: "medium",
+  large: "large",
+  xlarge: "xlarge",
+} as const;
+
+export type ArchitectureRequestDeploymentModel =
+  | (typeof ArchitectureRequestDeploymentModel)[keyof typeof ArchitectureRequestDeploymentModel]
+  | null;
+
+export const ArchitectureRequestDeploymentModel = {
+  on_prem_datacenter: "on_prem_datacenter",
+  on_prem_plant: "on_prem_plant",
+  saas: "saas",
+  cloud_vendor: "cloud_vendor",
+  cloud_mccain: "cloud_mccain",
+  hybrid: "hybrid",
+  tbd: "tbd",
+} as const;
+
+export type ArchitectureRequestSecurityImpactLevel =
+  (typeof ArchitectureRequestSecurityImpactLevel)[keyof typeof ArchitectureRequestSecurityImpactLevel];
+
+export const ArchitectureRequestSecurityImpactLevel = {
+  none: "none",
+  low: "low",
+  medium: "medium",
+  high: "high",
+} as const;
+
+export type ArchitectureRequestDataImpactLevel =
+  (typeof ArchitectureRequestDataImpactLevel)[keyof typeof ArchitectureRequestDataImpactLevel];
+
+export const ArchitectureRequestDataImpactLevel = {
+  none: "none",
+  low: "low",
+  medium: "medium",
+  high: "high",
+} as const;
+
+export type ArchitectureRequestIntegrationImpactLevel =
+  (typeof ArchitectureRequestIntegrationImpactLevel)[keyof typeof ArchitectureRequestIntegrationImpactLevel];
+
+export const ArchitectureRequestIntegrationImpactLevel = {
+  none: "none",
+  low: "low",
+  medium: "medium",
+  high: "high",
+} as const;
+
+export type ArchitectureRequestRegulatoryImpactLevel =
+  (typeof ArchitectureRequestRegulatoryImpactLevel)[keyof typeof ArchitectureRequestRegulatoryImpactLevel];
+
+export const ArchitectureRequestRegulatoryImpactLevel = {
+  none: "none",
+  low: "low",
+  medium: "medium",
+  high: "high",
+} as const;
+
+export type ArchitectureRequestAiImpactLevel =
+  (typeof ArchitectureRequestAiImpactLevel)[keyof typeof ArchitectureRequestAiImpactLevel];
+
+export const ArchitectureRequestAiImpactLevel = {
+  none: "none",
+  low: "low",
+  medium: "medium",
+  high: "high",
+} as const;
+
+export type ArchitectureRequestEaReviewType =
+  | (typeof ArchitectureRequestEaReviewType)[keyof typeof ArchitectureRequestEaReviewType]
+  | null;
+
+export const ArchitectureRequestEaReviewType = {
+  lightweight: "lightweight",
+  standard: "standard",
+  deep_dive: "deep_dive",
+} as const;
+
 export interface ArchitectureRequest {
   id: number;
   title: string;
   description: string;
-  requestType: ArchitectureRequestRequestType;
-  phase: ArchitectureRequestPhase;
-  submittedBy: string;
   businessUnit: string;
+  submittedBy: string;
+  sponsorProductOwner?: string | null;
+  solutionArchitect?: string | null;
+  requestType: ArchitectureRequestRequestType;
   status: ArchitectureRequestStatus;
   priority: ArchitectureRequestPriority;
-  eaAssignee?: string | null;
+  phase?: string | null;
+  businessContext?: string | null;
+  businessValueHypothesis: ArchitectureRequestBusinessValueHypothesisItem[];
+  businessCapability: string[];
+  businessCriticality?: ArchitectureRequestBusinessCriticality;
+  costEstimate?: ArchitectureRequestCostEstimate;
+  inScopeRegions: string[];
+  expectedUserBase?: string | null;
+  deploymentModel?: ArchitectureRequestDeploymentModel;
+  targetGoLiveDate?: string | null;
+  securityImpactLevel: ArchitectureRequestSecurityImpactLevel;
+  securityImpactDetails?: string | null;
+  dataImpactLevel: ArchitectureRequestDataImpactLevel;
+  dataImpactDetails?: string | null;
+  integrationImpactLevel: ArchitectureRequestIntegrationImpactLevel;
+  integrationImpactDetails?: string | null;
+  regulatoryImpactLevel: ArchitectureRequestRegulatoryImpactLevel;
+  regulatoryImpactDetails?: string | null;
+  aiImpactLevel: ArchitectureRequestAiImpactLevel;
+  aiImpactDetails?: string | null;
   architectureSpecifications?: string | null;
+  eaAssignee?: string | null;
   scopeNotes?: string | null;
+  eaSecurityRiskRating?: string | null;
+  eaDataComplexityRating?: string | null;
+  eaIntegrationComplexityRating?: string | null;
+  eaRegulatoryRiskRating?: string | null;
+  eaAiRiskRating?: string | null;
+  eaOverallComplexity?: string | null;
+  eaOverallRiskLevel?: string | null;
+  eaReviewType?: ArchitectureRequestEaReviewType;
+  eaRequiredArchitectureViews?: string | null;
+  eaRequiredSmes?: string | null;
+  eaArcSchedule?: string | null;
   jiraInitiativeId?: number | null;
   jiraKey?: string | null;
   createdAt: string;
@@ -101,20 +232,13 @@ export type CreateArchitectureRequestRequestType =
   (typeof CreateArchitectureRequestRequestType)[keyof typeof CreateArchitectureRequestRequestType];
 
 export const CreateArchitectureRequestRequestType = {
-  new_technology: "new_technology",
-  replacement_migration: "replacement_migration",
+  new_application: "new_application",
+  major_enhancement: "major_enhancement",
   new_capability: "new_capability",
-  expansion: "expansion",
-  ma_assessment: "ma_assessment",
-} as const;
-
-export type CreateArchitectureRequestPhase =
-  (typeof CreateArchitectureRequestPhase)[keyof typeof CreateArchitectureRequestPhase];
-
-export const CreateArchitectureRequestPhase = {
-  ph1: "ph1",
-  ph2: "ph2",
-  ph3: "ph3",
+  cloud_migration: "cloud_migration",
+  application_replacement: "application_replacement",
+  application_decommissioning: "application_decommissioning",
+  technology_selection: "technology_selection",
 } as const;
 
 export type CreateArchitectureRequestPriority =
@@ -130,11 +254,31 @@ export const CreateArchitectureRequestPriority = {
 export interface CreateArchitectureRequest {
   title: string;
   description: string;
-  requestType: CreateArchitectureRequestRequestType;
-  phase: CreateArchitectureRequestPhase;
-  submittedBy: string;
   businessUnit: string;
+  submittedBy: string;
+  sponsorProductOwner?: string | null;
+  solutionArchitect?: string | null;
+  requestType: CreateArchitectureRequestRequestType;
   priority: CreateArchitectureRequestPriority;
+  businessContext?: string | null;
+  businessValueHypothesis?: string[];
+  businessCapability?: string[];
+  businessCriticality?: string | null;
+  costEstimate?: string | null;
+  inScopeRegions?: string[];
+  expectedUserBase?: string | null;
+  deploymentModel?: string | null;
+  targetGoLiveDate?: string | null;
+  securityImpactLevel?: string;
+  securityImpactDetails?: string | null;
+  dataImpactLevel?: string;
+  dataImpactDetails?: string | null;
+  integrationImpactLevel?: string;
+  integrationImpactDetails?: string | null;
+  regulatoryImpactLevel?: string;
+  regulatoryImpactDetails?: string | null;
+  aiImpactLevel?: string;
+  aiImpactDetails?: string | null;
   architectureSpecifications?: string | null;
   jiraInitiativeId?: number | null;
 }
@@ -154,23 +298,24 @@ export const UpdateArchitectureRequestStatus = {
   rejected: "rejected",
 } as const;
 
-export type UpdateArchitectureRequestPriority =
-  (typeof UpdateArchitectureRequestPriority)[keyof typeof UpdateArchitectureRequestPriority];
-
-export const UpdateArchitectureRequestPriority = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
-} as const;
-
 export interface UpdateArchitectureRequest {
   status?: UpdateArchitectureRequestStatus;
+  priority?: string;
   eaAssignee?: string | null;
-  architectureSpecifications?: string | null;
   scopeNotes?: string | null;
-  priority?: UpdateArchitectureRequestPriority;
+  architectureSpecifications?: string | null;
   jiraInitiativeId?: number | null;
+  eaSecurityRiskRating?: string | null;
+  eaDataComplexityRating?: string | null;
+  eaIntegrationComplexityRating?: string | null;
+  eaRegulatoryRiskRating?: string | null;
+  eaAiRiskRating?: string | null;
+  eaOverallComplexity?: string | null;
+  eaOverallRiskLevel?: string | null;
+  eaReviewType?: string | null;
+  eaRequiredArchitectureViews?: string | null;
+  eaRequiredSmes?: string | null;
+  eaArcSchedule?: string | null;
 }
 
 export type ArcSessionStatus =

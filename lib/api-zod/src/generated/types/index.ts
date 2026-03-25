@@ -7,14 +7,22 @@
  */
 
 export * from "./architectureRequest";
-export * from "./architectureRequestPhase";
+export * from "./architectureRequestAiImpactLevel";
+export * from "./architectureRequestBusinessCriticality";
+export * from "./architectureRequestBusinessValueHypothesisItem";
+export * from "./architectureRequestCostEstimate";
+export * from "./architectureRequestDataImpactLevel";
+export * from "./architectureRequestDeploymentModel";
+export * from "./architectureRequestEaReviewType";
+export * from "./architectureRequestIntegrationImpactLevel";
 export * from "./architectureRequestPriority";
+export * from "./architectureRequestRegulatoryImpactLevel";
 export * from "./architectureRequestRequestType";
+export * from "./architectureRequestSecurityImpactLevel";
 export * from "./architectureRequestStatus";
 export * from "./arcSession";
 export * from "./arcSessionStatus";
 export * from "./createArchitectureRequest";
-export * from "./createArchitectureRequestPhase";
 export * from "./createArchitectureRequestPriority";
 export * from "./createArchitectureRequestRequestType";
 export * from "./createArcSession";
@@ -28,7 +36,6 @@ export * from "./reviewOutcome";
 export * from "./reviewOutcomeDecision";
 export * from "./reviewOutcomeOutcomeType";
 export * from "./updateArchitectureRequest";
-export * from "./updateArchitectureRequestPriority";
 export * from "./updateArchitectureRequestStatus";
 export * from "./updateArcSession";
 export * from "./updateArcSessionStatus";

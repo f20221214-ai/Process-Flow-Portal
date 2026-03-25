@@ -6,9 +6,16 @@ import { useCreateRequest } from "@workspace/api-client-react";
 import type { CreateArchitectureRequest } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Layers } from "lucide-react";
+import { ArrowLeft, X, Layers, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
+
+const IMPACT_LEVELS = [
+  { value: "none", label: "None" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" }
+];
 
 export default function RequestForm() {
   const [, setLocation] = useLocation();
@@ -18,21 +25,42 @@ export default function RequestForm() {
   const [formData, setFormData] = useState<CreateArchitectureRequest>({
     title: "",
     description: "",
-    requestType: "new_technology",
-    phase: "ph1",
-    submittedBy: "Jane Doe", // Mocking auth user
     businessUnit: "",
+    sponsorProductOwner: "",
+    solutionArchitect: "",
+    requestType: "new_application",
+    businessContext: "",
+    businessValueHypothesis: [],
+    businessCriticality: "business_operational",
+    costEstimate: "small",
+    inScopeRegions: [],
+    expectedUserBase: "",
+    deploymentModel: "tbd",
+    targetGoLiveDate: "",
+    
+    securityImpactLevel: "none",
+    securityImpactDetails: "",
+    dataImpactLevel: "none",
+    dataImpactDetails: "",
+    integrationImpactLevel: "none",
+    integrationImpactDetails: "",
+    regulatoryImpactLevel: "none",
+    regulatoryImpactDetails: "",
+    aiImpactLevel: "none",
+    aiImpactDetails: "",
+    
+    submittedBy: "Jane Doe",
     priority: "medium",
-    architectureSpecifications: "",
     jiraInitiativeId: null
   });
+
+  const [regionInput, setRegionInput] = useState("");
 
   const { data: initiatives, isLoading: isLoadingJira } = useQuery<JiraInitiative[]>({
     queryKey: ['/api/jira/initiatives'],
     queryFn: () => fetch('/api/jira/initiatives').then(res => res.json())
   });
 
-  // Handle ?jiraId= in URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const jiraIdStr = params.get('jiraId');
@@ -72,6 +100,42 @@ export default function RequestForm() {
     });
   };
 
+  const handleRegionKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = regionInput.trim();
+      if (val && !formData.inScopeRegions?.includes(val)) {
+        setFormData(prev => ({
+          ...prev,
+          inScopeRegions: [...(prev.inScopeRegions || []), val]
+        }));
+      }
+      setRegionInput("");
+    }
+  };
+
+  const removeRegion = (r: string) => {
+    setFormData(prev => ({
+      ...prev,
+      inScopeRegions: prev.inScopeRegions?.filter(region => region !== r)
+    }));
+  };
+
+  const handleBusinessValueHypothesisToggle = (value: string) => {
+    setFormData(prev => {
+      const current = prev.businessValueHypothesis || [];
+      if (current.includes(value)) {
+        return { ...prev, businessValueHypothesis: current.filter(v => v !== value) };
+      } else {
+        return { ...prev, businessValueHypothesis: [...current, value] };
+      }
+    });
+  };
+
+  const setImpactLevel = (area: string, level: string) => {
+    setFormData(prev => ({ ...prev, [`${area}ImpactLevel`]: level }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate({ data: formData }, {
@@ -85,26 +149,82 @@ export default function RequestForm() {
     });
   };
 
+  const ImpactRow = ({ area, title, fieldName, guidance }: { area: string, title: string, fieldName: string, guidance: string }) => {
+    const levelKey = `${fieldName}ImpactLevel` as keyof CreateArchitectureRequest;
+    const detailsKey = `${fieldName}ImpactDetails` as keyof CreateArchitectureRequest;
+    const currentLevel = formData[levelKey] as string;
+    const [showGuidance, setShowGuidance] = useState(false);
+
+    return (
+      <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card/50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Label className="mb-0 text-base">{title}</Label>
+            <button type="button" onClick={() => setShowGuidance(!showGuidance)} className="text-muted-foreground hover:text-primary transition-colors">
+              <Info className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex gap-2">
+            {IMPACT_LEVELS.map(level => (
+              <button
+                key={level.value}
+                type="button"
+                onClick={() => setImpactLevel(fieldName, level.value)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  currentLevel === level.value
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                }`}
+              >
+                {level.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {showGuidance && (
+          <div className="bg-primary/5 border border-primary/20 p-3 rounded-xl text-sm text-primary/80 animate-in fade-in slide-in-from-top-2">
+            {guidance}
+          </div>
+        )}
+
+        {currentLevel !== "none" && (
+          <div className="animate-in fade-in slide-in-from-top-2">
+            <Label className="text-xs mb-2">Please provide details regarding the {title.toLowerCase()}:</Label>
+            <Textarea
+              name={detailsKey}
+              value={(formData[detailsKey] as string) || ""}
+              onChange={handleChange}
+              placeholder={`Elaborate on the ${currentLevel} impact...`}
+              className="min-h-[80px]"
+              required
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Layout>
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pb-12">
         <Button variant="ghost" size="sm" href="/requests" className="mb-6 -ml-4 text-muted-foreground">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Requests
         </Button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold">Submit Architecture Request</h1>
-          <p className="text-muted-foreground mt-2">Provide initial details for the EA team to triage your request.</p>
+          <h1 className="text-3xl font-display font-bold">Architecture Review Request (ARR)</h1>
+          <p className="text-muted-foreground mt-2">Complete the intake form to initiate the Architecture Review Process.</p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* JIRA INITIATIVE CARD */}
-          <Card className="mb-8 border-indigo-100">
+          {/* SECTION 0: JIRA INITIATIVE */}
+          <Card className="mb-8 border-indigo-100 shadow-sm">
             <CardHeader className="bg-indigo-50/50 flex flex-row items-center gap-2">
-              <div className="bg-blue-600 text-white p-1 rounded">
+              <div className="bg-blue-600 text-white p-1 rounded-lg">
                 <Layers className="w-4 h-4" />
               </div>
-              <CardTitle className="text-indigo-900">Linked JIRA Initiative</CardTitle>
+              <CardTitle className="text-indigo-900">0. Linked JIRA Initiative</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -135,7 +255,7 @@ export default function RequestForm() {
                   <button 
                     type="button"
                     onClick={() => setFormData(prev => ({...prev, jiraInitiativeId: null}))}
-                    className="absolute top-3 right-3 text-slate-400 hover:text-slate-600"
+                    className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -155,46 +275,207 @@ export default function RequestForm() {
             </CardContent>
           </Card>
 
-          <Card className="mb-8">
+          {/* SECTION 1: REQUEST INFORMATION */}
+          <Card className="mb-8 shadow-sm">
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>1. Request Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                <Label>Project Title</Label>
-                <Input required name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Migration to AWS Cloud" />
-              </div>
               
-              <div>
-                <Label>Description</Label>
-                <Textarea required name="description" value={formData.description} onChange={handleChange} placeholder="Briefly describe the business problem and proposed solution..." />
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <Label>Project/Initiative Name</Label>
+                  <p className="text-xs text-muted-foreground mb-1.5">Refer to JIRA list for accuracy.</p>
+                  <Input required name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Migration to AWS Cloud" />
+                </div>
+                
+                <div className="md:col-span-2">
+                  <Label>Project/Initiative Description</Label>
+                  <Textarea required name="description" value={formData.description} onChange={handleChange} placeholder="Briefly describe the initiative..." />
+                </div>
+
+                <div>
+                  <Label>Business Unit/Portfolio</Label>
+                  <Input required name="businessUnit" value={formData.businessUnit} onChange={handleChange} placeholder="e.g. Retail Banking" />
+                </div>
+                
                 <div>
                   <Label>Request Type</Label>
                   <Select name="requestType" value={formData.requestType} onChange={handleChange}>
-                    <option value="new_technology">New Technology</option>
-                    <option value="replacement_migration">Replacement / Migration</option>
+                    <option value="new_application">New Application</option>
+                    <option value="major_enhancement">Major Enhancement</option>
                     <option value="new_capability">New Capability</option>
-                    <option value="expansion">Expansion</option>
-                    <option value="ma_assessment">M&A Assessment</option>
+                    <option value="cloud_migration">Cloud Migration</option>
+                    <option value="application_replacement">Application Replacement</option>
+                    <option value="application_decommissioning">Application Decommissioning</option>
+                    <option value="technology_selection">Technology Selection</option>
                   </Select>
                 </div>
+
                 <div>
-                  <Label>Project Phase</Label>
-                  <Select name="phase" value={formData.phase} onChange={handleChange}>
-                    <option value="ph1">Phase 1 (Discovery/Concept)</option>
-                    <option value="ph2">Phase 2 (Design/Architecture)</option>
-                    <option value="ph3">Phase 3 (Implementation/Build)</option>
+                  <Label>Sponsor / Product Owner</Label>
+                  <Input name="sponsorProductOwner" value={formData.sponsorProductOwner || ""} onChange={handleChange} placeholder="Name" />
+                </div>
+
+                <div>
+                  <Label>Solution Architect</Label>
+                  <Input name="solutionArchitect" value={formData.solutionArchitect || ""} onChange={handleChange} placeholder="Name (if assigned)" />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label>Business Context</Label>
+                  <Textarea name="businessContext" value={formData.businessContext || ""} onChange={handleChange} placeholder="Describe the problem statement and anticipated business value..." className="min-h-[120px]" />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label className="mb-3">Business Value Hypothesis</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      { id: 'increased_revenue', label: 'Increased Revenue' },
+                      { id: 'reduced_costs', label: 'Reduced Costs' },
+                      { id: 'reduced_risk', label: 'Reduced Risk' },
+                      { id: 'improved_experience', label: 'Improved Experience' },
+                    ].map((item) => (
+                      <label key={item.id} className="flex items-center space-x-3 p-3 border border-border rounded-xl hover:bg-secondary/50 cursor-pointer transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={formData.businessValueHypothesis?.includes(item.id)}
+                          onChange={() => handleBusinessValueHypothesisToggle(item.id)}
+                          className="w-4 h-4 rounded text-primary focus:ring-primary/20"
+                        />
+                        <span className="text-sm font-medium">{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Business Criticality</Label>
+                  <Select name="businessCriticality" value={formData.businessCriticality || ""} onChange={handleChange}>
+                    <option value="mission_critical">Mission Critical</option>
+                    <option value="business_critical">Business Critical</option>
+                    <option value="business_operational">Business Operational</option>
+                    <option value="administrative_service">Administrative Service</option>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Cost T-Shirt Sizing</Label>
+                  <Select name="costEstimate" value={formData.costEstimate || ""} onChange={handleChange}>
+                    <option value="small">Small (&lt;100K CAD)</option>
+                    <option value="medium">Medium (100K-500K CAD)</option>
+                    <option value="large">Large (500K-1M CAD)</option>
+                    <option value="xlarge">XLarge (&gt;1M CAD)</option>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label>In-Scope Regions / Countries</Label>
+                  <div className="space-y-3">
+                    <Input 
+                      placeholder="Type a region and press Enter or comma..." 
+                      value={regionInput}
+                      onChange={(e) => setRegionInput(e.target.value)}
+                      onKeyDown={handleRegionKeyDown}
+                    />
+                    {formData.inScopeRegions && formData.inScopeRegions.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.inScopeRegions.map((region, i) => (
+                          <div key={i} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm font-medium">
+                            {region}
+                            <button type="button" onClick={() => removeRegion(region)} className="hover:text-destructive transition-colors ml-1 focus:outline-none">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Expected User Base</Label>
+                  <Input name="expectedUserBase" value={formData.expectedUserBase || ""} onChange={handleChange} placeholder="e.g. 500 internal, 10,000 external" />
+                </div>
+
+                <div>
+                  <Label>Target Go-Live Date</Label>
+                  <Input type="date" name="targetGoLiveDate" value={formData.targetGoLiveDate || ""} onChange={handleChange} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label>Deployment Model</Label>
+                  <Select name="deploymentModel" value={formData.deploymentModel || ""} onChange={handleChange}>
+                    <option value="on_prem_datacenter">On-Prem (McCain Data Center)</option>
+                    <option value="on_prem_plant">On-Prem (McCain Plant)</option>
+                    <option value="saas">SaaS</option>
+                    <option value="cloud_vendor">Cloud (Vendor Tenant)</option>
+                    <option value="cloud_mccain">Cloud (McCain Tenant)</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="tbd">To be Defined</option>
                   </Select>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
+          {/* SECTION 2: IMPACT ASSESSMENT */}
+          <Card className="mb-8 shadow-sm">
+            <CardHeader>
+              <CardTitle>2. Impact Assessment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-sm text-muted-foreground mb-6">
+                Refer to the guidance below when selecting impact levels. Accurate scoring ensures the correct depth of review.
+              </p>
+
+              <ImpactRow 
+                area="Security" 
+                title="Security Impact" 
+                fieldName="security"
+                guidance="None=internal use only, approved auth, no sensitive data; Low=standard enterprise identity, limited external; Medium=new external interfaces, sensitive internal data, new access patterns; High=internet-facing, PII/financial data, OT/IT boundary"
+              />
+
+              <ImpactRow 
+                area="Data" 
+                title="Data Impact" 
+                fieldName="data"
+                guidance="None=only public data, no systems of record; Low=internal operational data, limited reporting; Medium=business-critical cross-domain data, new analytics; High=personal/regulated data, financial reporting, cross-border movement"
+              />
+
+              <ImpactRow 
+                area="Integration" 
+                title="Integration Impact" 
+                fieldName="integration"
+                guidance="None=no integrations; Low=2-3 systems, standard patterns; Medium=multiple systems, real-time/event-driven; High=external partner integrations, new middleware"
+              />
+
+              <ImpactRow 
+                area="Regulatory" 
+                title="Regulatory Impact" 
+                fieldName="regulatory"
+                guidance="None=no compliance implications; Low=internal policy only; Medium=ISO/SOX/audit compliance; High=legal/safety/GDPR/food safety regulations"
+              />
+
+              <ImpactRow 
+                area="AI" 
+                title="AI Impact" 
+                fieldName="ai"
+                guidance="None=no ML/GenAI/LLM or AI APIs; Low=prebuilt SaaS toggle, human-in-loop; Medium=workflow routing, fine-tuned models, sensitive data; High=decisions with legal/financial implications, regulated domains, customer-facing AI"
+              />
+            </CardContent>
+          </Card>
+
+          {/* SECTION 3: SUBMITTED BY */}
+          <Card className="mb-8 shadow-sm">
+            <CardHeader>
+              <CardTitle>3. Submitted By</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label>Business Unit</Label>
-                  <Input required name="businessUnit" value={formData.businessUnit} onChange={handleChange} placeholder="e.g. Retail Banking" />
+                  <Label>Submitter Name</Label>
+                  <Input required name="submittedBy" value={formData.submittedBy} onChange={handleChange} />
                 </div>
                 <div>
                   <Label>Priority</Label>
@@ -209,20 +490,10 @@ export default function RequestForm() {
             </CardContent>
           </Card>
 
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Architecture Specifications (Optional)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">If you already have technical specifications, sequence diagrams links, or security context, provide them here. Otherwise, the EA team will request them during triage.</p>
-              <Textarea name="architectureSpecifications" value={formData.architectureSpecifications || ''} onChange={handleChange} placeholder="Technical details, links to Confluence, etc." className="min-h-[150px]" />
-            </CardContent>
-          </Card>
-
           <div className="flex justify-end gap-4">
             <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Submitting..." : "Submit Request"}
+            <Button type="submit" disabled={createMutation.isPending} className="px-8">
+              {createMutation.isPending ? "Submitting..." : "Submit ARR"}
             </Button>
           </div>
         </form>

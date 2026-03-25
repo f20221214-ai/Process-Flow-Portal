@@ -5,14 +5,24 @@
  * Architecture Review Process Portal API
  * OpenAPI spec version: 0.1.0
  */
-import type { UpdateArchitectureRequestPriority } from "./updateArchitectureRequestPriority";
 import type { UpdateArchitectureRequestStatus } from "./updateArchitectureRequestStatus";
 
 export interface UpdateArchitectureRequest {
   status?: UpdateArchitectureRequestStatus;
+  priority?: string;
   eaAssignee?: string | null;
-  architectureSpecifications?: string | null;
   scopeNotes?: string | null;
-  priority?: UpdateArchitectureRequestPriority;
+  architectureSpecifications?: string | null;
   jiraInitiativeId?: number | null;
+  eaSecurityRiskRating?: string | null;
+  eaDataComplexityRating?: string | null;
+  eaIntegrationComplexityRating?: string | null;
+  eaRegulatoryRiskRating?: string | null;
+  eaAiRiskRating?: string | null;
+  eaOverallComplexity?: string | null;
+  eaOverallRiskLevel?: string | null;
+  eaReviewType?: string | null;
+  eaRequiredArchitectureViews?: string | null;
+  eaRequiredSmes?: string | null;
+  eaArcSchedule?: string | null;
 }

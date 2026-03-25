@@ -859,7 +859,7 @@ export const useCreateOutcome = <
 };
 
 /**
- * @summary List all JIRA initiatives synced from JIRA
+ * @summary List JIRA initiatives
  */
 export const getListJiraInitiativesUrl = () => {
   return `/api/jira/initiatives`;
@@ -910,7 +910,7 @@ export type ListJiraInitiativesQueryResult = NonNullable<
 export type ListJiraInitiativesQueryError = ErrorType<unknown>;
 
 /**
- * @summary List all JIRA initiatives synced from JIRA
+ * @summary List JIRA initiatives
  */
 
 export function useListJiraInitiatives<
@@ -934,7 +934,7 @@ export function useListJiraInitiatives<
 }
 
 /**
- * @summary Trigger a simulated sync from JIRA
+ * @summary Trigger simulated JIRA sync
  */
 export const getSyncJiraInitiativesUrl = () => {
   return `/api/jira/sync`;
@@ -992,7 +992,7 @@ export type SyncJiraInitiativesMutationResult = NonNullable<
 export type SyncJiraInitiativesMutationError = ErrorType<unknown>;
 
 /**
- * @summary Trigger a simulated sync from JIRA
+ * @summary Trigger simulated JIRA sync
  */
 export const useSyncJiraInitiatives = <
   TError = ErrorType<unknown>,

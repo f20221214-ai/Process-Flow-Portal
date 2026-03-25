@@ -8,15 +8,10 @@ servers:
     description: Base API path
 tags:
   - name: health
-    description: Health operations
   - name: requests
-    description: Architecture Review Requests
   - name: sessions
-    description: ARC Sessions
   - name: outcomes
-    description: Review Outcomes
   - name: jira
-    description: JIRA Integration
 paths:
   /healthz:
     get:
@@ -198,7 +193,7 @@ paths:
     get:
       operationId: listJiraInitiatives
       tags: [jira]
-      summary: List all JIRA initiatives synced from JIRA
+      summary: List JIRA initiatives
       responses:
         "200":
           description: List of JIRA initiatives
@@ -213,7 +208,7 @@ paths:
     post:
       operationId: syncJiraInitiatives
       tags: [jira]
-      summary: Trigger a simulated sync from JIRA
+      summary: Trigger simulated JIRA sync
       responses:
         "200":
           description: Sync result
@@ -229,8 +224,7 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
     JiraInitiative:
       type: object
@@ -270,18 +264,7 @@ components:
         createdAt:
           type: string
           format: date-time
-      required:
-        - id
-        - jiraKey
-        - summary
-        - projectKey
-        - projectName
-        - status
-        - priority
-        - issueType
-        - labels
-        - syncedAt
-        - createdAt
+      required: [id, jiraKey, summary, projectKey, projectName, status, priority, issueType, labels, syncedAt, createdAt]
 
     JiraSyncResult:
       type: object
@@ -295,46 +278,153 @@ components:
         lastSyncedAt:
           type: string
           format: date-time
-      required:
-        - synced
-        - added
-        - updated
-        - lastSyncedAt
+      required: [synced, added, updated, lastSyncedAt]
 
     ArchitectureRequest:
       type: object
       properties:
         id:
           type: integer
+        # Core
         title:
           type: string
         description:
           type: string
-        requestType:
-          type: string
-          enum: [new_technology, replacement_migration, new_capability, expansion, ma_assessment]
-        phase:
-          type: string
-          enum: [ph1, ph2, ph3]
-        submittedBy:
-          type: string
         businessUnit:
           type: string
+        submittedBy:
+          type: string
+        sponsorProductOwner:
+          type: string
+          nullable: true
+        solutionArchitect:
+          type: string
+          nullable: true
+        # Classification
+        requestType:
+          type: string
+          enum: [new_application, major_enhancement, new_capability, cloud_migration, application_replacement, application_decommissioning, technology_selection]
         status:
           type: string
           enum: [submitted, ea_triage, specifications_required, arc_scheduled, arc_review, approved, approved_with_conditions, deferred, rejected]
         priority:
           type: string
           enum: [low, medium, high, critical]
-        eaAssignee:
+        phase:
           type: string
           nullable: true
+        # Business context
+        businessContext:
+          type: string
+          nullable: true
+        businessValueHypothesis:
+          type: array
+          items:
+            type: string
+            enum: [increased_revenue, reduced_costs, reduced_risk, improved_experience]
+        businessCapability:
+          type: array
+          items:
+            type: string
+        businessCriticality:
+          type: string
+          nullable: true
+          enum: [mission_critical, business_critical, business_operational, administrative_service]
+        costEstimate:
+          type: string
+          nullable: true
+          enum: [small, medium, large, xlarge]
+        inScopeRegions:
+          type: array
+          items:
+            type: string
+        expectedUserBase:
+          type: string
+          nullable: true
+        deploymentModel:
+          type: string
+          nullable: true
+          enum: [on_prem_datacenter, on_prem_plant, saas, cloud_vendor, cloud_mccain, hybrid, tbd]
+        targetGoLiveDate:
+          type: string
+          nullable: true
+        # Impact levels
+        securityImpactLevel:
+          type: string
+          enum: [none, low, medium, high]
+        securityImpactDetails:
+          type: string
+          nullable: true
+        dataImpactLevel:
+          type: string
+          enum: [none, low, medium, high]
+        dataImpactDetails:
+          type: string
+          nullable: true
+        integrationImpactLevel:
+          type: string
+          enum: [none, low, medium, high]
+        integrationImpactDetails:
+          type: string
+          nullable: true
+        regulatoryImpactLevel:
+          type: string
+          enum: [none, low, medium, high]
+        regulatoryImpactDetails:
+          type: string
+          nullable: true
+        aiImpactLevel:
+          type: string
+          enum: [none, low, medium, high]
+        aiImpactDetails:
+          type: string
+          nullable: true
+        # Specs
         architectureSpecifications:
+          type: string
+          nullable: true
+        # EA triage
+        eaAssignee:
           type: string
           nullable: true
         scopeNotes:
           type: string
           nullable: true
+        eaSecurityRiskRating:
+          type: string
+          nullable: true
+        eaDataComplexityRating:
+          type: string
+          nullable: true
+        eaIntegrationComplexityRating:
+          type: string
+          nullable: true
+        eaRegulatoryRiskRating:
+          type: string
+          nullable: true
+        eaAiRiskRating:
+          type: string
+          nullable: true
+        eaOverallComplexity:
+          type: string
+          nullable: true
+        eaOverallRiskLevel:
+          type: string
+          nullable: true
+        eaReviewType:
+          type: string
+          nullable: true
+          enum: [lightweight, standard, deep_dive]
+        eaRequiredArchitectureViews:
+          type: string
+          nullable: true
+        eaRequiredSmes:
+          type: string
+          nullable: true
+        eaArcSchedule:
+          type: string
+          nullable: true
+        # JIRA
         jiraInitiativeId:
           type: integer
           nullable: true
@@ -347,18 +437,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required:
-        - id
-        - title
-        - description
-        - requestType
-        - phase
-        - submittedBy
-        - businessUnit
-        - status
-        - priority
-        - createdAt
-        - updatedAt
+      required: [id, title, description, businessUnit, submittedBy, requestType, status, priority, businessValueHypothesis, businessCapability, inScopeRegions, securityImpactLevel, dataImpactLevel, integrationImpactLevel, regulatoryImpactLevel, aiImpactLevel, createdAt, updatedAt]
 
     CreateArchitectureRequest:
       type: object
@@ -367,33 +446,84 @@ components:
           type: string
         description:
           type: string
-        requestType:
-          type: string
-          enum: [new_technology, replacement_migration, new_capability, expansion, ma_assessment]
-        phase:
-          type: string
-          enum: [ph1, ph2, ph3]
-        submittedBy:
-          type: string
         businessUnit:
           type: string
+        submittedBy:
+          type: string
+        sponsorProductOwner:
+          type: string
+          nullable: true
+        solutionArchitect:
+          type: string
+          nullable: true
+        requestType:
+          type: string
+          enum: [new_application, major_enhancement, new_capability, cloud_migration, application_replacement, application_decommissioning, technology_selection]
         priority:
           type: string
           enum: [low, medium, high, critical]
+        businessContext:
+          type: string
+          nullable: true
+        businessValueHypothesis:
+          type: array
+          items:
+            type: string
+        businessCapability:
+          type: array
+          items:
+            type: string
+        businessCriticality:
+          type: string
+          nullable: true
+        costEstimate:
+          type: string
+          nullable: true
+        inScopeRegions:
+          type: array
+          items:
+            type: string
+        expectedUserBase:
+          type: string
+          nullable: true
+        deploymentModel:
+          type: string
+          nullable: true
+        targetGoLiveDate:
+          type: string
+          nullable: true
+        securityImpactLevel:
+          type: string
+        securityImpactDetails:
+          type: string
+          nullable: true
+        dataImpactLevel:
+          type: string
+        dataImpactDetails:
+          type: string
+          nullable: true
+        integrationImpactLevel:
+          type: string
+        integrationImpactDetails:
+          type: string
+          nullable: true
+        regulatoryImpactLevel:
+          type: string
+        regulatoryImpactDetails:
+          type: string
+          nullable: true
+        aiImpactLevel:
+          type: string
+        aiImpactDetails:
+          type: string
+          nullable: true
         architectureSpecifications:
           type: string
           nullable: true
         jiraInitiativeId:
           type: integer
           nullable: true
-      required:
-        - title
-        - description
-        - requestType
-        - phase
-        - submittedBy
-        - businessUnit
-        - priority
+      required: [title, description, businessUnit, submittedBy, requestType, priority]
 
     UpdateArchitectureRequest:
       type: object
@@ -401,20 +531,52 @@ components:
         status:
           type: string
           enum: [submitted, ea_triage, specifications_required, arc_scheduled, arc_review, approved, approved_with_conditions, deferred, rejected]
-        eaAssignee:
+        priority:
           type: string
-          nullable: true
-        architectureSpecifications:
+        eaAssignee:
           type: string
           nullable: true
         scopeNotes:
           type: string
           nullable: true
-        priority:
+        architectureSpecifications:
           type: string
-          enum: [low, medium, high, critical]
+          nullable: true
         jiraInitiativeId:
           type: integer
+          nullable: true
+        eaSecurityRiskRating:
+          type: string
+          nullable: true
+        eaDataComplexityRating:
+          type: string
+          nullable: true
+        eaIntegrationComplexityRating:
+          type: string
+          nullable: true
+        eaRegulatoryRiskRating:
+          type: string
+          nullable: true
+        eaAiRiskRating:
+          type: string
+          nullable: true
+        eaOverallComplexity:
+          type: string
+          nullable: true
+        eaOverallRiskLevel:
+          type: string
+          nullable: true
+        eaReviewType:
+          type: string
+          nullable: true
+        eaRequiredArchitectureViews:
+          type: string
+          nullable: true
+        eaRequiredSmes:
+          type: string
+          nullable: true
+        eaArcSchedule:
+          type: string
           nullable: true
 
     ArcSession:
@@ -442,14 +604,7 @@ components:
         createdAt:
           type: string
           format: date-time
-      required:
-        - id
-        - requestId
-        - scheduledDate
-        - duration
-        - status
-        - attendees
-        - createdAt
+      required: [id, requestId, scheduledDate, duration, status, attendees, createdAt]
 
     CreateArcSession:
       type: object
@@ -468,11 +623,7 @@ components:
         notes:
           type: string
           nullable: true
-      required:
-        - requestId
-        - scheduledDate
-        - duration
-        - attendees
+      required: [requestId, scheduledDate, duration, attendees]
 
     UpdateArcSession:
       type: object
@@ -529,13 +680,7 @@ components:
           format: date-time
         createdBy:
           type: string
-      required:
-        - id
-        - requestId
-        - decision
-        - outcomeType
-        - createdAt
-        - createdBy
+      required: [id, requestId, decision, outcomeType, createdAt, createdBy]
 
     CreateReviewOutcome:
       type: object
@@ -574,8 +719,4 @@ components:
           nullable: true
         createdBy:
           type: string
-      required:
-        - requestId
-        - decision
-        - outcomeType
-        - createdBy
+      required: [requestId, decision, outcomeType, createdBy]

@@ -8,7 +8,7 @@ import { useGetRequest, useUpdateRequest, useListSessions, useListOutcomes } fro
 import { format } from "date-fns";
 import { formatLabel } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink } from "lucide-react";
+import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
 
@@ -21,6 +21,8 @@ export default function RequestDetail() {
   const { data: sessions } = useListSessions();
   const { data: outcomes } = useListOutcomes();
   const updateMutation = useUpdateRequest();
+
+  const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
 
   // Fetch JIRA Initiative if linked
   const { data: initiatives } = useQuery<JiraInitiative[]>({
@@ -36,6 +38,17 @@ export default function RequestDetail() {
     eaAssignee: "",
     scopeNotes: "",
     status: "",
+    eaSecurityRiskRating: "",
+    eaDataComplexityRating: "",
+    eaIntegrationComplexityRating: "",
+    eaRegulatoryRiskRating: "",
+    eaAiRiskRating: "",
+    eaOverallComplexity: "",
+    eaOverallRiskLevel: "",
+    eaReviewType: "",
+    eaRequiredArchitectureViews: "",
+    eaRequiredSmes: "",
+    eaArcSchedule: "",
   });
 
   const requestSessions = sessions?.filter(s => s.requestId === id) || [];
@@ -48,6 +61,17 @@ export default function RequestDetail() {
         eaAssignee: request.eaAssignee || "",
         scopeNotes: request.scopeNotes || "",
         status: request.status,
+        eaSecurityRiskRating: request.eaSecurityRiskRating || "",
+        eaDataComplexityRating: request.eaDataComplexityRating || "",
+        eaIntegrationComplexityRating: request.eaIntegrationComplexityRating || "",
+        eaRegulatoryRiskRating: request.eaRegulatoryRiskRating || "",
+        eaAiRiskRating: request.eaAiRiskRating || "",
+        eaOverallComplexity: request.eaOverallComplexity || "",
+        eaOverallRiskLevel: request.eaOverallRiskLevel || "",
+        eaReviewType: request.eaReviewType || "",
+        eaRequiredArchitectureViews: request.eaRequiredArchitectureViews || "",
+        eaRequiredSmes: request.eaRequiredSmes || "",
+        eaArcSchedule: request.eaArcSchedule || "",
       });
     }
   }, [request]);
@@ -68,6 +92,16 @@ export default function RequestDetail() {
     );
   };
 
+  const getImpactBadgeVariant = (level: string) => {
+    switch (level?.toLowerCase()) {
+      case 'none': return 'default';
+      case 'low': return 'primary';
+      case 'medium': return 'warning';
+      case 'high': return 'danger';
+      default: return 'default';
+    }
+  };
+
   if (isLoading || !request) {
     return (
       <Layout>
@@ -81,7 +115,7 @@ export default function RequestDetail() {
 
   return (
     <Layout>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">
         
         {/* Header Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -147,55 +181,125 @@ export default function RequestDetail() {
             )}
 
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><AlignLeft className="w-5 h-5 text-primary"/> Details</CardTitle>
+              <CardHeader 
+                className="cursor-pointer hover:bg-card/80 transition-colors select-none" 
+                onClick={() => setIsDetailsExpanded(!isDetailsExpanded)}
+              >
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2"><AlignLeft className="w-5 h-5 text-primary"/> ARR Details</CardTitle>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                    {isDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </Button>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</h4>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{request.description}</p>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-secondary/30 p-4 rounded-xl">
+              
+              {isDetailsExpanded && (
+                <CardContent className="space-y-8 pt-6 border-t border-border/40">
                   <div>
-                    <div className="text-xs text-muted-foreground mb-1">Type</div>
-                    <div className="font-medium text-sm">{formatLabel(request.requestType)}</div>
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description</h4>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{request.description}</p>
                   </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Phase</div>
-                    <div className="font-medium text-sm">{formatLabel(request.phase)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">Business Unit</div>
-                    <div className="font-medium text-sm">{request.businessUnit}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground mb-1">EA Assignee</div>
-                    <div className="font-medium text-sm">{request.eaAssignee || "Unassigned"}</div>
-                  </div>
-                </div>
+                  
+                  {request.businessContext && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Business Context</h4>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap bg-secondary/30 p-4 rounded-xl">{request.businessContext}</p>
+                    </div>
+                  )}
 
-                {(request.architectureSpecifications || request.scopeNotes) && (
-                  <div className="border-t border-border/50 pt-6 mt-6">
-                    {request.architectureSpecifications && (
-                      <div className="mb-6">
-                        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Architecture Specifications</h4>
-                        <div className="bg-slate-50 p-4 rounded-xl text-sm font-mono text-slate-800 whitespace-pre-wrap border border-slate-200">
-                          {request.architectureSpecifications}
-                        </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Business Unit</div>
+                      <div className="font-medium text-sm">{request.businessUnit || "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Request Type</div>
+                      <div className="font-medium text-sm">{formatLabel(request.requestType)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Sponsor / Product Owner</div>
+                      <div className="font-medium text-sm">{request.sponsorProductOwner || "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Solution Architect</div>
+                      <div className="font-medium text-sm">{request.solutionArchitect || "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Business Criticality</div>
+                      <div className="font-medium text-sm">{request.businessCriticality ? formatLabel(request.businessCriticality) : "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Cost Estimate</div>
+                      <div className="font-medium text-sm">{request.costEstimate ? formatLabel(request.costEstimate) : "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Deployment Model</div>
+                      <div className="font-medium text-sm">{request.deploymentModel ? formatLabel(request.deploymentModel) : "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Target Go-Live Date</div>
+                      <div className="font-medium text-sm">{request.targetGoLiveDate ? format(new Date(request.targetGoLiveDate), 'PP') : "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Expected User Base</div>
+                      <div className="font-medium text-sm">{request.expectedUserBase || "N/A"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">In-Scope Regions</div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {request.inScopeRegions && request.inScopeRegions.length > 0 ? (
+                          request.inScopeRegions.map((region, i) => (
+                            <Badge key={i} variant="default" className="text-[10px] font-normal px-2 py-0">{region}</Badge>
+                          ))
+                        ) : (
+                          <span className="text-sm font-medium">N/A</span>
+                        )}
                       </div>
-                    )}
-                    {request.scopeNotes && (
-                      <div>
-                        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">EA Scope Notes</h4>
-                        <div className="bg-amber-50 p-4 rounded-xl text-sm text-amber-900 border border-amber-200">
-                          {request.scopeNotes}
-                        </div>
-                      </div>
-                    )}
+                    </div>
                   </div>
-                )}
-              </CardContent>
+
+                  {request.businessValueHypothesis && request.businessValueHypothesis.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Business Value Hypothesis</h4>
+                      <ul className="list-disc list-inside text-sm space-y-1 ml-4 text-foreground">
+                        {request.businessValueHypothesis.map((item, i) => (
+                          <li key={i}>{formatLabel(item)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="pt-6 border-t border-border/40">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                      <Activity className="w-4 h-4" /> Impact Assessment
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Security</span>
+                        <Badge variant={getImpactBadgeVariant(request.securityImpactLevel)}>{request.securityImpactLevel}</Badge>
+                      </div>
+                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Data</span>
+                        <Badge variant={getImpactBadgeVariant(request.dataImpactLevel)}>{request.dataImpactLevel}</Badge>
+                      </div>
+                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Integration</span>
+                        <Badge variant={getImpactBadgeVariant(request.integrationImpactLevel)}>{request.integrationImpactLevel}</Badge>
+                      </div>
+                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Regulatory</span>
+                        <Badge variant={getImpactBadgeVariant(request.regulatoryImpactLevel)}>{request.regulatoryImpactLevel}</Badge>
+                      </div>
+                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between md:col-span-2">
+                        <span className="text-sm font-medium text-muted-foreground">AI</span>
+                        <Badge variant={getImpactBadgeVariant(request.aiImpactLevel)}>{request.aiImpactLevel}</Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                </CardContent>
+              )}
             </Card>
 
             {/* Outcomes Section */}
@@ -235,8 +339,8 @@ export default function RequestDetail() {
             {/* EA Triage Panel */}
             <Card className="border-indigo-100 bg-indigo-50/30">
               <CardHeader className="pb-4">
-                <CardTitle className="text-indigo-900 text-base">EA Workspace</CardTitle>
-                <p className="text-xs text-indigo-700/70 mt-1">Update triage details and status</p>
+                <CardTitle className="text-indigo-900 text-base">EA Triage & Assessment</CardTitle>
+                <p className="text-xs text-indigo-700/70 mt-1">Update triage details, risk ratings, and status</p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleTriageSubmit} className="space-y-4">
@@ -245,13 +349,17 @@ export default function RequestDetail() {
                     <Select 
                       value={triageData.status} 
                       onChange={e => setTriageData({...triageData, status: e.target.value})}
-                      className="border-indigo-200 focus-visible:ring-indigo-200"
+                      className="border-indigo-200 focus-visible:ring-indigo-200 h-9 text-sm"
                     >
                       <option value="submitted">Submitted</option>
                       <option value="ea_triage">EA Triage</option>
                       <option value="specifications_required">Need Specifications</option>
                       <option value="arc_scheduled">Ready for ARC (Scheduled)</option>
                       <option value="arc_review">In ARC Review</option>
+                      <option value="approved">Approved</option>
+                      <option value="approved_with_conditions">Approved (Conditions)</option>
+                      <option value="deferred">Deferred</option>
+                      <option value="rejected">Rejected</option>
                     </Select>
                   </div>
                   <div>
@@ -260,16 +368,117 @@ export default function RequestDetail() {
                       value={triageData.eaAssignee} 
                       onChange={e => setTriageData({...triageData, eaAssignee: e.target.value})}
                       placeholder="e.g. John Architect"
-                      className="border-indigo-200"
+                      className="border-indigo-200 h-9 text-sm"
                     />
                   </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div>
+                      <Label className="text-xs text-indigo-900">Security Risk</Label>
+                      <Select value={triageData.eaSecurityRiskRating} onChange={e => setTriageData({...triageData, eaSecurityRiskRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                        <option value="">-</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-indigo-900">Data Complexity</Label>
+                      <Select value={triageData.eaDataComplexityRating} onChange={e => setTriageData({...triageData, eaDataComplexityRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                        <option value="">-</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-indigo-900">Integration Comp.</Label>
+                      <Select value={triageData.eaIntegrationComplexityRating} onChange={e => setTriageData({...triageData, eaIntegrationComplexityRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                        <option value="">-</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-indigo-900">Regulatory Risk</Label>
+                      <Select value={triageData.eaRegulatoryRiskRating} onChange={e => setTriageData({...triageData, eaRegulatoryRiskRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                        <option value="">-</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-indigo-900">AI Risk</Label>
+                      <Select value={triageData.eaAiRiskRating} onChange={e => setTriageData({...triageData, eaAiRiskRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                        <option value="">-</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-indigo-900">Overall Risk</Label>
+                      <Select value={triageData.eaOverallRiskLevel} onChange={e => setTriageData({...triageData, eaOverallRiskLevel: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                        <option value="">-</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Label className="text-xs text-indigo-900">Review Type</Label>
+                    <Select value={triageData.eaReviewType} onChange={e => setTriageData({...triageData, eaReviewType: e.target.value})} className="border-indigo-200 h-9 text-sm">
+                      <option value="">-- Select Review Type --</option>
+                      <option value="lightweight">Lightweight</option>
+                      <option value="standard">Standard</option>
+                      <option value="deep_dive">Deep Dive</option>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-indigo-900">Required Architecture Views</Label>
+                    <Input 
+                      value={triageData.eaRequiredArchitectureViews} 
+                      onChange={e => setTriageData({...triageData, eaRequiredArchitectureViews: e.target.value})}
+                      placeholder="e.g. C4, Sequence, Data"
+                      className="border-indigo-200 h-9 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-indigo-900">Required SMEs</Label>
+                    <Input 
+                      value={triageData.eaRequiredSmes} 
+                      onChange={e => setTriageData({...triageData, eaRequiredSmes: e.target.value})}
+                      placeholder="e.g. SecOps, Network"
+                      className="border-indigo-200 h-9 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-indigo-900">ARC Schedule Target</Label>
+                    <Input 
+                      value={triageData.eaArcSchedule} 
+                      onChange={e => setTriageData({...triageData, eaArcSchedule: e.target.value})}
+                      placeholder="e.g. Q3 2023, TBD"
+                      className="border-indigo-200 h-9 text-sm"
+                    />
+                  </div>
+
                   <div>
                     <Label className="text-xs text-indigo-900">Scope Notes</Label>
                     <Textarea 
                       value={triageData.scopeNotes} 
                       onChange={e => setTriageData({...triageData, scopeNotes: e.target.value})}
                       placeholder="Add triage notes here..."
-                      className="min-h-[80px] border-indigo-200"
+                      className="min-h-[80px] border-indigo-200 text-sm"
                     />
                   </div>
                   <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={updateMutation.isPending}>

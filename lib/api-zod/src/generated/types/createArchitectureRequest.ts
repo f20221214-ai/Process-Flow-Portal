@@ -5,18 +5,37 @@
  * Architecture Review Process Portal API
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateArchitectureRequestPhase } from "./createArchitectureRequestPhase";
 import type { CreateArchitectureRequestPriority } from "./createArchitectureRequestPriority";
 import type { CreateArchitectureRequestRequestType } from "./createArchitectureRequestRequestType";
 
 export interface CreateArchitectureRequest {
   title: string;
   description: string;
-  requestType: CreateArchitectureRequestRequestType;
-  phase: CreateArchitectureRequestPhase;
-  submittedBy: string;
   businessUnit: string;
+  submittedBy: string;
+  sponsorProductOwner?: string | null;
+  solutionArchitect?: string | null;
+  requestType: CreateArchitectureRequestRequestType;
   priority: CreateArchitectureRequestPriority;
+  businessContext?: string | null;
+  businessValueHypothesis?: string[];
+  businessCapability?: string[];
+  businessCriticality?: string | null;
+  costEstimate?: string | null;
+  inScopeRegions?: string[];
+  expectedUserBase?: string | null;
+  deploymentModel?: string | null;
+  targetGoLiveDate?: string | null;
+  securityImpactLevel?: string;
+  securityImpactDetails?: string | null;
+  dataImpactLevel?: string;
+  dataImpactDetails?: string | null;
+  integrationImpactLevel?: string;
+  integrationImpactDetails?: string | null;
+  regulatoryImpactLevel?: string;
+  regulatoryImpactDetails?: string | null;
+  aiImpactLevel?: string;
+  aiImpactDetails?: string | null;
   architectureSpecifications?: string | null;
   jiraInitiativeId?: number | null;
 }
