@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, FileText, Calendar, ShieldCheck, FileSpreadsheet, Hexagon, Bell, Search, UserCircle, Layers } from "lucide-react";
+import { LayoutDashboard, FileText, Calendar, ShieldCheck, FileSpreadsheet, Hexagon, Bell, Search, UserCircle, Layers, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/requests/new", label: "Submit Request", icon: PlusCircleIcon },
   { href: "/sessions", label: "ARC Sessions", icon: Calendar },
   { href: "/outcomes", label: "Review Outcomes", icon: ShieldCheck },
+  { href: "/kpis", label: "KPI Dashboard", icon: BarChart3 },
 ];
 
 function PlusCircleIcon(props: any) {
