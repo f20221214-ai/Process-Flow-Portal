@@ -51,10 +51,10 @@ const KPI_SEED = [
   { outcomeNumber: 5, outcomeName: "Ensure high-impact architectural decisions are taken at the right level with full transparency of trade-offs and consequences.", kpiCategory: "Decision Governance", kpiName: "Re-Architecture Rate", whatToMeasure: "Re-Architecture Rate", howToMeasure: "Number of major rework efforts due to poor early design decisions", status: "not_started" },
 ];
 
-router.post("/admin/seed-demo", async (req, res) => {
-  const token = req.headers["x-seed-token"];
+router.get("/admin/seed-demo", async (req, res) => {
+  const token = req.query["token"] || req.headers["x-seed-token"];
   if (token !== SEED_TOKEN) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Unauthorized – add ?token=arc-demo-seed-2026 to the URL" });
     return;
   }
 
