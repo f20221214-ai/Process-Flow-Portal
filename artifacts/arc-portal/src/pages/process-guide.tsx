@@ -289,7 +289,7 @@ export default function ProcessGuidePage() {
                 <span className="text-xs bg-white/20 px-3 py-1 rounded-full">5 phases</span>
                 <span className="text-xs bg-white/20 px-3 py-1 rounded-full">3 swim lanes</span>
                 <span className="text-xs bg-white/20 px-3 py-1 rounded-full">3 review tracks</span>
-                <span className="text-xs bg-white/20 px-3 py-1 rounded-full">Typical SLA: 22 business days</span>
+                <span className="text-xs bg-white/20 px-3 py-1 rounded-full">Typical SLA: 1–2 weeks</span>
               </div>
             </div>
           </div>
