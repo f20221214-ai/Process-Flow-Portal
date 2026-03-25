@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Textarea, Select, Label, Badge } from "@/components/ui-primitives";
@@ -6,7 +6,7 @@ import { useCreateRequest } from "@workspace/api-client-react";
 import type { CreateArchitectureRequest } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Layers, Info } from "lucide-react";
+import { ArrowLeft, X, Layers, Info, ChevronDown, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
 
@@ -149,6 +149,114 @@ export default function RequestForm() {
     });
   };
 
+  const InitiativeCombobox = ({ initiatives, jiraId, isLoading, onSelect }: {
+    initiatives?: JiraInitiative[];
+    jiraId: number | null | undefined;
+    isLoading: boolean;
+    onSelect: (initiative: JiraInitiative | null) => void;
+  }) => {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const filtered = initiatives?.filter(i =>
+      `${i.jiraKey} ${i.summary} ${i.projectName}`.toLowerCase().includes(search.toLowerCase())
+    ) ?? [];
+
+    const selected = initiatives?.find(i => i.id === jiraId) ?? null;
+
+    useEffect(() => {
+      const handleClickOutside = (e: MouseEvent) => {
+        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+          setOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+      <div className="relative" ref={containerRef}>
+        <div
+          role="combobox"
+          aria-expanded={open}
+          className="flex items-center border border-border rounded-xl px-3 py-2.5 cursor-pointer bg-background hover:border-primary/50 transition-colors min-h-[42px]"
+          onClick={() => setOpen(!open)}
+        >
+          <div className="flex-1 min-w-0">
+            {selected ? (
+              <div className="flex items-center gap-2">
+                <Badge variant="primary" className="font-mono text-xs bg-blue-100 text-blue-800 border-blue-200 shrink-0">
+                  {selected.jiraKey}
+                </Badge>
+                <span className="text-sm truncate">{selected.summary}</span>
+              </div>
+            ) : (
+              <span className="text-sm text-muted-foreground">
+                {isLoading ? "Loading initiatives…" : "Select a JIRA initiative…"}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 ml-2 shrink-0">
+            {selected && (
+              <button
+                type="button"
+                aria-label="Clear selection"
+                onClick={(e) => { e.stopPropagation(); onSelect(null); setSearch(""); }}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+          </div>
+        </div>
+
+        {open && (
+          <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-xl shadow-lg overflow-hidden">
+            <div className="p-2 border-b border-border">
+              <div className="flex items-center gap-2 px-2">
+                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by key, name, or project…"
+                  className="flex-1 text-sm outline-none bg-transparent py-1"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              {isLoading ? (
+                <div className="p-4 text-sm text-muted-foreground text-center">Loading initiatives…</div>
+              ) : filtered.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground text-center">No initiatives match your search.</div>
+              ) : (
+                filtered.map(init => (
+                  <button
+                    key={init.id}
+                    type="button"
+                    onClick={() => { onSelect(init); setOpen(false); setSearch(""); }}
+                    className={`w-full text-left px-4 py-2.5 hover:bg-secondary transition-colors flex items-start gap-3 ${jiraId === init.id ? "bg-primary/5" : ""}`}
+                  >
+                    <Badge variant="primary" className="font-mono text-xs bg-blue-100 text-blue-800 border-blue-200 shrink-0 mt-0.5">
+                      {init.jiraKey}
+                    </Badge>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{init.summary}</div>
+                      <div className="text-xs text-muted-foreground">{init.projectName} · {init.status}</div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const ImpactRow = ({ area, title, fieldName, guidance }: { area: string, title: string, fieldName: string, guidance: string }) => {
     const levelKey = `${fieldName}ImpactLevel` as keyof CreateArchitectureRequest;
     const detailsKey = `${fieldName}ImpactDetails` as keyof CreateArchitectureRequest;
@@ -285,8 +393,29 @@ export default function RequestForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <Label>Project/Initiative Name</Label>
-                  <p className="text-xs text-muted-foreground mb-1.5">Refer to JIRA list for accuracy.</p>
-                  <Input required name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Migration to AWS Cloud" />
+                  <p className="text-xs text-muted-foreground mb-1.5">Pick from a synced JIRA initiative below, or clear to enter a custom name.</p>
+                  <InitiativeCombobox
+                    initiatives={initiatives}
+                    jiraId={formData.jiraInitiativeId}
+                    isLoading={isLoadingJira}
+                    onSelect={(initiative) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        jiraInitiativeId: initiative?.id ?? null,
+                        title: initiative?.summary ?? ""
+                      }));
+                    }}
+                  />
+                  {!formData.jiraInitiativeId && (
+                    <Input
+                      required
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      placeholder="e.g. Migration to AWS Cloud"
+                      className="mt-2"
+                    />
+                  )}
                 </div>
                 
                 <div className="md:col-span-2">
