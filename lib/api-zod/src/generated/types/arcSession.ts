@@ -11,7 +11,6 @@ export interface ArcSession {
   id: number;
   requestId: number;
   scheduledDate: Date;
-  /** Duration in minutes */
   duration: number;
   status: ArcSessionStatus;
   attendees: string[];

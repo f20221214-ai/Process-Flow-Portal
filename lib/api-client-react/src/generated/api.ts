@@ -23,6 +23,8 @@ import type {
   CreateArchitectureRequest,
   CreateReviewOutcome,
   HealthStatus,
+  JiraInitiative,
+  JiraSyncResult,
   ReviewOutcome,
   UpdateArcSession,
   UpdateArchitectureRequest,
@@ -38,7 +40,6 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const getHealthCheckUrl = () => {
@@ -855,4 +856,160 @@ export const useCreateOutcome = <
   TContext
 > => {
   return useMutation(getCreateOutcomeMutationOptions(options));
+};
+
+/**
+ * @summary List all JIRA initiatives synced from JIRA
+ */
+export const getListJiraInitiativesUrl = () => {
+  return `/api/jira/initiatives`;
+};
+
+export const listJiraInitiatives = async (
+  options?: RequestInit,
+): Promise<JiraInitiative[]> => {
+  return customFetch<JiraInitiative[]>(getListJiraInitiativesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListJiraInitiativesQueryKey = () => {
+  return [`/api/jira/initiatives`] as const;
+};
+
+export const getListJiraInitiativesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listJiraInitiatives>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listJiraInitiatives>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListJiraInitiativesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listJiraInitiatives>>
+  > = ({ signal }) => listJiraInitiatives({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listJiraInitiatives>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListJiraInitiativesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listJiraInitiatives>>
+>;
+export type ListJiraInitiativesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all JIRA initiatives synced from JIRA
+ */
+
+export function useListJiraInitiatives<
+  TData = Awaited<ReturnType<typeof listJiraInitiatives>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listJiraInitiatives>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListJiraInitiativesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Trigger a simulated sync from JIRA
+ */
+export const getSyncJiraInitiativesUrl = () => {
+  return `/api/jira/sync`;
+};
+
+export const syncJiraInitiatives = async (
+  options?: RequestInit,
+): Promise<JiraSyncResult> => {
+  return customFetch<JiraSyncResult>(getSyncJiraInitiativesUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSyncJiraInitiativesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof syncJiraInitiatives>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof syncJiraInitiatives>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["syncJiraInitiatives"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof syncJiraInitiatives>>,
+    void
+  > = () => {
+    return syncJiraInitiatives(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SyncJiraInitiativesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof syncJiraInitiatives>>
+>;
+
+export type SyncJiraInitiativesMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Trigger a simulated sync from JIRA
+ */
+export const useSyncJiraInitiatives = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof syncJiraInitiatives>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof syncJiraInitiatives>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getSyncJiraInitiativesMutationOptions(options));
 };

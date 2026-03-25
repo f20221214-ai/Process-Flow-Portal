@@ -8,7 +8,6 @@
 import * as zod from "zod";
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -47,6 +46,8 @@ export const ListRequestsResponseItem = zod.object({
   eaAssignee: zod.string().nullish(),
   architectureSpecifications: zod.string().nullish(),
   scopeNotes: zod.string().nullish(),
+  jiraInitiativeId: zod.number().nullish(),
+  jiraKey: zod.string().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
 });
@@ -70,6 +71,7 @@ export const CreateRequestBody = zod.object({
   businessUnit: zod.string(),
   priority: zod.enum(["low", "medium", "high", "critical"]),
   architectureSpecifications: zod.string().nullish(),
+  jiraInitiativeId: zod.number().nullish(),
 });
 
 /**
@@ -108,6 +110,8 @@ export const GetRequestResponse = zod.object({
   eaAssignee: zod.string().nullish(),
   architectureSpecifications: zod.string().nullish(),
   scopeNotes: zod.string().nullish(),
+  jiraInitiativeId: zod.number().nullish(),
+  jiraKey: zod.string().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
 });
@@ -137,6 +141,7 @@ export const UpdateRequestBody = zod.object({
   architectureSpecifications: zod.string().nullish(),
   scopeNotes: zod.string().nullish(),
   priority: zod.enum(["low", "medium", "high", "critical"]).optional(),
+  jiraInitiativeId: zod.number().nullish(),
 });
 
 export const UpdateRequestResponse = zod.object({
@@ -168,6 +173,8 @@ export const UpdateRequestResponse = zod.object({
   eaAssignee: zod.string().nullish(),
   architectureSpecifications: zod.string().nullish(),
   scopeNotes: zod.string().nullish(),
+  jiraInitiativeId: zod.number().nullish(),
+  jiraKey: zod.string().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
 });
@@ -179,7 +186,7 @@ export const ListSessionsResponseItem = zod.object({
   id: zod.number(),
   requestId: zod.number(),
   scheduledDate: zod.date(),
-  duration: zod.number().describe("Duration in minutes"),
+  duration: zod.number(),
   status: zod.enum(["scheduled", "in_progress", "completed", "cancelled"]),
   attendees: zod.array(zod.string()),
   notes: zod.string().nullish(),
@@ -217,7 +224,7 @@ export const UpdateSessionResponse = zod.object({
   id: zod.number(),
   requestId: zod.number(),
   scheduledDate: zod.date(),
-  duration: zod.number().describe("Duration in minutes"),
+  duration: zod.number(),
   status: zod.enum(["scheduled", "in_progress", "completed", "cancelled"]),
   attendees: zod.array(zod.string()),
   notes: zod.string().nullish(),
@@ -285,4 +292,37 @@ export const CreateOutcomeBody = zod.object({
   nextSteps: zod.string().nullish(),
   notes: zod.string().nullish(),
   createdBy: zod.string(),
+});
+
+/**
+ * @summary List all JIRA initiatives synced from JIRA
+ */
+export const ListJiraInitiativesResponseItem = zod.object({
+  id: zod.number(),
+  jiraKey: zod.string(),
+  summary: zod.string(),
+  description: zod.string().nullish(),
+  projectKey: zod.string(),
+  projectName: zod.string(),
+  status: zod.string(),
+  priority: zod.string(),
+  assignee: zod.string().nullish(),
+  issueType: zod.string(),
+  labels: zod.array(zod.string()),
+  jiraUrl: zod.string().nullish(),
+  syncedAt: zod.date(),
+  createdAt: zod.date(),
+});
+export const ListJiraInitiativesResponse = zod.array(
+  ListJiraInitiativesResponseItem,
+);
+
+/**
+ * @summary Trigger a simulated sync from JIRA
+ */
+export const SyncJiraInitiativesResponse = zod.object({
+  synced: zod.number(),
+  added: zod.number(),
+  updated: zod.number(),
+  lastSyncedAt: zod.date(),
 });

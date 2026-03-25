@@ -22,6 +22,8 @@ export * from "./createReviewOutcome";
 export * from "./createReviewOutcomeDecision";
 export * from "./createReviewOutcomeOutcomeType";
 export * from "./healthStatus";
+export * from "./jiraInitiative";
+export * from "./jiraSyncResult";
 export * from "./reviewOutcome";
 export * from "./reviewOutcomeDecision";
 export * from "./reviewOutcomeOutcomeType";

@@ -14,4 +14,5 @@ export interface UpdateArchitectureRequest {
   architectureSpecifications?: string | null;
   scopeNotes?: string | null;
   priority?: UpdateArchitectureRequestPriority;
+  jiraInitiativeId?: number | null;
 }

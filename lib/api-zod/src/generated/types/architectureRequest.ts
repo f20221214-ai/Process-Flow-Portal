@@ -23,6 +23,8 @@ export interface ArchitectureRequest {
   eaAssignee?: string | null;
   architectureSpecifications?: string | null;
   scopeNotes?: string | null;
+  jiraInitiativeId?: number | null;
+  jiraKey?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

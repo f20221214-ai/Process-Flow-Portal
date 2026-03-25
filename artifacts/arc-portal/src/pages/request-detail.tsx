@@ -8,7 +8,9 @@ import { useGetRequest, useUpdateRequest, useListSessions, useListOutcomes } fro
 import { format } from "date-fns";
 import { formatLabel } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, User, AlignLeft, ShieldAlert } from "lucide-react";
+import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import type { JiraInitiative } from "@workspace/api-client-react";
 
 export default function RequestDetail() {
   const [, params] = useRoute("/requests/:id");
@@ -19,6 +21,15 @@ export default function RequestDetail() {
   const { data: sessions } = useListSessions();
   const { data: outcomes } = useListOutcomes();
   const updateMutation = useUpdateRequest();
+
+  // Fetch JIRA Initiative if linked
+  const { data: initiatives } = useQuery<JiraInitiative[]>({
+    queryKey: ['/api/jira/initiatives'],
+    queryFn: () => fetch('/api/jira/initiatives').then(res => res.json()),
+    enabled: !!request?.jiraInitiativeId
+  });
+
+  const linkedJira = initiatives?.find(i => i.id === request?.jiraInitiativeId);
 
   // EA Triage Form State
   const [triageData, setTriageData] = useState({
@@ -97,6 +108,44 @@ export default function RequestDetail() {
           
           {/* Main Info Column */}
           <div className="lg:col-span-2 space-y-6">
+
+            {/* Linked JIRA Section */}
+            {(request.jiraKey || request.jiraInitiativeId) && (
+              <Card className="border-indigo-200 bg-gradient-to-r from-indigo-50/50 to-white shadow-sm">
+                <CardHeader className="py-4 bg-transparent border-b-0">
+                  <CardTitle className="text-base text-indigo-900 flex items-center gap-2">
+                    <div className="bg-blue-600 text-white p-1 rounded">
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    Linked JIRA Initiative
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white rounded-xl border border-indigo-100">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="primary" className="font-mono bg-indigo-100 text-indigo-800 border-indigo-200">
+                          {request.jiraKey || linkedJira?.jiraKey}
+                        </Badge>
+                        <span className="font-semibold text-slate-800">{linkedJira?.summary || "Loading..."}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Project: {linkedJira?.projectName || "Unknown"}
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="shrink-0 text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+                      onClick={() => window.open(linkedJira?.jiraUrl || `https://company.atlassian.net/browse/${request.jiraKey || linkedJira?.jiraKey}`, '_blank')}
+                    >
+                      View in JIRA <ExternalLink className="w-3 h-3 ml-2" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><AlignLeft className="w-5 h-5 text-primary"/> Details</CardTitle>

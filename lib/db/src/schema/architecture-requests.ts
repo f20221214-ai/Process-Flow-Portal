@@ -15,6 +15,8 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   eaAssignee: text("ea_assignee"),
   architectureSpecifications: text("architecture_specifications"),
   scopeNotes: text("scope_notes"),
+  jiraInitiativeId: integer("jira_initiative_id"),
+  jiraKey: text("jira_key"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

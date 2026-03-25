@@ -18,4 +18,5 @@ export interface CreateArchitectureRequest {
   businessUnit: string;
   priority: CreateArchitectureRequestPriority;
   architectureSpecifications?: string | null;
+  jiraInitiativeId?: number | null;
 }

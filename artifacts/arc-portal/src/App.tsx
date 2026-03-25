@@ -11,6 +11,7 @@ import RequestForm from "./pages/request-form";
 import RequestDetail from "./pages/request-detail";
 import SessionsPage from "./pages/sessions";
 import OutcomesPage from "./pages/outcomes";
+import JiraInitiatives from "./pages/jira-initiatives";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/requests" component={RequestList} />
       <Route path="/requests/new" component={RequestForm} />
       <Route path="/requests/:id" component={RequestDetail} />
+      <Route path="/jira" component={JiraInitiatives} />
       <Route path="/sessions" component={SessionsPage} />
       <Route path="/outcomes" component={OutcomesPage} />
       <Route component={NotFound} />

@@ -1,8 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { architectureRequestsTable, insertArchitectureRequestSchema } from "@workspace/db";
+import { architectureRequestsTable, insertArchitectureRequestSchema, jiraInitiativesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 
 const router: IRouter = Router();
 
@@ -23,6 +22,16 @@ router.get("/requests", async (req, res) => {
 router.post("/requests", async (req, res) => {
   try {
     const body = req.body;
+
+    let jiraKey: string | null = null;
+    if (body.jiraInitiativeId) {
+      const [initiative] = await db
+        .select()
+        .from(jiraInitiativesTable)
+        .where(eq(jiraInitiativesTable.id, body.jiraInitiativeId));
+      if (initiative) jiraKey = initiative.jiraKey;
+    }
+
     const parsed = insertArchitectureRequestSchema.safeParse({
       title: body.title,
       description: body.description,
@@ -35,6 +44,8 @@ router.post("/requests", async (req, res) => {
       eaAssignee: body.eaAssignee ?? null,
       architectureSpecifications: body.architectureSpecifications ?? null,
       scopeNotes: null,
+      jiraInitiativeId: body.jiraInitiativeId ?? null,
+      jiraKey,
     });
 
     if (!parsed.success) {
@@ -84,6 +95,18 @@ router.patch("/requests/:id", async (req, res) => {
     if (body.architectureSpecifications !== undefined) updateData.architectureSpecifications = body.architectureSpecifications;
     if (body.scopeNotes !== undefined) updateData.scopeNotes = body.scopeNotes;
     if (body.priority !== undefined) updateData.priority = body.priority;
+    if (body.jiraInitiativeId !== undefined) {
+      updateData.jiraInitiativeId = body.jiraInitiativeId;
+      if (body.jiraInitiativeId) {
+        const [initiative] = await db
+          .select()
+          .from(jiraInitiativesTable)
+          .where(eq(jiraInitiativesTable.id, body.jiraInitiativeId));
+        updateData.jiraKey = initiative?.jiraKey ?? null;
+      } else {
+        updateData.jiraKey = null;
+      }
+    }
 
     const [updated] = await db
       .update(architectureRequestsTable)

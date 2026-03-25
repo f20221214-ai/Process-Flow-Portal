@@ -9,6 +9,30 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface JiraInitiative {
+  id: number;
+  jiraKey: string;
+  summary: string;
+  description?: string | null;
+  projectKey: string;
+  projectName: string;
+  status: string;
+  priority: string;
+  assignee?: string | null;
+  issueType: string;
+  labels: string[];
+  jiraUrl?: string | null;
+  syncedAt: string;
+  createdAt: string;
+}
+
+export interface JiraSyncResult {
+  synced: number;
+  added: number;
+  updated: number;
+  lastSyncedAt: string;
+}
+
 export type ArchitectureRequestRequestType =
   (typeof ArchitectureRequestRequestType)[keyof typeof ArchitectureRequestRequestType];
 
@@ -67,6 +91,8 @@ export interface ArchitectureRequest {
   eaAssignee?: string | null;
   architectureSpecifications?: string | null;
   scopeNotes?: string | null;
+  jiraInitiativeId?: number | null;
+  jiraKey?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -110,6 +136,7 @@ export interface CreateArchitectureRequest {
   businessUnit: string;
   priority: CreateArchitectureRequestPriority;
   architectureSpecifications?: string | null;
+  jiraInitiativeId?: number | null;
 }
 
 export type UpdateArchitectureRequestStatus =
@@ -143,6 +170,7 @@ export interface UpdateArchitectureRequest {
   architectureSpecifications?: string | null;
   scopeNotes?: string | null;
   priority?: UpdateArchitectureRequestPriority;
+  jiraInitiativeId?: number | null;
 }
 
 export type ArcSessionStatus =
@@ -159,7 +187,6 @@ export interface ArcSession {
   id: number;
   requestId: number;
   scheduledDate: string;
-  /** Duration in minutes */
   duration: number;
   status: ArcSessionStatus;
   attendees: string[];
