@@ -344,25 +344,50 @@ export default function RequestDetail() {
                     </h4>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">Security</span>
-                        <Badge variant={getImpactBadgeVariant(request.securityImpactLevel)}>{request.securityImpactLevel}</Badge>
+                      <div className="bg-secondary/30 p-4 rounded-xl flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Security</span>
+                          <Badge variant={getImpactBadgeVariant(request.securityImpactLevel)}>{request.securityImpactLevel}</Badge>
+                        </div>
+                        {request.securityImpactDetails && (
+                          <p className="text-sm text-foreground/80">{request.securityImpactDetails}</p>
+                        )}
                       </div>
-                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">Data</span>
-                        <Badge variant={getImpactBadgeVariant(request.dataImpactLevel)}>{request.dataImpactLevel}</Badge>
+                      <div className="bg-secondary/30 p-4 rounded-xl flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Data</span>
+                          <Badge variant={getImpactBadgeVariant(request.dataImpactLevel)}>{request.dataImpactLevel}</Badge>
+                        </div>
+                        {request.dataImpactDetails && (
+                          <p className="text-sm text-foreground/80">{request.dataImpactDetails}</p>
+                        )}
                       </div>
-                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">Integration</span>
-                        <Badge variant={getImpactBadgeVariant(request.integrationImpactLevel)}>{request.integrationImpactLevel}</Badge>
+                      <div className="bg-secondary/30 p-4 rounded-xl flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Integration</span>
+                          <Badge variant={getImpactBadgeVariant(request.integrationImpactLevel)}>{request.integrationImpactLevel}</Badge>
+                        </div>
+                        {request.integrationImpactDetails && (
+                          <p className="text-sm text-foreground/80">{request.integrationImpactDetails}</p>
+                        )}
                       </div>
-                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">Regulatory</span>
-                        <Badge variant={getImpactBadgeVariant(request.regulatoryImpactLevel)}>{request.regulatoryImpactLevel}</Badge>
+                      <div className="bg-secondary/30 p-4 rounded-xl flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Regulatory</span>
+                          <Badge variant={getImpactBadgeVariant(request.regulatoryImpactLevel)}>{request.regulatoryImpactLevel}</Badge>
+                        </div>
+                        {request.regulatoryImpactDetails && (
+                          <p className="text-sm text-foreground/80">{request.regulatoryImpactDetails}</p>
+                        )}
                       </div>
-                      <div className="bg-secondary/30 p-4 rounded-xl flex items-center justify-between md:col-span-2">
-                        <span className="text-sm font-medium text-muted-foreground">AI</span>
-                        <Badge variant={getImpactBadgeVariant(request.aiImpactLevel)}>{request.aiImpactLevel}</Badge>
+                      <div className="bg-secondary/30 p-4 rounded-xl flex flex-col gap-2 md:col-span-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">AI</span>
+                          <Badge variant={getImpactBadgeVariant(request.aiImpactLevel)}>{request.aiImpactLevel}</Badge>
+                        </div>
+                        {request.aiImpactDetails && (
+                          <p className="text-sm text-foreground/80">{request.aiImpactDetails}</p>
+                        )}
                       </div>
                     </div>
                   </div>
