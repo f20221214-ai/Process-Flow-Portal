@@ -78,9 +78,9 @@ function ImpactRow({
           name={detailsKey}
           value={(formData[detailsKey] as string) || ""}
           onChange={handleChange}
-          placeholder={currentLevel === "none" ? "Optional: provide rationale for selecting no impact" : `Elaborate on the ${currentLevel} impact...`}
+          placeholder={currentLevel === "none" ? "Provide rationale for selecting no impact" : `Elaborate on the ${currentLevel} impact...`}
           className="min-h-[80px]"
-          required={currentLevel !== "none"}
+          required
         />
       </div>
     </div>
