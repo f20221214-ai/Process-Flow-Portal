@@ -425,7 +425,17 @@ export default function RequestForm() {
 
                 <div>
                   <Label>Business Unit/Portfolio</Label>
-                  <Input required name="businessUnit" value={formData.businessUnit} onChange={handleChange} placeholder="e.g. Retail Banking" />
+                  <Select required name="businessUnit" value={formData.businessUnit} onChange={handleChange}>
+                    <option value="">Select a business unit...</option>
+                    <option value="Digital Agriculture">Digital Agriculture</option>
+                    <option value="Digital Manufacturing">Digital Manufacturing</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Finance">Finance</option>
+                    <option value="HR">HR</option>
+                    <option value="Legal">Legal</option>
+                    <option value="Sustainability">Sustainability</option>
+                    <option value="Supply Chain">Supply Chain</option>
+                  </Select>
                 </div>
                 
                 <div>
