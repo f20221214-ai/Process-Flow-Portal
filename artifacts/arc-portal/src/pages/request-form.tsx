@@ -296,19 +296,17 @@ export default function RequestForm() {
           </div>
         )}
 
-        {currentLevel !== "none" && (
-          <div className="animate-in fade-in slide-in-from-top-2">
-            <Label className="text-xs mb-2">Please provide details regarding the {title.toLowerCase()}:</Label>
-            <Textarea
-              name={detailsKey}
-              value={(formData[detailsKey] as string) || ""}
-              onChange={handleChange}
-              placeholder={`Elaborate on the ${currentLevel} impact...`}
-              className="min-h-[80px]"
-              required
-            />
-          </div>
-        )}
+        <div>
+          <Label className="text-xs mb-2">Details supporting the impact level selection</Label>
+          <Textarea
+            name={detailsKey}
+            value={(formData[detailsKey] as string) || ""}
+            onChange={handleChange}
+            placeholder={currentLevel === "none" ? "Optional: provide rationale for selecting no impact" : `Elaborate on the ${currentLevel} impact...`}
+            className="min-h-[80px]"
+            required={currentLevel !== "none"}
+          />
+        </div>
       </div>
     );
   };
