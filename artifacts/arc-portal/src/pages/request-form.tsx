@@ -17,6 +17,76 @@ const IMPACT_LEVELS = [
   { value: "high", label: "High" }
 ];
 
+function ImpactRow({
+  area,
+  title,
+  fieldName,
+  guidance,
+  formData,
+  handleChange,
+  setImpactLevel,
+}: {
+  area: string;
+  title: string;
+  fieldName: string;
+  guidance: React.ReactNode;
+  formData: CreateArchitectureRequest;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  setImpactLevel: (area: string, level: string) => void;
+}) {
+  const levelKey = `${fieldName}ImpactLevel` as keyof CreateArchitectureRequest;
+  const detailsKey = `${fieldName}ImpactDetails` as keyof CreateArchitectureRequest;
+  const currentLevel = formData[levelKey] as string;
+  const [showGuidance, setShowGuidance] = useState(false);
+
+  return (
+    <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card/50">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Label className="mb-0 text-base">{title}</Label>
+          <button type="button" onClick={() => setShowGuidance(!showGuidance)} className="text-muted-foreground hover:text-primary transition-colors">
+            <Info className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex gap-2">
+          {IMPACT_LEVELS.map(level => (
+            <button
+              key={level.value}
+              type="button"
+              onClick={() => setImpactLevel(fieldName, level.value)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                currentLevel === level.value
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+              }`}
+            >
+              {level.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {showGuidance && (
+        <div className="bg-primary/5 border border-primary/20 p-3 rounded-xl text-sm text-primary/80 animate-in fade-in slide-in-from-top-2">
+          {guidance}
+        </div>
+      )}
+
+      <div>
+        <Label className="text-xs mb-2">Details supporting the impact level selection</Label>
+        <Textarea
+          name={detailsKey}
+          value={(formData[detailsKey] as string) || ""}
+          onChange={handleChange}
+          placeholder={currentLevel === "none" ? "Optional: provide rationale for selecting no impact" : `Elaborate on the ${currentLevel} impact...`}
+          className="min-h-[80px]"
+          required={currentLevel !== "none"}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function RequestForm() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -253,60 +323,6 @@ export default function RequestForm() {
             </div>
           </div>
         )}
-      </div>
-    );
-  };
-
-  const ImpactRow = ({ area, title, fieldName, guidance }: { area: string, title: string, fieldName: string, guidance: React.ReactNode }) => {
-    const levelKey = `${fieldName}ImpactLevel` as keyof CreateArchitectureRequest;
-    const detailsKey = `${fieldName}ImpactDetails` as keyof CreateArchitectureRequest;
-    const currentLevel = formData[levelKey] as string;
-    const [showGuidance, setShowGuidance] = useState(false);
-
-    return (
-      <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card/50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Label className="mb-0 text-base">{title}</Label>
-            <button type="button" onClick={() => setShowGuidance(!showGuidance)} className="text-muted-foreground hover:text-primary transition-colors">
-              <Info className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex gap-2">
-            {IMPACT_LEVELS.map(level => (
-              <button
-                key={level.value}
-                type="button"
-                onClick={() => setImpactLevel(fieldName, level.value)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  currentLevel === level.value
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                }`}
-              >
-                {level.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {showGuidance && (
-          <div className="bg-primary/5 border border-primary/20 p-3 rounded-xl text-sm text-primary/80 animate-in fade-in slide-in-from-top-2">
-            {guidance}
-          </div>
-        )}
-
-        <div>
-          <Label className="text-xs mb-2">Details supporting the impact level selection</Label>
-          <Textarea
-            name={detailsKey}
-            value={(formData[detailsKey] as string) || ""}
-            onChange={handleChange}
-            placeholder={currentLevel === "none" ? "Optional: provide rationale for selecting no impact" : `Elaborate on the ${currentLevel} impact...`}
-            className="min-h-[80px]"
-            required={currentLevel !== "none"}
-          />
-        </div>
       </div>
     );
   };
@@ -571,6 +587,9 @@ export default function RequestForm() {
                 title="Security Impact" 
                 fieldName="security"
                 guidance={<><span className="font-bold text-red-600">None:</span> Only used inside the company by employees who already have approved login accounts — no sensitive information is involved. <span className="font-bold text-red-600">Low:</span> Used inside the company with standard login controls; only a small number of people outside the business (e.g. a partner team) may have access. <span className="font-bold text-red-600">Medium:</span> Introduces new ways for people to log in or access data, or handles sensitive internal information such as employee records or confidential business data. <span className="font-bold text-red-600">High:</span> Accessible from the internet and handles passwords, payment card details, personal information (e.g. names, addresses, health records), or connects company systems to external networks.</>}
+                formData={formData}
+                handleChange={handleChange}
+                setImpactLevel={setImpactLevel}
               />
 
               <ImpactRow 
@@ -578,6 +597,9 @@ export default function RequestForm() {
                 title="Data Impact" 
                 fieldName="data"
                 guidance={<><span className="font-bold text-red-600">None:</span> Only uses publicly available information — nothing that needs to be kept private or protected. <span className="font-bold text-red-600">Low:</span> Uses everyday internal data (e.g. product lists, operational reports) that is not sensitive and stays within the team. <span className="font-bold text-red-600">Medium:</span> Involves important business data shared across departments, or introduces new ways of analysing data that could affect decisions company-wide. <span className="font-bold text-red-600">High:</span> Handles personal information (e.g. customer names, addresses, health details), financial records, or data that must be kept in specific countries due to local laws.</>}
+                formData={formData}
+                handleChange={handleChange}
+                setImpactLevel={setImpactLevel}
               />
 
               <ImpactRow 
@@ -585,6 +607,9 @@ export default function RequestForm() {
                 title="Integration Impact" 
                 fieldName="integration"
                 guidance={<><span className="font-bold text-red-600">None:</span> This change does not connect to any other system — it works completely on its own. <span className="font-bold text-red-600">Low:</span> Connects to one or two existing internal systems using well-established, already-approved methods (e.g. a standard data feed or report). <span className="font-bold text-red-600">Medium:</span> Connects to several internal systems, or uses live data feeds where information is exchanged the moment something happens rather than in a scheduled batch. <span className="font-bold text-red-600">High:</span> Connects to systems outside the company (e.g. supplier portals, customer platforms, government services) or introduces a brand-new way of linking systems together.</>}
+                formData={formData}
+                handleChange={handleChange}
+                setImpactLevel={setImpactLevel}
               />
 
               <ImpactRow 
@@ -592,6 +617,9 @@ export default function RequestForm() {
                 title="Regulatory Impact" 
                 fieldName="regulatory"
                 guidance={<><span className="font-bold text-red-600">None:</span> No rules, laws, or audit requirements apply to this change — it has no compliance obligations. <span className="font-bold text-red-600">Low:</span> Must follow internal company policies or guidelines, but there are no external legal or regulatory requirements to meet. <span className="font-bold text-red-600">Medium:</span> Needs to meet external audit standards, financial reporting rules, or industry certification requirements (e.g. quality management, financial controls). <span className="font-bold text-red-600">High:</span> Involves legal obligations related to personal data privacy, food safety, health and safety, financial services regulations, or other laws where non-compliance could result in fines or legal action.</>}
+                formData={formData}
+                handleChange={handleChange}
+                setImpactLevel={setImpactLevel}
               />
 
               <ImpactRow 
@@ -599,6 +627,9 @@ export default function RequestForm() {
                 title="AI Impact" 
                 fieldName="ai"
                 guidance={<><span className="font-bold text-red-600">None:</span> Does not use any artificial intelligence, machine learning, or AI-powered features whatsoever. <span className="font-bold text-red-600">Low:</span> Uses a ready-made AI feature that a software vendor has built in (e.g. a smart search or auto-complete toggle); a person always reviews and approves the AI's suggestions before anything happens. <span className="font-bold text-red-600">Medium:</span> Uses AI to route tasks, prioritise work, or make recommendations that influence how the business operates; may use company data to improve the AI's responses. <span className="font-bold text-red-600">High:</span> Uses AI to make or heavily influence decisions with real consequences for customers, employees, or finances (e.g. loan approvals, medical recommendations, automated customer communications) — especially in areas that could be subject to regulation or legal challenge.</>}
+                formData={formData}
+                handleChange={handleChange}
+                setImpactLevel={setImpactLevel}
               />
             </CardContent>
           </Card>
