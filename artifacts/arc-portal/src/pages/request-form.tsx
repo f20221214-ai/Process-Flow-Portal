@@ -570,35 +570,35 @@ export default function RequestForm() {
                 area="Security" 
                 title="Security Impact" 
                 fieldName="security"
-                guidance="None=internal use only, approved auth, no sensitive data; Low=standard enterprise identity, limited external; Medium=new external interfaces, sensitive internal data, new access patterns; High=internet-facing, PII/financial data, OT/IT boundary"
+                guidance="None: Only used inside the company by employees who already have approved login accounts — no sensitive information is involved. Low: Used inside the company with standard login controls; only a small number of people outside the business (e.g. a partner team) may have access. Medium: Introduces new ways for people to log in or access data, or handles sensitive internal information such as employee records or confidential business data. High: Accessible from the internet and handles passwords, payment card details, personal information (e.g. names, addresses, health records), or connects company systems to external networks."
               />
 
               <ImpactRow 
                 area="Data" 
                 title="Data Impact" 
                 fieldName="data"
-                guidance="None=only public data, no systems of record; Low=internal operational data, limited reporting; Medium=business-critical cross-domain data, new analytics; High=personal/regulated data, financial reporting, cross-border movement"
+                guidance="None: Only uses publicly available information — nothing that needs to be kept private or protected. Low: Uses everyday internal data (e.g. product lists, operational reports) that is not sensitive and stays within the team. Medium: Involves important business data shared across departments, or introduces new ways of analysing data that could affect decisions company-wide. High: Handles personal information (e.g. customer names, addresses, health details), financial records, or data that must be kept in specific countries due to local laws."
               />
 
               <ImpactRow 
                 area="Integration" 
                 title="Integration Impact" 
                 fieldName="integration"
-                guidance="None=no integrations; Low=2-3 systems, standard patterns; Medium=multiple systems, real-time/event-driven; High=external partner integrations, new middleware"
+                guidance="None: This change does not connect to any other system — it works completely on its own. Low: Connects to one or two existing internal systems using well-established, already-approved methods (e.g. a standard data feed or report). Medium: Connects to several internal systems, or uses live data feeds where information is exchanged the moment something happens rather than in a scheduled batch. High: Connects to systems outside the company (e.g. supplier portals, customer platforms, government services) or introduces a brand-new way of linking systems together."
               />
 
               <ImpactRow 
                 area="Regulatory" 
                 title="Regulatory Impact" 
                 fieldName="regulatory"
-                guidance="None=no compliance implications; Low=internal policy only; Medium=ISO/SOX/audit compliance; High=legal/safety/GDPR/food safety regulations"
+                guidance="None: No rules, laws, or audit requirements apply to this change — it has no compliance obligations. Low: Must follow internal company policies or guidelines, but there are no external legal or regulatory requirements to meet. Medium: Needs to meet external audit standards, financial reporting rules, or industry certification requirements (e.g. quality management, financial controls). High: Involves legal obligations related to personal data privacy, food safety, health and safety, financial services regulations, or other laws where non-compliance could result in fines or legal action."
               />
 
               <ImpactRow 
                 area="AI" 
                 title="AI Impact" 
                 fieldName="ai"
-                guidance="None=no ML/GenAI/LLM or AI APIs; Low=prebuilt SaaS toggle, human-in-loop; Medium=workflow routing, fine-tuned models, sensitive data; High=decisions with legal/financial implications, regulated domains, customer-facing AI"
+                guidance="None: Does not use any artificial intelligence, machine learning, or AI-powered features whatsoever. Low: Uses a ready-made AI feature that a software vendor has built in (e.g. a smart search or auto-complete toggle); a person always reviews and approves the AI's suggestions before anything happens. Medium: Uses AI to route tasks, prioritise work, or make recommendations that influence how the business operates; may use company data to improve the AI's responses. High: Uses AI to make or heavily influence decisions with real consequences for customers, employees, or finances (e.g. loan approvals, medical recommendations, automated customer communications) — especially in areas that could be subject to regulation or legal challenge."
               />
             </CardContent>
           </Card>
