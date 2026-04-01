@@ -150,6 +150,7 @@ export default function RequestDetail() {
       { id, data: triageData as any },
       {
         onSuccess: () => {
+          setRatingWasAutoCalc(false);
           toast({ title: "Updated", description: "Request has been updated successfully." });
           refetch();
         },
@@ -445,11 +446,11 @@ export default function RequestDetail() {
                       <Label className="text-xs text-indigo-900 font-semibold">Risk & Complexity Ratings</Label>
                       {ratingWasAutoCalc ? (
                         <span className="flex items-center gap-1 text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                          <Sparkles className="w-3 h-3" /> auto-calculated baseline
+                          <Sparkles className="w-3 h-3" /> Auto-Triaged
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                          EA reviewed
+                          EA Reviewed
                         </span>
                       )}
                     </div>
@@ -463,7 +464,7 @@ export default function RequestDetail() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs text-indigo-900">Security Risk</Label>
-                      <Select value={triageData.eaSecurityRiskRating} onChange={e => { setTriageData({...triageData, eaSecurityRiskRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaSecurityRiskRating} onChange={e => setTriageData({...triageData, eaSecurityRiskRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -473,7 +474,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">Data Complexity</Label>
-                      <Select value={triageData.eaDataComplexityRating} onChange={e => { setTriageData({...triageData, eaDataComplexityRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaDataComplexityRating} onChange={e => setTriageData({...triageData, eaDataComplexityRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -483,7 +484,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">Integration Comp.</Label>
-                      <Select value={triageData.eaIntegrationComplexityRating} onChange={e => { setTriageData({...triageData, eaIntegrationComplexityRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaIntegrationComplexityRating} onChange={e => setTriageData({...triageData, eaIntegrationComplexityRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -492,7 +493,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">Regulatory Risk</Label>
-                      <Select value={triageData.eaRegulatoryRiskRating} onChange={e => { setTriageData({...triageData, eaRegulatoryRiskRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaRegulatoryRiskRating} onChange={e => setTriageData({...triageData, eaRegulatoryRiskRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -501,7 +502,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">AI Risk</Label>
-                      <Select value={triageData.eaAiRiskRating} onChange={e => { setTriageData({...triageData, eaAiRiskRating: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaAiRiskRating} onChange={e => setTriageData({...triageData, eaAiRiskRating: e.target.value})} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -510,7 +511,7 @@ export default function RequestDetail() {
                     </div>
                     <div>
                       <Label className="text-xs text-indigo-900">Overall Risk</Label>
-                      <Select value={triageData.eaOverallRiskLevel} onChange={e => { setTriageData({...triageData, eaOverallRiskLevel: e.target.value}); setRatingWasAutoCalc(false); }} className="border-indigo-200 h-9 text-sm">
+                      <Select value={triageData.eaOverallRiskLevel} onChange={e => setTriageData({...triageData, eaOverallRiskLevel: e.target.value})} className="border-indigo-200 h-9 text-sm">
                         <option value="">-</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -524,7 +525,7 @@ export default function RequestDetail() {
                     <Label className="text-xs text-indigo-900">Review Type</Label>
                     <Select
                       value={triageData.eaReviewType}
-                      onChange={e => { setTriageData({...triageData, eaReviewType: e.target.value}); setRatingWasAutoCalc(false); }}
+                      onChange={e => setTriageData({...triageData, eaReviewType: e.target.value})}
                       className="border-indigo-200 h-9 text-sm"
                     >
                       <option value="">-- Select Review Type --</option>
@@ -538,7 +539,7 @@ export default function RequestDetail() {
                     <Label className="text-xs text-indigo-900">Required Architecture Views</Label>
                     <Input
                       value={triageData.eaRequiredArchitectureViews}
-                      onChange={e => { setTriageData({...triageData, eaRequiredArchitectureViews: e.target.value}); setRatingWasAutoCalc(false); }}
+                      onChange={e => setTriageData({...triageData, eaRequiredArchitectureViews: e.target.value})}
                       placeholder="e.g. Solution Architecture, Security Architecture"
                       className="border-indigo-200 h-9 text-sm"
                     />
@@ -548,7 +549,7 @@ export default function RequestDetail() {
                     <Label className="text-xs text-indigo-900">Required SMEs</Label>
                     <Input
                       value={triageData.eaRequiredSmes}
-                      onChange={e => { setTriageData({...triageData, eaRequiredSmes: e.target.value}); setRatingWasAutoCalc(false); }}
+                      onChange={e => setTriageData({...triageData, eaRequiredSmes: e.target.value})}
                       placeholder="e.g. Security Architect, Data Architect"
                       className="border-indigo-200 h-9 text-sm"
                     />
