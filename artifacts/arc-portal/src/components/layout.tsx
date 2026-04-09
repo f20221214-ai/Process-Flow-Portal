@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/requests", label: "All Requests", icon: FileText },
-  { href: "/knowledge-base", label: "Knowledge Base", icon: BookOpen },
+  { href: "/knowledge-base", label: "Architecture Patterns", icon: BookOpen },
   { href: "/jira", label: "JIRA Initiatives", icon: Layers },
   { href: "/sessions", label: "ARC Sessions", icon: Calendar },
   { href: "/outcomes", label: "Review Outcomes", icon: ShieldCheck },

@@ -1,11 +1,402 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { jiraInitiativesTable, architectureRequestsTable, kpiMetricsTable } from "@workspace/db";
+import { jiraInitiativesTable, architectureRequestsTable, kpiMetricsTable, knowledgeBaseArticlesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
 const SEED_TOKEN = "arc-demo-seed-2026";
+
+const PATTERNS_SEED = [
+  {
+    title: "Enterprise API Gateway Pattern",
+    category: "pattern",
+    owner: "Platform Architecture Team",
+    status: "published",
+    technologies: ["Kong Gateway", "AWS API Gateway", "Azure API Management", "MuleSoft"],
+    tags: ["api", "gateway", "security", "integration", "enterprise"],
+    externalUrl: null,
+    content: `## Overview
+The Enterprise API Gateway pattern provides a single, managed entry point for all north-south API traffic. The gateway handles cross-cutting concerns — authentication, authorisation, rate limiting, TLS termination, logging, and routing — so that individual microservices do not need to implement these themselves.
+
+## When to Use
+- Exposing internal services to external consumers (partners, mobile apps, public APIs)
+- Enforcing consistent security policy across multiple backend services
+- Requiring traffic analytics, throttling, or monetisation of API calls
+- Migrating from monolith to microservices (strangler fig pattern)
+
+## Architecture
+\`\`\`
+Client → [WAF] → API Gateway → [Auth / Rate Limit / Transform] → Backend Services
+                                       ↓
+                               Identity Provider (OAuth 2.0 / OIDC)
+\`\`\`
+
+## Key Components
+1. **WAF (Web Application Firewall)**: Cloudflare or AWS WAF in front of the gateway for L7 threat protection
+2. **API Gateway**: Kong (self-managed) or AWS API Gateway / Azure APIM (managed)
+3. **Identity Provider**: Enterprise IdP (Okta / Azure Entra ID) for OAuth 2.0 token validation
+4. **Developer Portal**: Self-service onboarding for internal and external API consumers
+5. **Observability**: Centralised logging to Datadog/Splunk; metrics to Prometheus/Grafana
+
+## Enterprise Standards
+- All APIs must be registered in the API Catalogue before gateway publishing
+- OAuth 2.0 with PKCE mandatory for all external-facing APIs
+- Rate limiting default: 1,000 req/min per consumer key; exceptions require EA approval
+- mTLS required for all service-to-service (east-west) calls where available
+
+## Common Pitfalls
+- Using the gateway for east-west (service mesh) traffic — use a service mesh (Istio/Linkerd) instead
+- Storing business logic in gateway transformation policies — keep transformations thin
+- Single-region gateway deployment without active-active failover for HA requirements
+
+## Approved Products (2025)
+| Use Case | Approved Product |
+|---|---|
+| Cloud-managed (AWS) | AWS API Gateway v2 |
+| Cloud-managed (Azure) | Azure API Management |
+| Self-managed on-prem | Kong Gateway Enterprise |
+| Integration Platform | MuleSoft Anypoint Platform |`,
+  },
+  {
+    title: "Event-Driven Architecture with Apache Kafka",
+    category: "reference_architecture",
+    owner: "Integration Architecture CoE",
+    status: "published",
+    technologies: ["Apache Kafka", "AWS MSK", "Azure Event Hubs", "Confluent Platform", "Schema Registry"],
+    tags: ["events", "streaming", "async", "integration", "kafka", "pub-sub"],
+    externalUrl: null,
+    content: `## Overview
+Event-Driven Architecture (EDA) decouples producers and consumers via an immutable, ordered event log. Apache Kafka (or managed equivalents) is the enterprise-approved backbone for high-throughput, durable event streaming.
+
+## When to Use
+- Decoupling services that would otherwise be synchronously coupled via REST/SOAP
+- High-throughput data pipelines (>10,000 events/second)
+- Audit-trail and event-sourcing requirements
+- Cross-domain data replication (e.g. operational data store → analytics platform)
+- Replacing point-to-point MQ integrations with fan-out publish/subscribe
+
+## When NOT to Use
+- Request/response interactions requiring immediate responses — use REST/gRPC
+- Small-scale integrations with <100 events/day — overhead is not justified
+- Simple file transfer — use SFTP or object storage events
+
+## Reference Architecture
+\`\`\`
+Producers (Services / Databases / Sensors)
+       ↓
+[Schema Registry] ← validate schema
+       ↓
+Apache Kafka / Confluent Platform
+  - Topic per domain entity (e.g. orders.v1, inventory.v1)
+  - Retention: 7 days default, 30 days for audit domains
+       ↓
+Consumers (Microservices / Analytics / Data Warehouse)
+       ↓
+[Dead Letter Queue] → alerting on poison messages
+\`\`\`
+
+## Kafka Topic Naming Convention
+\`<domain>.<entity>.<version>\`
+Examples: \`finance.invoices.v1\`, \`manufacturing.production-orders.v2\`
+
+## Enterprise Standards
+- **Schema Registry is mandatory**: All topics must use Avro or Protobuf with a registered schema. Breaking schema changes are prohibited without a new topic version.
+- **Managed Kafka preferred**: AWS MSK or Azure Event Hubs preferred over self-managed Kafka clusters unless workload requires Kafka-specific features.
+- **Exactly-once semantics**: Enable idempotent producers and transactional consumers for financial and operational domains.
+- **Multi-AZ deployment required** for all production topics.
+- **Consumer lag alerting**: Alert at >10,000 messages lag for critical consumers.
+
+## Data Sovereignty Considerations
+For EU workloads, Kafka brokers must reside in EU regions. Cross-region replication (MirrorMaker 2) must not replicate topics containing personal data unless GDPR transfer mechanisms are in place.`,
+  },
+  {
+    title: "OT/IT Security DMZ Pattern",
+    category: "pattern",
+    owner: "Cyber Security Architecture",
+    status: "published",
+    technologies: ["OPC-UA", "Palo Alto NGFW", "Cisco ISE", "Fortinet FortiGate", "MQTT", "OSIsoft PI"],
+    tags: ["security", "ot-it", "manufacturing", "scada", "dmz", "industrial"],
+    externalUrl: null,
+    content: `## Overview
+The OT/IT Security DMZ pattern establishes a secure, auditable bridge between Operational Technology (OT) networks (PLCs, SCADA, DCS) and Information Technology (IT) networks (ERP, cloud platforms). This pattern is mandatory for any architecture crossing the OT/IT boundary.
+
+## Security Classification
+**CRITICAL**: This pattern is a security-mandated standard. Deviations require written approval from the CISO and Enterprise Architecture.
+
+## Architecture
+\`\`\`
+[OT Network - Level 3]          [DMZ - Isolated Segment]         [IT Network]
+  SCADA / PLCs                    OPC-UA Proxy Server               SAP ERP
+  Historians (PI)    ←→ OPC-UA →  (Protocol Break)   ← REST/MQTT → MES Platform
+  DCS Systems                     Data Diode (optional)             Corporate Data
+  (Purdue Model L0-L2)            NGFW (Palo Alto)                  Platform
+\`\`\`
+
+## Mandatory Controls
+1. **Physical/Logical Isolation**: OT and IT networks must be on separate VLANs with no direct routing. All traffic must pass through the DMZ.
+2. **Protocol Break**: A dedicated proxy (e.g., Kepware, Inductive Automation Ignition Gateway) must translate OT protocols (OPC-UA, Modbus, EtherNet/IP) to IT-friendly protocols (REST, MQTT, OPC-UA over TLS). No native OT protocols may traverse the DMZ.
+3. **Next-Generation Firewall**: Palo Alto NGFW (primary) or Fortinet FortiGate with IDS/IPS, application-aware policies, and OT protocol signatures enabled.
+4. **Data Diode (where required)**: Unidirectional gateway (e.g., Waterfall Security) for unidirectional flows from OT to IT where data must never flow IT→OT.
+5. **Jump Server / PAM**: All OT network access from IT must traverse a privileged access management (PAM) jump server with session recording. No direct RDP/VNC to OT assets from IT.
+6. **Network Traffic Monitoring**: OT-aware IDS (Claroty, Dragos, or Nozomi) deployed in passive monitoring mode on the OT network.
+
+## Approved Integration Protocols
+| Layer | Approved | Prohibited |
+|---|---|---|
+| OT side | OPC-UA, Modbus TCP, EtherNet/IP | HTTP, MQTT (native) |
+| DMZ bridge | OPC-UA Proxy → REST/MQTT | Direct protocol pass-through |
+| IT side | REST over HTTPS, MQTT over TLS, AMQP | Unencrypted protocols |
+
+## ARC Requirements
+Any new OT/IT integration must complete an ARC Deep Dive review. Security Architecture and the OT/IT Security SME must attend. Architecture exception process applies for any deviation from this pattern.`,
+  },
+  {
+    title: "Cloud Landing Zone – ANZ Multi-Account Foundation",
+    category: "reference_architecture",
+    owner: "Cloud Platform Engineering",
+    status: "published",
+    technologies: ["AWS Control Tower", "AWS Organizations", "Azure Management Groups", "Terraform", "AWS Config", "Azure Policy"],
+    tags: ["cloud", "landing-zone", "aws", "azure", "governance", "iac", "foundation"],
+    externalUrl: null,
+    content: `## Overview
+The Cloud Landing Zone (CLZ) defines the pre-approved, security-hardened account/subscription structure and guardrails that all new cloud workloads must deploy into. The CLZ eliminates bespoke cloud account setup and ensures consistent compliance, network topology, and identity federation from day one.
+
+## Scope
+- **ANZ Region**: AWS (ap-southeast-2 primary, ap-southeast-4 DR) and Azure (Australia East primary, Australia Southeast DR)
+- **Platform Owner**: Cloud Platform Engineering (CPE)
+- **Mandatory for**: All new cloud-hosted workloads classified business-valuable or above
+
+## Account Structure (AWS)
+\`\`\`
+Root (Management Account)
+├── Security OU
+│   ├── Log Archive Account (read-only, immutable CloudTrail / Config)
+│   └── Security Tooling Account (GuardDuty, Security Hub master)
+├── Infrastructure OU
+│   ├── Network Account (Transit Gateway, Direct Connect, DNS)
+│   └── Shared Services Account (Active Directory, Artifactory, monitoring)
+├── Workloads OU
+│   ├── Production OU → prod-<workload> accounts
+│   ├── Non-Production OU → dev/test/staging-<workload> accounts
+│   └── Sandbox OU → ephemeral developer accounts (auto-terminate 30 days)
+└── Suspended OU (decommissioned accounts)
+\`\`\`
+
+## Guardrails (Always-On)
+- MFA required for all IAM user console access (SCPs enforced)
+- No public S3 buckets (SCP + AWS Config rule)
+- CloudTrail enabled and log archive account only (cannot be disabled)
+- AWS Config rules: mandatory tagging, encryption at rest, VPC flow logs
+- No root account API keys (preventive SCP)
+
+## Networking
+- All workload VPCs connect to the Network Account via Transit Gateway (no VPC peering)
+- Internet egress centralised through the Network Account (no workload-level IGWs for production)
+- DNS: Route 53 Resolver with centralised private hosted zones
+- Direct Connect: 2 × 1Gbps to ANZ on-prem datacentres (primary + failover)
+
+## How to Request a New Account
+Submit an ARR (Architecture Review Request) via the ARC Portal with the Cloud Account Request form. CPE will provision the account into the CLZ within 5 business days of ARC approval.`,
+  },
+  {
+    title: "Data Mesh Architecture",
+    category: "reference_architecture",
+    owner: "Data Architecture Team",
+    status: "published",
+    technologies: ["Databricks", "dbt", "Apache Iceberg", "AWS Glue", "Apache Kafka", "AWS Lake Formation"],
+    tags: ["data", "mesh", "governance", "platform", "analytics", "domain-driven"],
+    externalUrl: null,
+    content: `## Overview
+The Data Mesh pattern distributes data ownership to domain teams while providing centralised data platform infrastructure and governance. Each domain becomes the "data product owner" for datasets they produce, exposing them via standardised, discoverable interfaces.
+
+## Core Principles (after Zhamak Dehghani)
+1. **Domain-oriented data ownership**: Domains own their data products end-to-end (ingest, model, publish, SLA)
+2. **Data as a product**: Each dataset is a product with an owner, SLO, documentation, and a contract
+3. **Self-serve data platform**: CPE provides infrastructure primitives (compute, storage, cataloguing); domains self-serve
+4. **Federated computational governance**: Central governance policies (PII tagging, retention, access) are enforced by the platform; domains operate within them
+
+## Reference Architecture
+\`\`\`
+Domain Teams (Producers)
+  Manufacturing → [dbt + Databricks] → Iceberg tables → Data Catalogue (Unity Catalog)
+  Finance       → [dbt + Databricks] → Iceberg tables → Data Catalogue
+  Marketing     → [Kafka + Glue]     → Iceberg tables → Data Catalogue
+                                               ↓
+                                    [AWS Lake Formation - access control]
+                                               ↓
+Consumer Teams (Analytics / ML / Reporting)
+\`\`\`
+
+## Data Product Contract (Mandatory Fields)
+Each data product must define:
+- **Owner**: Domain team and named data product owner
+- **SLO**: Freshness SLA, completeness target, availability target
+- **Schema**: Registered in Unity Catalog with column-level documentation
+- **PII Classification**: Fields tagged via the enterprise data classification standard
+- **Retention**: Aligned to the enterprise data retention schedule
+- **Access Policy**: Row/column security implemented via Lake Formation
+
+## Governance Rules
+- PII data products require GDPR/Privacy Act impact assessment before publishing
+- Cross-domain data joins must be documented as a data product dependency
+- Breaking schema changes require a 30-day deprecation notice and a new major version
+
+## Anti-Patterns to Avoid
+- Central "data team" building all pipelines (reverts to data warehouse monolith)
+- Domain teams bypassing the data catalogue (shadow data)
+- Data products with no named owner (orphaned datasets)`,
+  },
+  {
+    title: "Zero-Trust Network Architecture",
+    category: "best_practice",
+    owner: "Cyber Security Architecture",
+    status: "published",
+    technologies: ["Azure Entra ID", "Zscaler ZIA/ZPA", "Cloudflare Access", "Okta", "CrowdStrike", "Palo Alto Prisma"],
+    tags: ["security", "zero-trust", "iam", "network", "identity", "ztna"],
+    externalUrl: null,
+    content: `## Overview
+Zero-Trust Architecture (ZTA) replaces perimeter-based security with identity-centric, context-aware access controls. The principle is "never trust, always verify" — no implicit trust is granted based on network location.
+
+## Why This Matters
+Traditional VPN-based remote access creates a flat, implicitly trusted internal network once a user connects. A single compromised endpoint can move laterally across the entire network. ZTA eliminates this by enforcing per-session, per-resource authorisation decisions.
+
+## Five Pillars of Zero Trust (NIST SP 800-207)
+1. **Identity**: Strong multi-factor authentication (MFA) for all users and service accounts. Continuous identity verification, not just at login.
+2. **Device**: Device health evaluated before access is granted (CrowdStrike Falcon sensor status, patch level, encryption state).
+3. **Network**: Micro-segmentation; no implicit east-west trust. Application-layer inspection for all traffic.
+4. **Application**: Applications published via identity-aware proxy (Zscaler ZPA / Cloudflare Access), not exposed to the internet directly.
+5. **Data**: Data classified and access granted based on classification, not role alone. DLP controls for sensitive data exfiltration prevention.
+
+## Enterprise Implementation Standards
+
+### Identity & Access
+- **MFA mandatory** for all staff (Microsoft Entra ID Conditional Access + phishing-resistant MFA preferred)
+- Privileged accounts: Entra ID PIM with just-in-time (JIT) access — no standing admin access
+- Service accounts: Managed Identities (Azure) or IAM Roles (AWS) preferred over static credentials
+
+### Remote Access (replacing VPN)
+- **Zscaler ZPA** is the approved ZTNA solution for enterprise application access
+- Legacy VPN permitted only for OT/industrial access (see OT/IT DMZ Pattern)
+- Device posture check required before ZPA access (CrowdStrike agent + patch compliance)
+
+### Network Segmentation
+- Production environments: All east-west traffic blocked by default; allow-listing per application flow
+- Cloud environments: Security Groups / NSGs with least-privilege allow rules only
+- Servers must not have public IPs (use load balancers + private link)
+
+## Compliance Mapping
+| Framework | Zero-Trust Requirement |
+|---|---|
+| ISO 27001:2022 | A.8.3 Information access restriction |
+| NIST CSF 2.0 | PR.AA (Access Control), PR.IR (Isolation) |
+| ACSC Essential 8 | Multi-factor Authentication (MFA) maturity level |
+| PCI DSS v4.0 | Requirement 1 (network security), Requirement 8 (identity) |`,
+  },
+  {
+    title: "Peppol E-Invoicing Integration Pattern",
+    category: "pattern",
+    owner: "Finance Technology Architecture",
+    status: "published",
+    technologies: ["Peppol BIS 3.0", "SAP S/4HANA", "MuleSoft Anypoint", "Azure Service Bus", "AS4 Messaging"],
+    tags: ["e-invoicing", "peppol", "regulatory", "finance", "edi", "ato", "compliance"],
+    externalUrl: null,
+    content: `## Overview
+The Peppol E-Invoicing pattern describes the approved architecture for compliant electronic invoice exchange over the Peppol network. It covers ANZ (ATO mandate) and EU (EN 16931) requirements and is the reference design for all projects implementing e-invoicing capability.
+
+## Regulatory Context
+- **Australia (ATO)**: Peppol BIS Billing 3.0 mandatory for B2B transactions with registered trading partners. Peppol Access Point (AP) accreditation required.
+- **European Union**: EN 16931 standard (UBL 2.1 or CII D16B syntax). Receiving e-invoices mandatory for public sector suppliers in most EU member states.
+- **Compliance deadline**: Check ATO and relevant EU authority mandates for current obligations.
+
+## Architecture
+\`\`\`
+[SAP S/4HANA FI]
+      ↓ iDoc / BAPI (via MuleSoft)
+[Enterprise Integration Platform (MuleSoft)]
+      ↓ Transform to UBL 2.1 / Peppol BIS 3.0
+[Peppol Access Point (Certified AP Provider)]
+      ↓ AS4 over Peppol network
+[Trading Partner's AP]
+      ↓
+[Trading Partner ERP]
+\`\`\`
+
+## Approved AP Providers (Shortlist)
+| Provider | Region | SAP Certified | Notes |
+|---|---|---|---|
+| Tickstar (Pagero) | ANZ, EU | Yes | Recommended — native SAP connector |
+| Ecosio | EU | Yes | Strong EU mandate coverage |
+| Ariba Network | Global | Yes | For SAP-to-SAP trading partners |
+
+## Integration Standards
+1. **SAP Integration**: MuleSoft Anypoint Platform is the mandatory middleware. Native RFC/BAPI calls from SAP to MuleSoft. SOAP/RFC direct-to-AP is prohibited (conflicts with API-first standard).
+2. **Message Format**: UBL 2.1 for ANZ and EU. No proprietary formats.
+3. **Validation**: Schema validation and Schematron rules applied at MuleSoft layer before submission to AP.
+4. **Error Handling**: Failed invoices must not silently drop — route to Azure Service Bus DLQ with alerting.
+5. **Audit Trail**: All invoice events (sent, acknowledged, rejected) must be logged to the enterprise audit store with 7-year retention.
+
+## Data Sovereignty
+- ANZ invoice data: must remain in ap-southeast-2 (AWS Sydney) or Australia East (Azure)
+- EU invoice data: must remain within EU boundary — do not replicate to ANZ infrastructure
+- PII in invoice fields (ABN, IBAN, address): classified HIGH; GDPR/Privacy Act controls apply
+
+## GDPR vs. Tax Retention Conflict
+GDPR Art. 17 (right to erasure) conflicts with ATO/EU tax retention obligations (typically 7 years). Resolution: tax document retention obligation overrides erasure requests for invoice data. Legal must be consulted before any erasure of invoice records. Document this as a privacy exception in the system's DPIA.`,
+  },
+  {
+    title: "ML Model Lifecycle Management",
+    category: "best_practice",
+    owner: "AI/ML Architecture CoE",
+    status: "published",
+    technologies: ["MLflow", "AWS SageMaker", "Azure Machine Learning", "Databricks MLflow", "Feature Store", "Evidently AI"],
+    tags: ["ai", "ml", "mlops", "governance", "model-management", "responsible-ai"],
+    externalUrl: null,
+    content: `## Overview
+This pattern defines the approved MLOps lifecycle for machine learning models from experiment to production, covering governance gates, monitoring, and responsible AI controls required for enterprise deployment.
+
+## Why This Matters
+ML models degrade over time (data drift, concept drift). Without structured lifecycle management, models in production can silently produce biased, inaccurate, or non-compliant outputs. This pattern provides guardrails to detect and respond to model degradation before it causes business harm.
+
+## ML Model Risk Tiers
+| Tier | Criteria | Governance Required |
+|---|---|---|
+| Tier 1 – Critical | Output influences financial decisions, HR decisions, or regulatory filings | ARC Deep Dive + Ethics Review + CISO sign-off |
+| Tier 2 – High | Customer-facing personalisation, credit, pricing | ARC Standard Review + Model Card + Bias Assessment |
+| Tier 3 – Operational | Internal tooling, operational optimisation | ARC Light Review + Model Card |
+| Tier 4 – Experimental | PoC / R&D (not in production) | No ARC required; register in AI Inventory |
+
+## Lifecycle Stages
+
+### 1. Experiment & Development
+- All experiments tracked in MLflow (Databricks-managed instance preferred)
+- Training data must be documented: source, vintage, applied transformations
+- Bias and fairness evaluation required before proceeding to review
+
+### 2. Model Review (ARC Gate)
+- **Model Card mandatory**: Documents model purpose, performance metrics, limitations, fairness evaluation, intended use, and out-of-scope uses
+- **AI Risk Register entry**: All Tier 1–3 models logged in the enterprise AI risk register
+- **Explainability**: SHAP or LIME feature importance required for Tier 1–2 models
+
+### 3. Deployment
+- Approved serving infrastructure: AWS SageMaker Endpoints, Azure ML Online Endpoints, or Databricks Model Serving
+- A/B testing or shadow mode deployment recommended before full cutover
+- Feature Store integration required for models sharing features across pipelines
+
+### 4. Monitoring & Retraining
+- **Data drift**: Evidently AI or SageMaker Model Monitor — alert at >15% PSI drift
+- **Prediction drift**: Monitor output distribution weekly
+- **Performance degradation**: Automated retraining trigger when accuracy drops below defined threshold
+- **Retraining cadence**: Monthly minimum for Tier 1–2 models
+
+## Responsible AI Requirements
+- Bias evaluation: Required for any model processing protected attributes (gender, age, ethnicity, disability)
+- Explainability: Users affected by a model decision have the right to an explanation (GDPR Art. 22)
+- Human-in-the-loop: All Tier 1 decisions must have a human review step; models cannot be the sole decision-maker
+- Opt-out mechanism: Customers must be able to opt out of automated decision-making`,
+  },
+];
+
 
 const JIRA_SEED = [
   { jiraKey: "DAG-101", summary: "Digital Agriculture Platform", description: "End-to-end IoT-enabled platform for smart farming: sensor telemetry ingestion, agronomic analytics, and mobile advisory services for growers.", projectKey: "DAG", projectName: "Digital Agriculture", status: "In Progress", priority: "High", assignee: "sarah.chen@company.com", issueType: "Epic", labels: '["IoT","Cloud","Analytics"]', jiraUrl: "https://jira.company.com/browse/DAG-101" },
@@ -314,6 +705,20 @@ Required attendees: James Walker (PM), Deepak Sharma (SA), Angela Ross (Sponsor)
       results.kpiMetrics = KPI_SEED.length;
     } else {
       results.kpiMetrics = 0;
+    }
+
+    // 6. Seed Architecture Patterns if empty
+    const existingPatterns = await db.select().from(knowledgeBaseArticlesTable).limit(1);
+    if (existingPatterns.length === 0) {
+      const patternsToInsert = PATTERNS_SEED.map(p => ({
+        ...p,
+        tags: JSON.stringify(p.tags),
+        technologies: JSON.stringify(p.technologies),
+      }));
+      await db.insert(knowledgeBaseArticlesTable).values(patternsToInsert as any);
+      results.architecturePatterns = PATTERNS_SEED.length;
+    } else {
+      results.architecturePatterns = 0;
     }
 
     res.json({ success: true, seeded: results, message: "Demo data seeded successfully." });

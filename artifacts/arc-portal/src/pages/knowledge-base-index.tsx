@@ -53,12 +53,12 @@ export default function KnowledgeBaseIndex() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold">Knowledge Base</h1>
-            <p className="text-muted-foreground mt-1">Patterns, reference architectures, and best practices.</p>
+            <h1 className="text-3xl font-display font-bold">Architecture Patterns</h1>
+            <p className="text-muted-foreground mt-1">Approved patterns, reference architectures, and best practices.</p>
           </div>
           <Link href="/knowledge-base/new">
             <Button className="flex items-center gap-2">
-              <Plus className="w-4 h-4" /> New Article
+              <Plus className="w-4 h-4" /> New Pattern
             </Button>
           </Link>
         </div>
@@ -111,13 +111,13 @@ export default function KnowledgeBaseIndex() {
             <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
               <BookOpen className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-bold">No articles found</h3>
+            <h3 className="text-lg font-bold">No patterns found</h3>
             <p className="text-muted-foreground mt-1">
-              {articles.length === 0 ? "Create the first knowledge base article." : "Try adjusting your search or filters."}
+              {articles.length === 0 ? "Create the first architecture pattern." : "Try adjusting your search or filters."}
             </p>
             {articles.length === 0 && (
               <Link href="/knowledge-base/new">
-                <Button className="mt-4">Create Article</Button>
+                <Button className="mt-4">Create Pattern</Button>
               </Link>
             )}
           </Card>

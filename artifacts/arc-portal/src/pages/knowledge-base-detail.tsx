@@ -50,7 +50,7 @@ export default function KnowledgeBaseDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/knowledge-base"] });
-      toast({ title: "Deleted", description: "Article has been deleted." });
+      toast({ title: "Deleted", description: "Pattern has been deleted." });
       navigate("/knowledge-base");
     },
     onError: () => {
@@ -59,7 +59,7 @@ export default function KnowledgeBaseDetail() {
   });
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this article?")) {
+    if (confirm("Are you sure you want to delete this pattern?")) {
       deleteMutation.mutate();
     }
   };
@@ -80,10 +80,10 @@ export default function KnowledgeBaseDetail() {
       <Layout>
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <BookOpen className="w-16 h-16 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-bold mb-2">Article not found</h2>
-          <p className="text-muted-foreground mb-6">This article may have been deleted or does not exist.</p>
+          <h2 className="text-xl font-bold mb-2">Pattern not found</h2>
+          <p className="text-muted-foreground mb-6">This pattern may have been deleted or does not exist.</p>
           <Link href="/knowledge-base">
-            <Button>Back to Knowledge Base</Button>
+            <Button>Back to Architecture Patterns</Button>
           </Link>
         </div>
       </Layout>
@@ -100,7 +100,7 @@ export default function KnowledgeBaseDetail() {
         <div className="flex items-center justify-between gap-4">
           <Link href="/knowledge-base">
             <Button variant="ghost" size="sm" className="flex items-center gap-2 text-muted-foreground">
-              <ArrowLeft className="w-4 h-4" /> Back to Knowledge Base
+              <ArrowLeft className="w-4 h-4" /> Back to Architecture Patterns
             </Button>
           </Link>
           <div className="flex gap-2">

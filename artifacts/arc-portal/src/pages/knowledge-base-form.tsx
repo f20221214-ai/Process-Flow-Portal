@@ -177,12 +177,12 @@ export default function KnowledgeBaseForm() {
               <ArrowLeft className="w-4 h-4" /> Back
             </Button>
           </Link>
-          <h1 className="text-2xl font-display font-bold">{isEdit ? "Edit Article" : "New Article"}</h1>
+          <h1 className="text-2xl font-display font-bold">{isEdit ? "Edit Pattern" : "New Pattern"}</h1>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Article Details</CardTitle>
+            <CardTitle>Pattern Details</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -315,7 +315,7 @@ export default function KnowledgeBaseForm() {
                 </Link>
                 <Button type="submit" disabled={isPending} className="flex items-center gap-2">
                   <Save className="w-4 h-4" />
-                  {isPending ? "Saving..." : isEdit ? "Save Changes" : "Create Article"}
+                  {isPending ? "Saving..." : isEdit ? "Save Changes" : "Create Pattern"}
                 </Button>
               </div>
             </form>
