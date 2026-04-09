@@ -5,12 +5,16 @@ const router = Router();
 
 type ImpactLevel = "none" | "low" | "medium" | "high";
 
+interface AreaAnswers {
+  q1: string; q2: string; q3: string; q4: string; q5: string; remarks: string;
+}
+
 interface ImpactAnswers {
-  security: { q1: string; q2: string; q3: string };
-  data: { q1: string; q2: string; q3: string };
-  integration: { q1: string; q2: string; q3: string };
-  regulatory: { q1: string; q2: string; q3: string };
-  ai: { q1: string; q2: string; q3: string };
+  security: AreaAnswers;
+  data: AreaAnswers;
+  integration: AreaAnswers;
+  regulatory: AreaAnswers;
+  ai: AreaAnswers;
 }
 
 interface AnalysisResult {
@@ -28,28 +32,85 @@ interface AnalysisResult {
 
 const SYSTEM_PROMPT = `You are an Enterprise Architecture analyst helping to assess architecture review requests for a large enterprise.
 
-Given answers to scoping questions for a technology initiative, you must assess the impact level for each of five categories and provide a brief rationale for each.
+Given answers to scoping questions for a technology initiative, you must assess the impact level for each of five categories and provide a concise rationale for each.
 
 Impact Level Definitions:
-- SECURITY: none=internal only, standard login, no sensitive data; low=internal, some partner access, standard controls; medium=new auth methods or sensitive internal data (employee records, confidential business data); high=internet-accessible OR handles PII/passwords/payment/health data OR connects to external networks
-- DATA: none=publicly available info only; low=everyday non-sensitive internal data; medium=cross-department business data or new analytics; high=PII/financial records/data with residency requirements
-- INTEGRATION: none=no connections to other systems; low=1-2 existing internal systems, standard methods; medium=several systems or real-time feeds; high=external party connections (suppliers/customers/government) or new integration methods
-- REGULATORY: none=no compliance obligations; low=internal policies only; medium=external audits, financial reporting, certifications; high=legal obligations (privacy laws, food safety, financial regulations) with legal consequences for non-compliance
-- AI: none=no AI/ML; low=vendor built-in AI feature, human always reviews; medium=AI for routing/recommendations influencing operations; high=AI making/influencing high-consequence decisions (financial approvals, medical, legal, regulated)
+- SECURITY: none=internal only, standard login, no sensitive data, not internet-facing; low=internal with limited partner access, standard controls; medium=new auth methods OR sensitive internal data (employee records, confidential data) OR limited external exposure; high=internet-accessible OR handles PII/passwords/payment/health data OR connects to external networks OR external security audit required
+- DATA: none=publicly available info only; low=everyday non-sensitive internal data, short retention; medium=cross-department data, moderate volume/retention, or third-party sharing under agreement; high=PII/financial/health records OR data residency requirements OR sharing with government/public entities
+- INTEGRATION: none=no connections to other systems; low=1–2 internal systems, standard approved methods; medium=several systems or real-time feeds or minor legacy involvement; high=external party connections (suppliers/customers/government) OR new integration methods OR critical business-stopping failure risk OR significant legacy complexity
+- REGULATORY: none=no compliance obligations; low=internal policies only; medium=external audits, financial reporting, certifications, multiple countries with similar rules; high=government legislation (privacy laws, food safety, financial regulations) with legal/financial consequences OR multiple jurisdictions with differing requirements OR no existing compliance capability
+- AI: none=no AI/ML; low=vendor built-in feature, human always reviews, minimal consequence if wrong; medium=AI informing operations with some oversight, uses internal data; high=AI making/influencing high-consequence decisions OR customer PII used for training OR black-box with no explainability OR severe consequence if AI errors
+
+Use ALL answers and additional remarks to derive the most accurate level. When answers conflict, weight the highest-risk answer.
 
 You MUST respond with valid JSON only — no markdown, no explanation outside the JSON. Use this exact structure:
 {
   "securityImpactLevel": "none|low|medium|high",
-  "securityImpactDetails": "1-2 sentence rationale",
+  "securityImpactDetails": "2-3 sentence rationale referencing specific answers",
   "dataImpactLevel": "none|low|medium|high",
-  "dataImpactDetails": "1-2 sentence rationale",
+  "dataImpactDetails": "2-3 sentence rationale referencing specific answers",
   "integrationImpactLevel": "none|low|medium|high",
-  "integrationImpactDetails": "1-2 sentence rationale",
+  "integrationImpactDetails": "2-3 sentence rationale referencing specific answers",
   "regulatoryImpactLevel": "none|low|medium|high",
-  "regulatoryImpactDetails": "1-2 sentence rationale",
+  "regulatoryImpactDetails": "2-3 sentence rationale referencing specific answers",
   "aiImpactLevel": "none|low|medium|high",
-  "aiImpactDetails": "1-2 sentence rationale"
+  "aiImpactDetails": "2-3 sentence rationale referencing specific answers"
 }`;
+
+const SECURITY_QUESTIONS = [
+  "Who will use this system?",
+  "Will it store or handle sensitive data (passwords, PII, health records, payment data)?",
+  "Does it introduce new login methods or connect company systems to external networks?",
+  "Will the system be accessible from the internet (public-facing)?",
+  "Does this system require security testing or certification before go-live?"
+];
+
+const DATA_QUESTIONS = [
+  "What type of data will this system store or process?",
+  "Will it handle personal information (PII), financial records, or data with residency requirements?",
+  "Will data be shared or analysed across multiple departments?",
+  "What is the expected data volume and how long must it be retained?",
+  "Will data be shared with or accessible by third parties (vendors, partners, government)?"
+];
+
+const INTEGRATION_QUESTIONS = [
+  "How many systems will this connect to, and are any external to the company?",
+  "How will data move between systems?",
+  "Does this introduce new or non-standard integration methods?",
+  "What happens to the business if an integration connection fails?",
+  "Do any of the systems being integrated involve older or legacy technology?"
+];
+
+const REGULATORY_QUESTIONS = [
+  "Which laws, regulations, or standards must this system comply with?",
+  "Will this affect financial reporting, audits, or require certifications?",
+  "What would happen if the system were non-compliant?",
+  "Does this initiative operate across multiple countries with different regulatory requirements?",
+  "How established is the organisation's current compliance capability in this area?"
+];
+
+const AI_QUESTIONS = [
+  "Will this system use any artificial intelligence or machine learning?",
+  "How are AI-generated outputs used?",
+  "How serious would the consequences be if the AI made an error?",
+  "Will the AI system use or be trained on company or customer data?",
+  "Is the AI's decision-making process explainable and auditable?"
+];
+
+function buildSection(label: string, questions: string[], answers: AreaAnswers): string {
+  const qKeys: (keyof AreaAnswers)[] = ["q1", "q2", "q3", "q4", "q5"];
+  const lines = [`${label} QUESTIONS:`];
+  qKeys.forEach((k, i) => {
+    lines.push(`Q${i + 1}: ${questions[i]}`);
+    lines.push(`A: ${answers[k] || "Not answered"}`);
+    lines.push("");
+  });
+  if (answers.remarks?.trim()) {
+    lines.push(`Additional remarks: ${answers.remarks}`);
+    lines.push("");
+  }
+  return lines.join("\n");
+}
 
 router.post("/impact-assessment/analyze", async (req, res) => {
   try {
@@ -63,64 +124,20 @@ router.post("/impact-assessment/analyze", async (req, res) => {
       return res.status(400).json({ error: "answers is required" });
     }
 
-    const userPrompt = `
-Initiative: ${requestTitle || "Unnamed initiative"}
-Description: ${requestDescription || "No description provided"}
-
-SECURITY QUESTIONS:
-Q: Will this system be accessible from the internet, or only used internally by employees?
-A: ${answers.security?.q1 || "Not answered"}
-
-Q: Will it store or process sensitive information such as passwords, personal details (names, addresses, health records), or payment data?
-A: ${answers.security?.q2 || "Not answered"}
-
-Q: Does it introduce any new ways to log in, or connect company systems to external networks or partners?
-A: ${answers.security?.q3 || "Not answered"}
-
-DATA QUESTIONS:
-Q: What type of data will this system store or process? (e.g. public info, internal business data, employee records, customer details, financial records)
-A: ${answers.data?.q1 || "Not answered"}
-
-Q: Will it handle personal information (PII) such as names, addresses, health data, or financial records?
-A: ${answers.data?.q2 || "Not answered"}
-
-Q: Does any data need to stay within a specific country or region (data residency requirements)?
-A: ${answers.data?.q3 || "Not answered"}
-
-INTEGRATION QUESTIONS:
-Q: How many other systems will this connect to, and are any of them external to the company (e.g. suppliers, customers, government portals)?
-A: ${answers.integration?.q1 || "Not answered"}
-
-Q: Will it use real-time or event-driven data feeds rather than scheduled batch transfers?
-A: ${answers.integration?.q2 || "Not answered"}
-
-Q: Does it introduce any brand-new or non-standard methods for linking systems together?
-A: ${answers.integration?.q3 || "Not answered"}
-
-REGULATORY QUESTIONS:
-Q: Are there specific laws, industry regulations, or standards this system must comply with? (e.g. Australian Privacy Act, GDPR, food safety, financial regulations)
-A: ${answers.regulatory?.q1 || "Not answered"}
-
-Q: Will it affect financial reporting, external audits, or require compliance certifications?
-A: ${answers.regulatory?.q2 || "Not answered"}
-
-Q: If this system failed to comply, would the consequence be an internal policy issue, or could it result in fines, legal action, or regulatory sanction?
-A: ${answers.regulatory?.q3 || "Not answered"}
-
-AI/ML QUESTIONS:
-Q: Will this system use any artificial intelligence or machine learning features?
-A: ${answers.ai?.q1 || "Not answered"}
-
-Q: If yes — will the AI make or influence decisions that affect customers, employees, or finances? Can a human review and override those decisions?
-A: ${answers.ai?.q2 || "Not answered"}
-
-Q: How serious would the consequences be if the AI made an error? (e.g. minor inconvenience vs. financial losses, medical harm, regulatory breach)
-A: ${answers.ai?.q3 || "Not answered"}
-`.trim();
+    const userPrompt = [
+      `Initiative: ${requestTitle || "Unnamed initiative"}`,
+      `Description: ${requestDescription || "No description provided"}`,
+      "",
+      buildSection("SECURITY", SECURITY_QUESTIONS, answers.security),
+      buildSection("DATA", DATA_QUESTIONS, answers.data),
+      buildSection("INTEGRATION", INTEGRATION_QUESTIONS, answers.integration),
+      buildSection("REGULATORY", REGULATORY_QUESTIONS, answers.regulatory),
+      buildSection("AI/ML", AI_QUESTIONS, answers.ai),
+    ].join("\n");
 
     const response = await openai.chat.completions.create({
       model: "gpt-5-mini",
-      max_completion_tokens: 1024,
+      max_completion_tokens: 1500,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userPrompt }

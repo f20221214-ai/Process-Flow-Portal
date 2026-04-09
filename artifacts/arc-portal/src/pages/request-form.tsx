@@ -6,7 +6,7 @@ import { useCreateRequest } from "@workspace/api-client-react";
 import type { CreateArchitectureRequest } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Layers, ChevronDown, Search, Sparkles, Shield, Database, GitBranch, Scale, Bot, CheckCircle2, AlertCircle, ChevronRight, RotateCcw } from "lucide-react";
+import { ArrowLeft, X, Layers, ChevronDown, Search, Sparkles, Shield, Database, GitBranch, Scale, Bot, CheckCircle2, AlertCircle, ChevronRight, RotateCcw, MessageSquare } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
 
@@ -24,6 +24,8 @@ const IMPACT_COLORS: Record<string, string> = {
   high: "bg-red-100 text-red-700 border-red-200"
 };
 
+const UNSELECTED = "";
+
 const IMPACT_AREA_CONFIG = [
   {
     key: "security",
@@ -33,9 +35,51 @@ const IMPACT_AREA_CONFIG = [
     bgColor: "bg-blue-50",
     borderColor: "border-blue-100",
     questions: [
-      "Who will use this system — only internal employees via corporate login, or also people outside the company (partners, customers, public)?",
-      "Will it store or handle sensitive data such as passwords, personal details (names, addresses, health records), or payment card information?",
-      "Does it create any new way to log in or access company systems, or connect corporate systems to external networks?"
+      {
+        question: "Who will use this system?",
+        options: [
+          "Internal employees only (via existing corporate login)",
+          "Internal employees + small number of external partners (controlled access)",
+          "Customers or members of the public (internet-accessible)",
+          "Mixed internal and broad external user base"
+        ]
+      },
+      {
+        question: "Will it store or handle sensitive data (passwords, PII, health records, payment card data)?",
+        options: [
+          "No — public or non-sensitive information only",
+          "Internal business data only (no PII or financial data)",
+          "Sensitive internal data (e.g. employee records, confidential documents)",
+          "Highly sensitive data (PII, payment cards, health records, passwords)"
+        ]
+      },
+      {
+        question: "Does it introduce new login methods or connect company systems to external networks?",
+        options: [
+          "No new authentication methods or external connections",
+          "Minor change to existing access or login approach",
+          "New authentication method or identity provider",
+          "New connection to external network or third-party system"
+        ]
+      },
+      {
+        question: "Will the system be accessible from the internet (public-facing)?",
+        options: [
+          "No — internal corporate network only",
+          "Limited — accessible to specific external parties via VPN or whitelist",
+          "Partially internet-accessible (some public endpoints)",
+          "Fully public-facing application"
+        ]
+      },
+      {
+        question: "Does this system require security testing or certification before go-live?",
+        options: [
+          "No security testing or certification required",
+          "Internal security review only",
+          "Penetration testing or vulnerability assessment required",
+          "External security audit or compliance certification (e.g. ISO 27001, SOC 2)"
+        ]
+      }
     ]
   },
   {
@@ -46,9 +90,51 @@ const IMPACT_AREA_CONFIG = [
     bgColor: "bg-purple-50",
     borderColor: "border-purple-100",
     questions: [
-      "What kind of information will this system store or process? (e.g. public product info, internal reports, employee records, customer personal details, financial records)",
-      "Will it handle personal information (PII), financial records, or data that must legally remain within a specific country or region?",
-      "Will it combine or analyse data across multiple business departments or introduce new data analytics capabilities?"
+      {
+        question: "What type of data will this system store or process?",
+        options: [
+          "Publicly available information only",
+          "Non-sensitive internal operational data (e.g. product lists, reports)",
+          "Sensitive internal data (e.g. employee records, confidential business data)",
+          "Customer PII, financial records, or regulated health data"
+        ]
+      },
+      {
+        question: "Will it handle personal information (PII), financial records, or data with legal residency requirements?",
+        options: [
+          "No — no PII, financial data, or residency obligations",
+          "Some internal staff data only",
+          "Customer or supplier personal data",
+          "Regulated financial data, health records, or strict data residency requirements"
+        ]
+      },
+      {
+        question: "Will data be shared or analysed across multiple business departments?",
+        options: [
+          "No cross-department data sharing",
+          "Limited sharing within one business unit",
+          "Cross-department data integration or reporting",
+          "Enterprise-wide analytics platform or major new data capability"
+        ]
+      },
+      {
+        question: "What is the expected data volume and how long must data be retained?",
+        options: [
+          "Small volume, short-term retention (less than 1 year)",
+          "Moderate volume, standard retention (1–5 years)",
+          "Large volume or long-term retention (5+ years)",
+          "Very large volume with regulatory retention requirements"
+        ]
+      },
+      {
+        question: "Will data be shared with or accessible by third parties (vendors, partners, government)?",
+        options: [
+          "No third-party data sharing",
+          "Shared with approved internal teams only",
+          "Shared with trusted external partners under data-sharing agreement",
+          "Shared with or accessible by government or public entities"
+        ]
+      }
     ]
   },
   {
@@ -59,9 +145,51 @@ const IMPACT_AREA_CONFIG = [
     bgColor: "bg-orange-50",
     borderColor: "border-orange-100",
     questions: [
-      "Will this system connect to other systems? If so, how many, and are any external to the company (e.g. supplier portals, customer platforms, government services)?",
-      "Will data flow between systems in real-time as events happen, or only in scheduled batches?",
-      "Does it introduce any new or non-standard methods for linking systems together that are not already in use at the company?"
+      {
+        question: "How many systems will this connect to, and are any external to the company?",
+        options: [
+          "None — the system operates completely independently",
+          "1–2 internal systems only, using existing approved methods",
+          "3–5 internal systems, or one external connection",
+          "Multiple systems including external parties (suppliers, customers, or government)"
+        ]
+      },
+      {
+        question: "How will data move between systems?",
+        options: [
+          "No data movement between systems",
+          "Scheduled batch transfers only (e.g. nightly file drops)",
+          "Near real-time or event-triggered data flows",
+          "Fully real-time, high-frequency event streaming"
+        ]
+      },
+      {
+        question: "Does this introduce new or non-standard integration methods?",
+        options: [
+          "No — uses existing approved integration patterns only",
+          "Minor variation on existing patterns",
+          "New approach but based on industry standards",
+          "Entirely new or bespoke integration method"
+        ]
+      },
+      {
+        question: "What happens to the business if an integration connection fails?",
+        options: [
+          "No impact — the system works independently",
+          "Minor inconvenience — users can retry or wait",
+          "Significant delay to business operations",
+          "Critical business process stops immediately"
+        ]
+      },
+      {
+        question: "Do any of the systems being integrated involve older or legacy technology?",
+        options: [
+          "All systems are modern or cloud-based",
+          "Mostly modern, with one or two legacy components",
+          "Significant legacy system involvement",
+          "Primarily legacy systems requiring special technical handling"
+        ]
+      }
     ]
   },
   {
@@ -72,9 +200,51 @@ const IMPACT_AREA_CONFIG = [
     bgColor: "bg-teal-50",
     borderColor: "border-teal-100",
     questions: [
-      "Does this system need to comply with any laws, government regulations, or industry standards? (e.g. Australian Privacy Act, GDPR, food safety laws, financial regulations, Peppol e-invoicing)",
-      "Will it affect financial reporting, external audits, or require specific certifications or regulatory approvals?",
-      "If this system were non-compliant, would the consequences be limited to internal policy issues, or could there be fines, legal action, or government sanctions?"
+      {
+        question: "Which laws, regulations, or industry standards must this system comply with?",
+        options: [
+          "None — no regulatory obligations apply",
+          "Internal company policies and guidelines only",
+          "Industry standards or certifications (e.g. ISO, SOC 2, quality management)",
+          "Government legislation (e.g. Privacy Act, GDPR, food safety laws, financial regulations)"
+        ]
+      },
+      {
+        question: "Will this affect financial reporting, external audits, or require compliance certifications?",
+        options: [
+          "No financial reporting or audit impact",
+          "Affects internal financial tracking or management reporting only",
+          "Affects external audit or regulatory reporting",
+          "Requires regulatory certification or formal approval before go-live"
+        ]
+      },
+      {
+        question: "What would happen if the system were non-compliant?",
+        options: [
+          "Internal policy issue — handled through normal governance",
+          "Reputational or contractual risk with partners",
+          "Financial penalties or regulatory fines are possible",
+          "Legal action, government sanctions, or inability to operate the business"
+        ]
+      },
+      {
+        question: "Does this initiative operate across multiple countries with different regulatory requirements?",
+        options: [
+          "Single country, single jurisdiction",
+          "Multiple regions within one country",
+          "Multiple countries with broadly similar regulations",
+          "Multiple countries with significantly different regulatory requirements"
+        ]
+      },
+      {
+        question: "How established is the organisation's current compliance capability in this area?",
+        options: [
+          "Well established — controls, processes, and expertise already in place",
+          "Partially established — some gaps exist but foundation is there",
+          "Limited — significant capability uplift needed",
+          "Not established — starting from scratch with no existing capability"
+        ]
+      }
     ]
   },
   {
@@ -85,50 +255,122 @@ const IMPACT_AREA_CONFIG = [
     bgColor: "bg-indigo-50",
     borderColor: "border-indigo-100",
     questions: [
-      "Will this system use any artificial intelligence or machine learning features? (e.g. predictions, recommendations, automation, generative AI)",
-      "If yes — will AI-generated outputs be automatically acted on, or does a human always review and approve before anything happens?",
-      "How serious would the consequences be if the AI made an error? (e.g. minor inconvenience vs. financial losses, medical harm, legal exposure, or regulatory breach)"
+      {
+        question: "Will this system use any artificial intelligence or machine learning?",
+        options: [
+          "No AI or ML features whatsoever",
+          "Vendor-provided AI feature (e.g. smart search, autocomplete) — off the shelf",
+          "Custom ML models, generative AI, or AI-driven recommendations",
+          "AI is the core function — the system primarily operates through AI/ML"
+        ]
+      },
+      {
+        question: "How are AI-generated outputs used?",
+        options: [
+          "Not applicable — no AI",
+          "AI outputs are informational only; humans always decide and approve",
+          "AI outputs inform automated processes but significant human oversight exists",
+          "AI outputs trigger automated actions with limited or no human review"
+        ]
+      },
+      {
+        question: "How serious would the consequences be if the AI made an error?",
+        options: [
+          "Minimal — minor inconvenience with easy correction",
+          "Moderate — operational disruption or efficiency loss",
+          "Significant — financial loss, reputational damage, or customer harm",
+          "Severe — legal liability, health/safety risk, or regulatory breach"
+        ]
+      },
+      {
+        question: "Will the AI system use or be trained on company or customer data?",
+        options: [
+          "No — no company or customer data is used",
+          "Uses anonymised or aggregated internal data only",
+          "Uses identifiable internal business data",
+          "Uses customer PII or sensitive regulated data for training or inference"
+        ]
+      },
+      {
+        question: "Is the AI's decision-making process explainable and auditable?",
+        options: [
+          "Not applicable — no AI",
+          "Yes — full audit trail and explainability is built in",
+          "Partial — some logging exists but explainability is limited",
+          "No — black-box model with no explainability or audit mechanism"
+        ]
+      }
     ]
   }
 ];
 
 type ImpactLevel = "none" | "low" | "medium" | "high";
-type ImpactAnswers = {
-  [area: string]: { q1: string; q2: string; q3: string };
-};
+type AreaAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string; remarks: string };
+type ImpactAnswers = { [area: string]: AreaAnswers };
+
+const EMPTY_AREA: AreaAnswers = { q1: UNSELECTED, q2: UNSELECTED, q3: UNSELECTED, q4: UNSELECTED, q5: UNSELECTED, remarks: "" };
 
 function ImpactQuestionCard({
   area,
   answers,
-  onChange
+  onAnswer,
+  onRemarks
 }: {
   area: typeof IMPACT_AREA_CONFIG[0];
-  answers: { q1: string; q2: string; q3: string };
-  onChange: (q: "q1" | "q2" | "q3", value: string) => void;
+  answers: AreaAnswers;
+  onAnswer: (q: "q1" | "q2" | "q3" | "q4" | "q5", value: string) => void;
+  onRemarks: (value: string) => void;
 }) {
   const Icon = area.icon;
+  const qKeys: ("q1" | "q2" | "q3" | "q4" | "q5")[] = ["q1", "q2", "q3", "q4", "q5"];
+
   return (
-    <div className={`border rounded-xl p-5 space-y-4 ${area.borderColor} ${area.bgColor}/30`}>
-      <div className="flex items-center gap-2">
+    <div className={`border rounded-xl overflow-hidden ${area.borderColor}`}>
+      <div className={`flex items-center gap-2.5 px-5 py-3.5 ${area.bgColor}/40 border-b ${area.borderColor}`}>
         <div className={`p-1.5 rounded-lg ${area.bgColor}`}>
           <Icon className={`w-4 h-4 ${area.color}`} />
         </div>
         <span className="font-semibold text-sm">{area.title} Impact</span>
+        <span className="text-xs text-muted-foreground ml-auto">
+          {qKeys.filter(k => answers[k]).length}/{qKeys.length} answered
+        </span>
       </div>
-      <div className="space-y-3">
-        {(["q1", "q2", "q3"] as const).map((qKey, i) => (
+
+      <div className="p-5 space-y-4">
+        {qKeys.map((qKey, i) => (
           <div key={qKey}>
-            <Label className="text-xs text-muted-foreground mb-1.5 leading-snug block">
-              {i + 1}. {area.questions[i]}
+            <Label className="text-xs font-medium mb-1.5 leading-snug block text-foreground/80">
+              {i + 1}. {area.questions[i].question}
             </Label>
-            <Textarea
+            <select
               value={answers[qKey]}
-              onChange={e => onChange(qKey, e.target.value)}
-              placeholder="Your answer…"
-              className="min-h-[60px] text-sm"
-            />
+              onChange={e => onAnswer(qKey, e.target.value)}
+              className={`w-full rounded-xl border px-3 py-2.5 text-sm bg-background transition-colors outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 ${
+                answers[qKey]
+                  ? "border-border text-foreground"
+                  : "border-border/60 text-muted-foreground"
+              }`}
+            >
+              <option value="">— Select an option —</option>
+              {area.questions[i].options.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
           </div>
         ))}
+
+        <div className="pt-1 border-t border-border/40">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+            <Label className="text-xs font-medium text-muted-foreground">Additional comments or remarks (optional)</Label>
+          </div>
+          <Textarea
+            value={answers.remarks}
+            onChange={e => onRemarks(e.target.value)}
+            placeholder="Any additional context, constraints, or details that should be considered when assessing this impact area…"
+            className="min-h-[72px] text-sm"
+          />
+        </div>
       </div>
     </div>
   );
@@ -247,11 +489,11 @@ export default function RequestForm() {
   const [regionInput, setRegionInput] = useState("");
 
   const [impactAnswers, setImpactAnswers] = useState<ImpactAnswers>({
-    security: { q1: "", q2: "", q3: "" },
-    data: { q1: "", q2: "", q3: "" },
-    integration: { q1: "", q2: "", q3: "" },
-    regulatory: { q1: "", q2: "", q3: "" },
-    ai: { q1: "", q2: "", q3: "" }
+    security: { ...EMPTY_AREA },
+    data: { ...EMPTY_AREA },
+    integration: { ...EMPTY_AREA },
+    regulatory: { ...EMPTY_AREA },
+    ai: { ...EMPTY_AREA }
   });
   const [isAnalysing, setIsAnalysing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -336,11 +578,13 @@ export default function RequestForm() {
     setFormData(prev => ({ ...prev, [`${area}ImpactLevel`]: level }));
   };
 
-  const handleImpactAnswerChange = (area: string, q: "q1" | "q2" | "q3", value: string) => {
-    setImpactAnswers(prev => ({
-      ...prev,
-      [area]: { ...prev[area], [q]: value }
-    }));
+  const handleAnswer = (area: string, q: "q1" | "q2" | "q3" | "q4" | "q5", value: string) => {
+    setImpactAnswers(prev => ({ ...prev, [area]: { ...prev[area], [q]: value } }));
+    if (analysisComplete) setAnalysisComplete(false);
+  };
+
+  const handleRemarks = (area: string, value: string) => {
+    setImpactAnswers(prev => ({ ...prev, [area]: { ...prev[area], remarks: value } }));
     if (analysisComplete) setAnalysisComplete(false);
   };
 
@@ -359,7 +603,7 @@ export default function RequestForm() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Analysis failed");
+        throw new Error((err as { error?: string }).error || "Analysis failed");
       }
       const data = await res.json();
       setFormData(prev => ({
@@ -384,10 +628,12 @@ export default function RequestForm() {
     }
   };
 
-  const hasAnswers = IMPACT_AREA_CONFIG.some(a => {
+  const totalAnswered = IMPACT_AREA_CONFIG.reduce((sum, a) => {
     const ans = impactAnswers[a.key];
-    return ans.q1.trim() || ans.q2.trim() || ans.q3.trim();
-  });
+    return sum + (["q1","q2","q3","q4","q5"] as const).filter(k => ans[k]).length;
+  }, 0);
+  const totalQuestions = IMPACT_AREA_CONFIG.length * 5;
+  const hasAnswers = totalAnswered > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -537,14 +783,10 @@ export default function RequestForm() {
                 <p className="text-sm text-muted-foreground mb-3">
                   Select the JIRA epic or initiative this ARR relates to. This helps track architecture reviews alongside project delivery.
                 </p>
-
                 {isLoadingJira ? (
                   <div className="h-10 bg-secondary/50 rounded-xl animate-pulse"></div>
                 ) : (
-                  <Select
-                    value={formData.jiraInitiativeId?.toString() || ""}
-                    onChange={handleJiraSelect}
-                  >
+                  <Select value={formData.jiraInitiativeId?.toString() || ""} onChange={handleJiraSelect}>
                     <option value="">-- Select an initiative --</option>
                     {initiatives?.map(init => (
                       <option key={init.id} value={init.id}>
@@ -554,20 +796,13 @@ export default function RequestForm() {
                   </Select>
                 )}
               </div>
-
               {selectedInitiative && (
                 <div className="mt-4 p-4 border border-indigo-100 bg-indigo-50/30 rounded-xl relative">
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, jiraInitiativeId: null }))}
-                    className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 transition-colors"
-                  >
+                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, jiraInitiativeId: null }))} className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="primary" className="font-mono bg-blue-100 text-blue-800 border-blue-200">
-                      {selectedInitiative.jiraKey}
-                    </Badge>
+                    <Badge variant="primary" className="font-mono bg-blue-100 text-blue-800 border-blue-200">{selectedInitiative.jiraKey}</Badge>
                     <span className="text-sm font-semibold">{selectedInitiative.summary}</span>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -603,14 +838,7 @@ export default function RequestForm() {
                     }}
                   />
                   {!formData.jiraInitiativeId && (
-                    <Input
-                      required
-                      name="title"
-                      value={formData.title}
-                      onChange={handleChange}
-                      placeholder="e.g. Migration to AWS Cloud"
-                      className="mt-2"
-                    />
+                    <Input required name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Migration to AWS Cloud" className="mt-2" />
                   )}
                 </div>
 
@@ -672,12 +900,7 @@ export default function RequestForm() {
                       { id: 'improved_experience', label: 'Improved Experience' },
                     ].map((item) => (
                       <label key={item.id} className="flex items-center space-x-3 p-3 border border-border rounded-xl hover:bg-secondary/50 cursor-pointer transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={formData.businessValueHypothesis?.includes(item.id)}
-                          onChange={() => handleBusinessValueHypothesisToggle(item.id)}
-                          className="w-4 h-4 rounded text-primary focus:ring-primary/20"
-                        />
+                        <input type="checkbox" checked={formData.businessValueHypothesis?.includes(item.id)} onChange={() => handleBusinessValueHypothesisToggle(item.id)} className="w-4 h-4 rounded text-primary focus:ring-primary/20" />
                         <span className="text-sm font-medium">{item.label}</span>
                       </label>
                     ))}
@@ -707,22 +930,13 @@ export default function RequestForm() {
                 <div className="md:col-span-2">
                   <Label>In-Scope Regions / Countries</Label>
                   <div className="space-y-3">
-                    <Input
-                      placeholder="Type a region and press Enter or comma..."
-                      value={regionInput}
-                      onChange={(e) => setRegionInput(e.target.value)}
-                      onKeyDown={handleRegionKeyDown}
-                    />
+                    <Input placeholder="Type a region and press Enter or comma..." value={regionInput} onChange={(e) => setRegionInput(e.target.value)} onKeyDown={handleRegionKeyDown} />
                     {formData.inScopeRegions && formData.inScopeRegions.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {formData.inScopeRegions.map((region, i) => (
                           <div key={i} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm font-medium">
                             {region}
-                            <button
-                              type="button"
-                              onClick={() => removeRegion(region)}
-                              className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
-                            >
+                            <button type="button" onClick={() => removeRegion(region)} className="ml-1 text-muted-foreground hover:text-foreground transition-colors">
                               <X className="w-3 h-3" />
                             </button>
                           </div>
@@ -758,7 +972,7 @@ export default function RequestForm() {
             </CardContent>
           </Card>
 
-          {/* SECTION 2: IMPACT ASSESSMENT — Question-based with AI analysis */}
+          {/* SECTION 2: IMPACT ASSESSMENT */}
           <Card className="mb-8 shadow-sm">
             <CardHeader>
               <CardTitle>2. Impact Assessment</CardTitle>
@@ -766,12 +980,18 @@ export default function RequestForm() {
             <CardContent className="space-y-6">
               <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/15 rounded-xl">
                 <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-primary">AI-Assisted Impact Analysis</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Answer the questions below about your initiative. Once complete, click <strong>Analyse with AI</strong> and we'll automatically derive the Security, Data, Integration, Regulatory, and AI impact levels to populate the EA Triage section. You can review and edit the results before submitting.
+                    Select an option for each question across the five impact areas. Add any additional remarks where helpful. When ready, click <strong>Analyse with AI</strong> — impact levels will be automatically derived and populated into the EA Triage section for review.
                   </p>
                 </div>
+                {totalAnswered > 0 && (
+                  <div className="shrink-0 text-right">
+                    <div className="text-xs text-muted-foreground">{totalAnswered}/{totalQuestions}</div>
+                    <div className="text-xs font-medium text-primary">answered</div>
+                  </div>
+                )}
               </div>
 
               {/* Question cards */}
@@ -780,8 +1000,9 @@ export default function RequestForm() {
                   <ImpactQuestionCard
                     key={area.key}
                     area={area}
-                    answers={impactAnswers[area.key] as { q1: string; q2: string; q3: string }}
-                    onChange={(q, value) => handleImpactAnswerChange(area.key, q, value)}
+                    answers={impactAnswers[area.key] as AreaAnswers}
+                    onAnswer={(q, value) => handleAnswer(area.key, q, value)}
+                    onRemarks={(value) => handleRemarks(area.key, value)}
                   />
                 ))}
               </div>
@@ -794,7 +1015,6 @@ export default function RequestForm() {
                     <span>Analysis failed: {analysisError}. Please try again.</span>
                   </div>
                 )}
-
                 <div className="flex items-center gap-3">
                   <Button
                     type="button"
@@ -815,11 +1035,7 @@ export default function RequestForm() {
                     )}
                   </Button>
                   {analysisComplete && (
-                    <button
-                      type="button"
-                      onClick={() => setAnalysisComplete(false)}
-                      className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
+                    <button type="button" onClick={() => setAnalysisComplete(false)} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                       <RotateCcw className="w-3.5 h-3.5" />
                       Re-analyse
                     </button>
@@ -830,12 +1046,7 @@ export default function RequestForm() {
               {/* Analysis results */}
               <AnimatePresence>
                 {analysisComplete && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="space-y-4"
-                  >
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
                     <div className="flex items-center gap-2 pt-2">
                       <div className="flex-1 border-t border-border" />
                       <div className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
@@ -844,11 +1055,9 @@ export default function RequestForm() {
                       </div>
                       <div className="flex-1 border-t border-border" />
                     </div>
-
                     <p className="text-sm text-muted-foreground">
-                      The following impact levels have been derived from your answers and will be captured in the EA Triage section. You can override any level by clicking <strong>Override</strong> on the card.
+                      The following impact levels have been derived from your answers and will be captured in the EA Triage section. Click <strong>Override</strong> on any card to adjust a level or edit the rationale.
                     </p>
-
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {IMPACT_AREA_CONFIG.map(area => (
                         <DerivedImpactCard
@@ -857,13 +1066,10 @@ export default function RequestForm() {
                           level={formData[`${area.key}ImpactLevel` as keyof CreateArchitectureRequest] as ImpactLevel}
                           details={formData[`${area.key}ImpactDetails` as keyof CreateArchitectureRequest] as string}
                           onLevelChange={(level) => setImpactLevel(area.key, level)}
-                          onDetailsChange={(value) =>
-                            setFormData(prev => ({ ...prev, [`${area.key}ImpactDetails`]: value }))
-                          }
+                          onDetailsChange={(value) => setFormData(prev => ({ ...prev, [`${area.key}ImpactDetails`]: value }))}
                         />
                       ))}
                     </div>
-
                     <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
                       <ChevronRight className="w-4 h-4 shrink-0" />
                       These levels are now saved and will be visible to the EA team in the Triage section once submitted.
