@@ -12,6 +12,7 @@ tags:
   - name: sessions
   - name: outcomes
   - name: jira
+  - name: knowledge-base
 paths:
   /healthz:
     get:
@@ -216,6 +217,164 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/JiraSyncResult"
+
+  /knowledge-base:
+    get:
+      operationId: listKbArticles
+      tags: [knowledge-base]
+      summary: List all knowledge base articles
+      responses:
+        "200":
+          description: List of KB articles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KbArticle"
+    post:
+      operationId: createKbArticle
+      tags: [knowledge-base]
+      summary: Create a knowledge base article
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateKbArticle"
+      responses:
+        "201":
+          description: Created article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KbArticle"
+
+  /knowledge-base/{id}:
+    get:
+      operationId: getKbArticle
+      tags: [knowledge-base]
+      summary: Get a specific KB article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: KB article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KbArticle"
+    patch:
+      operationId: updateKbArticle
+      tags: [knowledge-base]
+      summary: Update a KB article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateKbArticle"
+      responses:
+        "200":
+          description: Updated article
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KbArticle"
+    delete:
+      operationId: deleteKbArticle
+      tags: [knowledge-base]
+      summary: Delete a KB article
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /requests/{requestId}/kb-articles:
+    get:
+      operationId: listRequestKbArticles
+      tags: [knowledge-base]
+      summary: List KB articles linked to a request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of linked KB articles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KbArticle"
+    post:
+      operationId: linkKbArticleToRequest
+      tags: [knowledge-base]
+      summary: Link a KB article to a request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                articleId:
+                  type: integer
+              required: [articleId]
+      responses:
+        "201":
+          description: Created link
+
+  /requests/{requestId}/kb-articles/{articleId}:
+    delete:
+      operationId: unlinkKbArticleFromRequest
+      tags: [knowledge-base]
+      summary: Remove a KB article link from a request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: articleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
 
 components:
   schemas:
@@ -720,3 +879,92 @@ components:
         createdBy:
           type: string
       required: [requestId, decision, outcomeType, createdBy]
+
+    KbArticle:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        category:
+          type: string
+          enum: [pattern, reference_architecture, best_practice, external_link]
+        tags:
+          type: array
+          items:
+            type: string
+        content:
+          type: string
+        externalUrl:
+          type: string
+          nullable: true
+        owner:
+          type: string
+        technologies:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [published, draft, archived]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, title, category, tags, content, owner, technologies, status, createdAt, updatedAt]
+
+    CreateKbArticle:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+          enum: [pattern, reference_architecture, best_practice, external_link]
+        tags:
+          type: array
+          items:
+            type: string
+        content:
+          type: string
+        externalUrl:
+          type: string
+          nullable: true
+        owner:
+          type: string
+        technologies:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [published, draft, archived]
+      required: [title, owner]
+
+    UpdateKbArticle:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        content:
+          type: string
+        externalUrl:
+          type: string
+          nullable: true
+        owner:
+          type: string
+        technologies:
+          type: array
+          items:
+            type: string
+        status:
+          type: string

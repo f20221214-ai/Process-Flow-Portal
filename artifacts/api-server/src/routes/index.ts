@@ -6,6 +6,7 @@ import outcomesRouter from "./outcomes";
 import jiraRouter from "./jira";
 import kpisRouter from "./kpis";
 import seedRouter from "./seed";
+import knowledgeBaseRouter from "./knowledge-base";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(outcomesRouter);
 router.use(jiraRouter);
 router.use(kpisRouter);
 router.use(seedRouter);
+router.use(knowledgeBaseRouter);
 
 export default router;

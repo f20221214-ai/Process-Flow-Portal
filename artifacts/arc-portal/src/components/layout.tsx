@@ -1,11 +1,12 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, FileText, Calendar, ShieldCheck, FileSpreadsheet, Hexagon, Bell, Search, UserCircle, Layers, BarChart3, Settings } from "lucide-react";
+import { LayoutDashboard, FileText, Calendar, ShieldCheck, FileSpreadsheet, Hexagon, Bell, Search, UserCircle, Layers, BarChart3, Settings, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/requests", label: "All Requests", icon: FileText },
+  { href: "/knowledge-base", label: "Knowledge Base", icon: BookOpen },
   { href: "/jira", label: "JIRA Initiatives", icon: Layers },
   { href: "/sessions", label: "ARC Sessions", icon: Calendar },
   { href: "/outcomes", label: "Review Outcomes", icon: ShieldCheck },

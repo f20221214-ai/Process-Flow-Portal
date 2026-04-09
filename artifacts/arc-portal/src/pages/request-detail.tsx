@@ -8,10 +8,12 @@ import { useGetRequest, useUpdateRequest, useListSessions, useListOutcomes } fro
 import { format } from "date-fns";
 import { formatLabel } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity, Sparkles } from "lucide-react";
+import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity, Sparkles, BookOpen, Search, Plus, X } from "lucide-react";
+import { Link } from "wouter";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
+import type { KbArticle } from "@/types/knowledge-base";
 
 /** Mirror of the server-side deriveEaBaseline — used as client-side fallback for older requests. */
 function deriveEaBaseline(req: {
@@ -69,6 +71,7 @@ export default function RequestDetail() {
   const [, params] = useRoute("/requests/:id");
   const id = parseInt(params?.id || "0");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: request, isLoading, refetch } = useGetRequest(id);
   const { data: sessions } = useListSessions();
@@ -77,6 +80,7 @@ export default function RequestDetail() {
 
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
   const [ratingWasAutoCalc, setRatingWasAutoCalc] = useState(false);
+  const [kbSearch, setKbSearch] = useState("");
 
   // Fetch JIRA Initiative if linked
   const { data: initiatives } = useQuery<JiraInitiative[]>({
@@ -84,6 +88,70 @@ export default function RequestDetail() {
     queryFn: () => fetch('/api/jira/initiatives').then(res => res.json()),
     enabled: !!request?.jiraInitiativeId
   });
+
+  // KB Articles linked to this request
+  const { data: linkedKbArticles = [] } = useQuery<KbArticle[]>({
+    queryKey: ['/api/requests', id, 'kb-articles'],
+    queryFn: async () => {
+      const r = await fetch(`/api/requests/${id}/kb-articles`);
+      if (!r.ok) throw new Error(`Failed to fetch linked KB articles: ${r.status}`);
+      return r.json();
+    },
+    enabled: !!id,
+  });
+
+  // All KB articles for search/attach
+  const { data: allKbArticles = [] } = useQuery<KbArticle[]>({
+    queryKey: ['/api/knowledge-base'],
+    queryFn: async () => {
+      const r = await fetch('/api/knowledge-base');
+      if (!r.ok) throw new Error(`Failed to fetch KB articles: ${r.status}`);
+      return r.json();
+    },
+  });
+
+  const attachKbMutation = useMutation({
+    mutationFn: async (articleId: number) => {
+      const r = await fetch(`/api/requests/${id}/kb-articles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ articleId }),
+      });
+      if (!r.ok && r.status !== 409) throw new Error(`Failed to link article: ${r.status}`);
+      return r.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/requests', id, 'kb-articles'] });
+      setKbSearch("");
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to attach article.", variant: "destructive" });
+    },
+  });
+
+  const detachKbMutation = useMutation({
+    mutationFn: async (articleId: number) => {
+      const r = await fetch(`/api/requests/${id}/kb-articles/${articleId}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error(`Failed to unlink article: ${r.status}`);
+      return r.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/requests', id, 'kb-articles'] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to detach article.", variant: "destructive" });
+    },
+  });
+
+  const linkedIds = new Set(linkedKbArticles.map(a => a.id));
+  const kbSearchResults = kbSearch.trim().length > 0
+    ? allKbArticles.filter(a =>
+        !linkedIds.has(a.id) &&
+        (a.title.toLowerCase().includes(kbSearch.toLowerCase()) ||
+         a.owner.toLowerCase().includes(kbSearch.toLowerCase()) ||
+         a.tags.some(t => t.toLowerCase().includes(kbSearch.toLowerCase())))
+      ).slice(0, 5)
+    : [];
 
   const linkedJira = initiatives?.find(i => i.id === request?.jiraInitiativeId);
 
@@ -426,6 +494,84 @@ export default function RequestDetail() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Relevant Knowledge Base Articles */}
+            <Card className="border-emerald-100 bg-emerald-50/20">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-emerald-900 text-base">
+                    <BookOpen className="w-5 h-5 text-emerald-600" /> Relevant Knowledge Base Articles
+                  </CardTitle>
+                  <Link href="/knowledge-base">
+                    <Button variant="ghost" size="sm" className="text-emerald-700 text-xs">Browse KB</Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Linked Articles */}
+                {linkedKbArticles.length === 0 ? (
+                  <div className="text-sm text-muted-foreground text-center py-4 bg-secondary/50 rounded-xl">
+                    No KB articles linked yet.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {linkedKbArticles.map(article => (
+                      <div key={article.id} className="flex items-center justify-between p-3 bg-white border border-emerald-100 rounded-xl text-sm">
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/knowledge-base/${article.id}`}>
+                            <span className="font-medium text-emerald-900 hover:underline cursor-pointer">{article.title}</span>
+                          </Link>
+                          <div className="text-xs text-muted-foreground">{article.owner}</div>
+                        </div>
+                        <div className="flex items-center gap-2 ml-2 shrink-0">
+                          {article.externalUrl && (
+                            <a href={article.externalUrl} target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:text-amber-700">
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => detachKbMutation.mutate(article.id)}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                            disabled={detachKbMutation.isPending}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Search to attach articles */}
+                <div className="relative mt-2">
+                  <Search className="absolute left-3 top-3 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input
+                    className="pl-9 h-9 text-sm border-emerald-200"
+                    placeholder="Search KB articles to add..."
+                    value={kbSearch}
+                    onChange={e => setKbSearch(e.target.value)}
+                  />
+                </div>
+                {kbSearchResults.length > 0 && (
+                  <div className="border border-emerald-100 rounded-xl overflow-hidden divide-y divide-border/40 bg-white">
+                    {kbSearchResults.map(article => (
+                      <button
+                        key={article.id}
+                        className="w-full flex items-center justify-between p-3 text-sm hover:bg-emerald-50 transition-colors text-left"
+                        onClick={() => attachKbMutation.mutate(article.id)}
+                        disabled={attachKbMutation.isPending}
+                      >
+                        <div>
+                          <div className="font-medium">{article.title}</div>
+                          <div className="text-xs text-muted-foreground">{article.owner}</div>
+                        </div>
+                        <Plus className="w-4 h-4 text-emerald-600 shrink-0 ml-2" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sidebar Column */}

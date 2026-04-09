@@ -15,6 +15,9 @@ import JiraInitiatives from "./pages/jira-initiatives";
 import KpisPage from "./pages/kpis";
 import ProcessGuidePage from "./pages/process-guide";
 import AdminPage from "./pages/admin";
+import KnowledgeBaseIndex from "./pages/knowledge-base-index";
+import KnowledgeBaseDetail from "./pages/knowledge-base-detail";
+import KnowledgeBaseForm from "./pages/knowledge-base-form";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +41,10 @@ function Router() {
       <Route path="/kpis" component={KpisPage} />
       <Route path="/process-guide" component={ProcessGuidePage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/knowledge-base/new" component={KnowledgeBaseForm} />
+      <Route path="/knowledge-base/:id/edit" component={KnowledgeBaseForm} />
+      <Route path="/knowledge-base/:id" component={KnowledgeBaseDetail} />
+      <Route path="/knowledge-base" component={KnowledgeBaseIndex} />
       <Route component={NotFound} />
     </Switch>
   );

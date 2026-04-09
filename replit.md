@@ -94,3 +94,29 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+
+## Features
+
+### Architecture Review Portal (`artifacts/arc-portal`)
+
+- **Dashboard** (`/`) — overview of requests, statuses, KPIs
+- **All Requests** (`/requests`) — list/search/filter ARRs; create new at `/requests/new`; detail at `/requests/:id`
+- **Knowledge Base** (`/knowledge-base`) — articles (patterns, reference architectures, best practices, external links)
+  - Index page with search + category/tag filters
+  - Detail page at `/knowledge-base/:id` with full content and external link affordance
+  - Create/edit form at `/knowledge-base/new` and `/knowledge-base/:id/edit`
+  - Articles can be linked to ARRs from the request detail page ("Relevant Knowledge Base Articles" section)
+- **JIRA Initiatives** (`/jira`) — browse and link JIRA initiatives to ARRs
+- **ARC Sessions** (`/sessions`) — schedule and manage ARC review sessions
+- **Review Outcomes** (`/outcomes`) — record and view review decisions
+- **KPI Dashboard** (`/kpis`) — track KPIs across EA outcomes
+
+### DB Schema (key tables)
+
+- `architecture_requests` — ARRs with EA triage and impact fields
+- `arc_sessions` — scheduled ARC sessions linked to requests
+- `review_outcomes` — decisions from ARC sessions
+- `jira_initiatives` — JIRA initiatives synced/linked to ARRs
+- `kpi_metrics` — KPI tracking for EA outcomes
+- `knowledge_base_articles` — KB articles (title, category, tags, content, externalUrl, owner, technologies, status)
+- `request_kb_articles` — join table linking requests to KB articles
