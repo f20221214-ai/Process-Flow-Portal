@@ -1,7 +1,97 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { knowledgeBaseArticlesTable, requestKbArticlesTable } from "@workspace/db";
+import { knowledgeBaseArticlesTable, requestKbArticlesTable, architectureRequestsTable } from "@workspace/db";
 import { eq, and, inArray } from "drizzle-orm";
+
+type RawRequest = typeof architectureRequestsTable.$inferSelect;
+type RawPattern = typeof knowledgeBaseArticlesTable.$inferSelect;
+
+interface PatternScore {
+  pattern: ReturnType<typeof serializeArticle>;
+  score: number;
+  reason: string;
+  isApplied: boolean;
+}
+
+function scorePatterns(request: RawRequest, patterns: RawPattern[], appliedIds: Set<number>): PatternScore[] {
+  const desc = [
+    request.description ?? "",
+    request.scopeNotes ?? "",
+    request.businessContext ?? "",
+    request.businessCapability ?? "",
+    request.integrationImpactDetails ?? "",
+    request.securityImpactDetails ?? "",
+    request.regulatoryImpactDetails ?? "",
+  ].join(" ").toLowerCase();
+
+  const results: PatternScore[] = [];
+
+  for (const pattern of patterns) {
+    const tags: string[] = JSON.parse(pattern.tags || "[]");
+    let score = 0;
+    const reasons: string[] = [];
+
+    const hasTag = (...t: string[]) => t.some(x => tags.includes(x));
+    const inDesc = (...kws: string[]) => kws.some(k => desc.includes(k));
+
+    // Security impact → Zero-Trust
+    if ((request.securityImpactLevel === "high") && hasTag("zero-trust", "security", "iam")) {
+      score += 3; reasons.push("High security impact — identity & access controls applicable");
+    }
+
+    // OT/IT keywords → OT/IT Security DMZ
+    if (inDesc("scada", "mes", "ot/it", "ot-it", "plc", "opc-ua", "opc ua", "dcs", "historian", "factorytalk", "sight machine") && hasTag("ot-it", "scada", "manufacturing")) {
+      score += 5; reasons.push("OT/IT integration detected in scope");
+    }
+
+    // E-invoicing keywords → Peppol pattern
+    if (inDesc("peppol", "e-invoic", "einvoic", "ato", "invoice", "accounts payable", "accounts receivable") && hasTag("e-invoicing", "peppol", "regulatory")) {
+      score += 5; reasons.push("E-invoicing / Peppol regulatory scope detected");
+    }
+
+    // AI/ML impact → ML Lifecycle
+    if ((request.aiImpactLevel === "high" || inDesc("ml", "machine learning", "personalisation", "personalization", "recommendation", "model", "mlops")) && hasTag("ai", "ml", "mlops")) {
+      score += 4; reasons.push("AI/ML capability in scope — model governance required");
+    }
+
+    // Data mesh / data platform keywords
+    if (inDesc("data platform", "data mesh", "data product", "analytics", "data warehouse", "data lake") && hasTag("data", "mesh", "analytics")) {
+      score += 3; reasons.push("Data platform pattern applicable to this scope");
+    }
+
+    // Integration impact → API Gateway (specific tags only)
+    if ((request.integrationImpactLevel === "high" || inDesc("api", "api gateway", "rest", "middleware")) && hasTag("api", "gateway")) {
+      score += 3; reasons.push("High integration complexity — API gateway pattern recommended");
+    }
+
+    // Integration / event streaming → Event-Driven (specific tags only)
+    if ((request.integrationImpactLevel === "high" || inDesc("event", "streaming", "kafka", "message queue", "pub/sub", "async", "iot", "telemetry", "sensor")) && hasTag("events", "streaming", "kafka")) {
+      score += 3; reasons.push("Async or event-driven integration pattern applicable");
+    }
+
+    // Cloud deployment → Cloud Landing Zone
+    const cloudModels = ["cloud_saas", "cloud_managed", "cloud_vendor", "hybrid"];
+    if ((cloudModels.includes(request.deploymentModel ?? "") || inDesc("aws", "azure", "cloud", "landing zone")) && hasTag("cloud", "landing-zone")) {
+      score += 3; reasons.push("Cloud deployment model — landing zone foundation recommended");
+    }
+
+    // Regulatory → reinforce compliance patterns
+    if ((request.regulatoryImpactLevel === "high") && hasTag("regulatory", "compliance", "e-invoicing")) {
+      score += 2; reasons.push("High regulatory impact — compliance architecture applicable");
+    }
+
+    if (score > 0) {
+      results.push({
+        pattern: serializeArticle(pattern),
+        score,
+        reason: reasons[0],
+        isApplied: appliedIds.has(pattern.id),
+      });
+    }
+  }
+
+  return results.sort((a, b) => b.score - a.score);
+}
 
 const router: IRouter = Router();
 
@@ -100,6 +190,35 @@ router.delete("/knowledge-base/:id", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Failed to delete KB article");
     res.status(500).json({ error: "Failed to delete KB article" });
+  }
+});
+
+router.get("/requests/:requestId/pattern-recommendations", async (req, res) => {
+  try {
+    const requestId = parseId(req.params.requestId);
+    if (!requestId) { res.status(400).json({ error: "Invalid request ID" }); return; }
+
+    const [request] = await db.select().from(architectureRequestsTable).where(eq(architectureRequestsTable.id, requestId));
+    if (!request) { res.status(404).json({ error: "Request not found" }); return; }
+
+    const allPatterns = await db.select().from(knowledgeBaseArticlesTable)
+      .where(eq(knowledgeBaseArticlesTable.status, "published"));
+
+    const links = await db.select({ articleId: requestKbArticlesTable.articleId })
+      .from(requestKbArticlesTable)
+      .where(eq(requestKbArticlesTable.requestId, requestId));
+    const appliedIds = new Set(links.map(l => l.articleId));
+
+    const recommendations = scorePatterns(request, allPatterns, appliedIds);
+    const appliedCount = recommendations.filter(r => r.isApplied).length;
+    const adherencePercent = recommendations.length > 0
+      ? Math.round((appliedCount / recommendations.length) * 100)
+      : 0;
+
+    res.json({ recommendations, adherencePercent });
+  } catch (err) {
+    req.log.error({ err }, "Failed to get pattern recommendations");
+    res.status(500).json({ error: "Failed to get pattern recommendations" });
   }
 });
 

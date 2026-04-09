@@ -8,7 +8,7 @@ import { useGetRequest, useUpdateRequest, useListSessions, useListOutcomes } fro
 import { format } from "date-fns";
 import { formatLabel } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity, Sparkles, BookOpen, Search, Plus, X } from "lucide-react";
+import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity, Sparkles, BookOpen, CheckCircle2, Circle, ArrowRight, TrendingUp } from "lucide-react";
 import { Link } from "wouter";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -80,7 +80,6 @@ export default function RequestDetail() {
 
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
   const [ratingWasAutoCalc, setRatingWasAutoCalc] = useState(false);
-  const [kbSearch, setKbSearch] = useState("");
 
   // Fetch JIRA Initiative if linked
   const { data: initiatives } = useQuery<JiraInitiative[]>({
@@ -89,69 +88,53 @@ export default function RequestDetail() {
     enabled: !!request?.jiraInitiativeId
   });
 
-  // KB Articles linked to this request
-  const { data: linkedKbArticles = [] } = useQuery<KbArticle[]>({
-    queryKey: ['/api/requests', id, 'kb-articles'],
+  // Pattern Recommendations for this request
+  const { data: patternRecs, isLoading: recsLoading } = useQuery<{
+    recommendations: Array<{ pattern: KbArticle; score: number; reason: string; isApplied: boolean }>;
+    adherencePercent: number;
+  }>({
+    queryKey: ['/api/requests', id, 'pattern-recommendations'],
     queryFn: async () => {
-      const r = await fetch(`/api/requests/${id}/kb-articles`);
-      if (!r.ok) throw new Error(`Failed to fetch linked KB articles: ${r.status}`);
+      const r = await fetch(`/api/requests/${id}/pattern-recommendations`);
+      if (!r.ok) throw new Error(`Failed to fetch pattern recommendations: ${r.status}`);
       return r.json();
     },
     enabled: !!id,
   });
 
-  // All KB articles for search/attach
-  const { data: allKbArticles = [] } = useQuery<KbArticle[]>({
-    queryKey: ['/api/knowledge-base'],
-    queryFn: async () => {
-      const r = await fetch('/api/knowledge-base');
-      if (!r.ok) throw new Error(`Failed to fetch KB articles: ${r.status}`);
-      return r.json();
-    },
-  });
-
-  const attachKbMutation = useMutation({
+  const applyPatternMutation = useMutation({
     mutationFn: async (articleId: number) => {
       const r = await fetch(`/api/requests/${id}/kb-articles`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ articleId }),
       });
-      if (!r.ok && r.status !== 409) throw new Error(`Failed to link article: ${r.status}`);
+      if (!r.ok && r.status !== 409) throw new Error(`Failed to apply pattern: ${r.status}`);
       return r.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/requests', id, 'kb-articles'] });
-      setKbSearch("");
+      queryClient.invalidateQueries({ queryKey: ['/api/requests', id, 'pattern-recommendations'] });
+      toast({ title: "Pattern applied", description: "Architecture pattern marked as applied for this request." });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to attach article.", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to apply pattern.", variant: "destructive" });
     },
   });
 
-  const detachKbMutation = useMutation({
+  const removePatternMutation = useMutation({
     mutationFn: async (articleId: number) => {
       const r = await fetch(`/api/requests/${id}/kb-articles/${articleId}`, { method: 'DELETE' });
-      if (!r.ok) throw new Error(`Failed to unlink article: ${r.status}`);
+      if (!r.ok) throw new Error(`Failed to remove pattern: ${r.status}`);
       return r.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/requests', id, 'kb-articles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/requests', id, 'pattern-recommendations'] });
+      toast({ title: "Pattern removed", description: "Architecture pattern removed from this request." });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to detach article.", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to remove pattern.", variant: "destructive" });
     },
   });
-
-  const linkedIds = new Set(linkedKbArticles.map(a => a.id));
-  const kbSearchResults = kbSearch.trim().length > 0
-    ? allKbArticles.filter(a =>
-        !linkedIds.has(a.id) &&
-        (a.title.toLowerCase().includes(kbSearch.toLowerCase()) ||
-         a.owner.toLowerCase().includes(kbSearch.toLowerCase()) ||
-         a.tags.some(t => t.toLowerCase().includes(kbSearch.toLowerCase())))
-      ).slice(0, 5)
-    : [];
 
   const linkedJira = initiatives?.find(i => i.id === request?.jiraInitiativeId);
 
@@ -495,80 +478,120 @@ export default function RequestDetail() {
               </Card>
             )}
 
-            {/* Relevant Knowledge Base Articles */}
-            <Card className="border-emerald-100 bg-emerald-50/20">
-              <CardHeader className="pb-4">
+            {/* Architecture Pattern Recommendations */}
+            <Card className="border-violet-100 bg-violet-50/20">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-emerald-900 text-base">
-                    <BookOpen className="w-5 h-5 text-emerald-600" /> Relevant Knowledge Base Articles
+                  <CardTitle className="flex items-center gap-2 text-violet-900 text-base">
+                    <BookOpen className="w-5 h-5 text-violet-600" /> Architecture Pattern Recommendations
                   </CardTitle>
                   <Link href="/knowledge-base">
-                    <Button variant="ghost" size="sm" className="text-emerald-700 text-xs">Browse KB</Button>
+                    <Button variant="ghost" size="sm" className="text-violet-700 text-xs flex items-center gap-1">
+                      View All <ArrowRight className="w-3 h-3" />
+                    </Button>
                   </Link>
                 </div>
+                <p className="text-xs text-violet-700/70 mt-0.5">Patterns relevant to this request based on scope, impact, and keywords</p>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Linked Articles */}
-                {linkedKbArticles.length === 0 ? (
-                  <div className="text-sm text-muted-foreground text-center py-4 bg-secondary/50 rounded-xl">
-                    No KB articles linked yet.
+              <CardContent className="space-y-4">
+                {recsLoading ? (
+                  <div className="space-y-2">
+                    {[1,2,3].map(i => <div key={i} className="h-14 bg-secondary/50 rounded-xl animate-pulse" />)}
+                  </div>
+                ) : !patternRecs || patternRecs.recommendations.length === 0 ? (
+                  <div className="text-sm text-muted-foreground text-center py-6 bg-secondary/50 rounded-xl">
+                    <BookOpen className="w-6 h-6 mx-auto mb-2 opacity-40" />
+                    No pattern recommendations for this request. Add more detail to the scope to get suggestions.
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {linkedKbArticles.map(article => (
-                      <div key={article.id} className="flex items-center justify-between p-3 bg-white border border-emerald-100 rounded-xl text-sm">
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/knowledge-base/${article.id}`}>
-                            <span className="font-medium text-emerald-900 hover:underline cursor-pointer">{article.title}</span>
-                          </Link>
-                          <div className="text-xs text-muted-foreground">{article.owner}</div>
+                  <>
+                    {/* Adherence meter */}
+                    <div className="bg-white border border-violet-100 rounded-xl p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-violet-900">
+                          <TrendingUp className="w-4 h-4 text-violet-600" />
+                          Pattern Adherence
                         </div>
-                        <div className="flex items-center gap-2 ml-2 shrink-0">
-                          {article.externalUrl && (
-                            <a href={article.externalUrl} target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:text-amber-700">
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                          )}
-                          <button
-                            onClick={() => detachKbMutation.mutate(article.id)}
-                            className="text-muted-foreground hover:text-destructive transition-colors"
-                            disabled={detachKbMutation.isPending}
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-2xl font-bold text-violet-700">{patternRecs.adherencePercent}%</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({patternRecs.recommendations.filter(r => r.isApplied).length}/{patternRecs.recommendations.length} applied)
+                          </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="h-2 bg-violet-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                          style={{ width: `${patternRecs.adherencePercent}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        {patternRecs.adherencePercent === 100
+                          ? "All recommended patterns have been applied."
+                          : patternRecs.adherencePercent === 0
+                          ? "Mark patterns as applied as they are addressed in the solution design."
+                          : "Continue applying recommended patterns to improve adherence."}
+                      </p>
+                    </div>
 
-                {/* Search to attach articles */}
-                <div className="relative mt-2">
-                  <Search className="absolute left-3 top-3 w-3.5 h-3.5 text-muted-foreground" />
-                  <Input
-                    className="pl-9 h-9 text-sm border-emerald-200"
-                    placeholder="Search KB articles to add..."
-                    value={kbSearch}
-                    onChange={e => setKbSearch(e.target.value)}
-                  />
-                </div>
-                {kbSearchResults.length > 0 && (
-                  <div className="border border-emerald-100 rounded-xl overflow-hidden divide-y divide-border/40 bg-white">
-                    {kbSearchResults.map(article => (
-                      <button
-                        key={article.id}
-                        className="w-full flex items-center justify-between p-3 text-sm hover:bg-emerald-50 transition-colors text-left"
-                        onClick={() => attachKbMutation.mutate(article.id)}
-                        disabled={attachKbMutation.isPending}
-                      >
-                        <div>
-                          <div className="font-medium">{article.title}</div>
-                          <div className="text-xs text-muted-foreground">{article.owner}</div>
+                    {/* Pattern list */}
+                    <div className="space-y-2">
+                      {patternRecs.recommendations.map(({ pattern, reason, isApplied }) => (
+                        <div
+                          key={pattern.id}
+                          className={`flex items-start gap-3 p-3 rounded-xl border text-sm transition-all ${
+                            isApplied
+                              ? "bg-green-50/60 border-green-200"
+                              : "bg-white border-violet-100"
+                          }`}
+                        >
+                          <div className="mt-0.5 shrink-0">
+                            {isApplied
+                              ? <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              : <Circle className="w-4 h-4 text-violet-300" />
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Link href={`/knowledge-base/${pattern.id}`}>
+                                <span className="font-semibold text-violet-900 hover:underline cursor-pointer leading-tight">
+                                  {pattern.title}
+                                </span>
+                              </Link>
+                              <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full border shrink-0 ${
+                                pattern.category === "pattern" ? "bg-blue-100 text-blue-700 border-blue-200" :
+                                pattern.category === "reference_architecture" ? "bg-purple-100 text-purple-700 border-purple-200" :
+                                "bg-green-100 text-green-700 border-green-200"
+                              }`}>
+                                {pattern.category === "reference_architecture" ? "Ref. Architecture" :
+                                 pattern.category === "best_practice" ? "Best Practice" : "Pattern"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{reason}</p>
+                          </div>
+                          <div className="shrink-0 flex items-center gap-1.5">
+                            {isApplied ? (
+                              <button
+                                onClick={() => removePatternMutation.mutate(pattern.id)}
+                                disabled={removePatternMutation.isPending}
+                                className="text-xs text-green-700 font-medium hover:text-destructive transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
+                              >
+                                Applied ✓
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => applyPatternMutation.mutate(pattern.id)}
+                                disabled={applyPatternMutation.isPending}
+                                className="text-xs bg-violet-600 text-white font-medium px-2.5 py-1 rounded-lg hover:bg-violet-700 transition-colors"
+                              >
+                                Apply
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <Plus className="w-4 h-4 text-emerald-600 shrink-0 ml-2" />
-                      </button>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
