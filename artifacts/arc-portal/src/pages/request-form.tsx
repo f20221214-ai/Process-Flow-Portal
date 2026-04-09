@@ -36,53 +36,43 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-blue-100",
     questions: [
       {
-        question: "Who will use this system?",
+        question: "Who will access this system, and by what means?",
         options: [
-          "Internal employees only (via existing corporate login)",
-          "Internal employees + small number of external partners (controlled access)",
-          "Customers or members of the public (internet-accessible)",
-          "Mixed internal and broad external user base",
+          "Internal employees only, through the existing corporate identity provider",
+          "Internal employees plus a controlled set of external partners or contractors",
+          "Customers or members of the public via the internet",
+          "A broad mix of internal staff and external users across multiple channels",
           "Not sure"
         ]
       },
       {
-        question: "Will it store or handle sensitive data (passwords, PII, health records, payment card data)?",
+        question: "Will the system store, transmit, or process sensitive, personal, or regulated data?",
         options: [
-          "No — public or non-sensitive information only",
-          "Internal business data only (no PII or financial data)",
-          "Sensitive internal data (e.g. employee records, confidential documents)",
-          "Highly sensitive data (PII, payment cards, health records, passwords)",
+          "No — publicly available or non-sensitive information only",
+          "General internal business data (non-sensitive operational records)",
+          "Sensitive internal data such as employee records or commercially confidential information",
+          "Highly sensitive or regulated data (PII, payment card data, health records, or credentials)",
           "Not sure"
         ]
       },
       {
-        question: "Does it introduce new login methods or connect company systems to external networks?",
+        question: "Does the solution introduce new authentication mechanisms, identity providers, or connections to external networks or third-party systems?",
         showPatternsLink: true,
         options: [
-          "No new authentication methods or external connections",
-          "Minor change to existing access or login approach",
-          "New authentication method or identity provider",
-          "New connection to external network or third-party system",
+          "No — no changes to existing authentication or external connectivity",
+          "A minor change using existing approved patterns",
+          "A new identity provider, SSO integration, or authentication mechanism",
+          "A new external network connection or integration with a third-party system outside the corporate perimeter",
           "Not sure"
         ]
       },
       {
-        question: "Will the system be accessible from the internet (public-facing)?",
+        question: "What is the expected network exposure of this system?",
         options: [
-          "No — internal corporate network only",
-          "Limited — accessible to specific external parties via VPN or whitelist",
-          "Partially internet-accessible (some public endpoints)",
-          "Fully public-facing application",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Does this system require security testing or certification before go-live?",
-        options: [
-          "No security testing or certification required",
-          "Internal security review only",
-          "Penetration testing or vulnerability assessment required",
-          "External security audit or compliance certification (e.g. ISO 27001, SOC 2)",
+          "Fully internal — accessible only within the corporate network",
+          "Partially restricted — accessible to specific external parties via VPN or IP allowlisting",
+          "Partially internet-facing — some public-facing endpoints alongside internal components",
+          "Fully public-facing — accessible from the open internet without network-level restrictions",
           "Not sure"
         ]
       }
@@ -97,53 +87,54 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-purple-100",
     questions: [
       {
-        question: "What type of data will this system store or process?",
+        question: "What is the highest classification of data this system will store or process?",
         options: [
-          "Publicly available information only",
-          "Non-sensitive internal operational data (e.g. product lists, reports)",
-          "Sensitive internal data (e.g. employee records, confidential business data)",
-          "Customer PII, financial records, or regulated health data",
+          "Public — no restrictions on access or disclosure",
+          "Internal — suitable for internal use but not for public release",
+          "Confidential — restricted access within the organisation (e.g. employee records, strategic plans)",
+          "Regulated or highly sensitive — subject to legal obligations (e.g. PII, health records, payment data)",
           "Not sure"
         ]
       },
       {
-        question: "Will it handle personal information (PII), financial records, or data with legal residency requirements?",
-        options: [
-          "No — no PII, financial data, or residency obligations",
-          "Some internal staff data only",
-          "Customer or supplier personal data",
-          "Regulated financial data, health records, or strict data residency requirements",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Will data be shared or analysed across multiple business departments?",
+        question: "Are there data residency, sovereignty, or legal jurisdiction constraints on where this data can be stored or processed?",
         showPatternsLink: true,
         options: [
-          "No cross-department data sharing",
-          "Limited sharing within one business unit",
-          "Cross-department data integration or reporting",
-          "Enterprise-wide analytics platform or major new data capability",
+          "No constraints — data can be stored or processed anywhere",
+          "Soft preference for local storage but no legal or contractual requirement",
+          "Regulatory or contractual requirement to keep data within specific countries or regions",
+          "Strict government or legal mandate with enforcement consequences for non-compliance",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Will data be shared or integrated across multiple business units, or used in enterprise-wide reporting or analytics?",
+        showPatternsLink: true,
+        options: [
+          "No — the system operates within a single team or business function",
+          "Limited sharing within one business unit only",
+          "Data is shared across departments or integrated into cross-functional reporting",
+          "The system is a major data platform or enterprise analytics capability",
           "Not sure"
         ]
       },
       {
         question: "What is the expected data volume and how long must data be retained?",
         options: [
-          "Small volume, short-term retention (less than 1 year)",
-          "Moderate volume, standard retention (1–5 years)",
-          "Large volume or long-term retention (5+ years)",
-          "Very large volume with regulatory retention requirements",
+          "Small volume with short-term retention (less than 1 year)",
+          "Moderate volume with standard retention (1–5 years)",
+          "Large volume or extended retention (5+ years)",
+          "Very large volume with mandatory long-term or regulatory retention requirements",
           "Not sure"
         ]
       },
       {
-        question: "Will data be shared with or accessible by third parties (vendors, partners, government)?",
+        question: "Will data be shared with or accessible by parties outside the organisation?",
         options: [
-          "No third-party data sharing",
-          "Shared with approved internal teams only",
-          "Shared with trusted external partners under data-sharing agreement",
-          "Shared with or accessible by government or public entities",
+          "No — data remains entirely within the organisation",
+          "Shared only with pre-approved internal teams or subsidiaries",
+          "Shared with trusted external partners under a formal data-sharing agreement",
+          "Accessible by or shared with government bodies, regulators, or public entities",
           "Not sure"
         ]
       }
@@ -158,54 +149,54 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-orange-100",
     questions: [
       {
-        question: "How many systems will this connect to, and are any external to the company?",
+        question: "How many other systems will this solution connect to, and are any of them outside the organisation?",
         options: [
-          "None — the system operates completely independently",
-          "1–2 internal systems only, using existing approved methods",
-          "3–5 internal systems, or one external connection",
-          "Multiple systems including external parties (suppliers, customers, or government)",
+          "None — the solution operates in complete isolation",
+          "One or two internal systems using existing approved methods",
+          "Three or more internal systems, or a single external connection",
+          "Multiple systems including external parties such as suppliers, customers, or government agencies",
           "Not sure"
         ]
       },
       {
-        question: "How will data move between systems?",
+        question: "How will data flow between this system and the systems it connects to?",
         showPatternsLink: true,
         options: [
-          "No data movement between systems",
-          "Scheduled batch transfers only (e.g. nightly file drops)",
+          "No data movement — the system does not exchange data with other systems",
+          "Scheduled batch transfers (e.g. nightly file drops or periodic extracts)",
           "Near real-time or event-triggered data flows",
-          "Fully real-time, high-frequency event streaming",
+          "Continuous high-frequency event streaming",
           "Not sure"
         ]
       },
       {
-        question: "Does this introduce new or non-standard integration methods?",
+        question: "Does this solution introduce integration patterns that are new to the organisation or deviate from approved standards?",
         showPatternsLink: true,
         options: [
-          "No — uses existing approved integration patterns only",
-          "Minor variation on existing patterns",
-          "New approach but based on industry standards",
-          "Entirely new or bespoke integration method",
+          "No — it uses only existing approved integration patterns and middleware",
+          "A minor variation of an existing approved pattern",
+          "A new approach aligned with industry standards but not yet used here",
+          "A bespoke or non-standard integration approach with no existing precedent",
           "Not sure"
         ]
       },
       {
-        question: "What happens to the business if an integration connection fails?",
+        question: "What is the business impact if an integration between this system and a connected system fails?",
         options: [
-          "No impact — the system works independently",
-          "Minor inconvenience — users can retry or wait",
-          "Significant delay to business operations",
-          "Critical business process stops immediately",
+          "Negligible — the system functions independently if connections are unavailable",
+          "Minor inconvenience — users can retry or manually work around the issue",
+          "Significant disruption — a key business process is delayed or degraded",
+          "Critical failure — a core business process stops and cannot continue",
           "Not sure"
         ]
       },
       {
-        question: "Do any of the systems being integrated involve older or legacy technology?",
+        question: "Does this solution need to connect to legacy systems, operational technology (OT), plant equipment, or industrial control systems?",
         options: [
-          "All systems are modern or cloud-based",
-          "Mostly modern, with one or two legacy components",
-          "Significant legacy system involvement",
-          "Primarily legacy systems requiring special technical handling",
+          "No — all connected systems are modern and cloud- or network-compatible",
+          "Mostly modern systems with one or two legacy components",
+          "Significant involvement of legacy or on-premises systems requiring special technical handling",
+          "Direct integration with OT systems, plant equipment, or industrial control systems",
           "Not sure"
         ]
       }
@@ -220,53 +211,53 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-teal-100",
     questions: [
       {
-        question: "Which laws, regulations, or industry standards must this system comply with?",
+        question: "Which category of regulation most closely applies to this system?",
         showPatternsLink: true,
         options: [
-          "None — no regulatory obligations apply",
-          "Internal company policies and guidelines only",
-          "Industry standards or certifications (e.g. ISO, SOC 2, quality management)",
-          "Government legislation (e.g. Privacy Act, GDPR, food safety laws, financial regulations)",
+          "None — no external regulatory obligations apply to this system",
+          "Internal governance only — must comply with company policies and standards",
+          "Industry standards or certification frameworks (e.g. ISO, SOC 2, food safety standards)",
+          "Government legislation or regulatory requirements (e.g. Privacy Act, GDPR, financial regulations)",
           "Not sure"
         ]
       },
       {
-        question: "Will this affect financial reporting, external audits, or require compliance certifications?",
+        question: "Will this system give rise to new compliance obligations — such as mandatory notifications, auditable controls, certifications, or reporting to regulators or auditors?",
         options: [
-          "No financial reporting or audit impact",
-          "Affects internal financial tracking or management reporting only",
-          "Affects external audit or regulatory reporting",
-          "Requires regulatory certification or formal approval before go-live",
+          "No new obligations — existing controls and reporting are sufficient",
+          "Some additional internal controls or documentation will be required",
+          "New external reporting, certification, or audit obligations will be introduced",
+          "Formal regulatory approval or licence required before the system can go live",
           "Not sure"
         ]
       },
       {
-        question: "What would happen if the system were non-compliant?",
+        question: "Does this initiative operate across multiple countries or jurisdictions with differing regulatory requirements?",
         options: [
-          "Internal policy issue — handled through normal governance",
-          "Reputational or contractual risk with partners",
-          "Financial penalties or regulatory fines are possible",
-          "Legal action, government sanctions, or inability to operate the business",
+          "No — single country and jurisdiction only",
+          "Multiple regions within the same country",
+          "Multiple countries with broadly comparable regulatory requirements",
+          "Multiple countries with significantly different or conflicting regulatory requirements",
           "Not sure"
         ]
       },
       {
-        question: "Does this initiative operate across multiple countries with different regulatory requirements?",
+        question: "What would be the consequence if this system were found to be non-compliant?",
         options: [
-          "Single country, single jurisdiction",
-          "Multiple regions within one country",
-          "Multiple countries with broadly similar regulations",
-          "Multiple countries with significantly different regulatory requirements",
+          "Low — an internal governance matter handled through normal processes",
+          "Moderate — reputational damage or breach of contract with a partner or customer",
+          "High — regulatory fines, financial penalties, or loss of certification",
+          "Severe — legal action, inability to operate, or direct harm to individuals",
           "Not sure"
         ]
       },
       {
-        question: "How established is the organisation's current compliance capability in this area?",
+        question: "How mature is the organisation's current compliance capability in the area this system touches?",
         options: [
-          "Well established — controls, processes, and expertise already in place",
-          "Partially established — some gaps exist but foundation is there",
-          "Limited — significant capability uplift needed",
-          "Not established — starting from scratch with no existing capability",
+          "Well established — robust controls, processes, and expertise already in place",
+          "Partially established — some capability exists but gaps remain",
+          "Limited — significant uplift to controls and processes will be required",
+          "Not established — this is a new compliance domain with no existing capability",
           "Not sure"
         ]
       }
@@ -281,54 +272,54 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-indigo-100",
     questions: [
       {
-        question: "Will this system use any artificial intelligence or machine learning?",
+        question: "Will this system incorporate artificial intelligence or machine learning functionality?",
         showPatternsLink: true,
         options: [
-          "No AI or ML features whatsoever",
-          "Vendor-provided AI feature (e.g. smart search, autocomplete) — off the shelf",
-          "Custom ML models, generative AI, or AI-driven recommendations",
-          "AI is the core function — the system primarily operates through AI/ML",
+          "No — no AI or ML is used anywhere in the solution",
+          "A vendor-provided AI feature used off the shelf (e.g. smart search, autocomplete, anomaly detection)",
+          "Custom-built ML models, generative AI, or AI-driven recommendations developed for this system",
+          "AI or ML is the primary function — the system's core operation depends on it",
           "Not sure"
         ]
       },
       {
-        question: "How are AI-generated outputs used?",
+        question: "What data will the AI system use, and does it include company or personal data?",
         options: [
           "Not applicable — no AI",
-          "AI outputs are informational only; humans always decide and approve",
-          "AI outputs inform automated processes but significant human oversight exists",
-          "AI outputs trigger automated actions with limited or no human review",
+          "No company or customer data — trained or operated on publicly available or synthetic data only",
+          "Anonymised or aggregated internal data with no individual identifiers",
+          "Identifiable internal business data or customer personal data",
           "Not sure"
         ]
       },
       {
-        question: "How serious would the consequences be if the AI made an error?",
+        question: "Will AI-generated outputs directly trigger automated actions, decisions, or transactions without human review?",
         options: [
-          "Minimal — minor inconvenience with easy correction",
-          "Moderate — operational disruption or efficiency loss",
-          "Significant — financial loss, reputational damage, or customer harm",
-          "Severe — legal liability, health/safety risk, or regulatory breach",
+          "Not applicable — no AI",
+          "No — AI outputs are informational only; all decisions require human approval",
+          "Partially — AI outputs inform automated processes, but humans review significant decisions",
+          "Yes — AI outputs directly trigger actions or decisions with limited or no human oversight",
           "Not sure"
         ]
       },
       {
-        question: "Will the AI system use or be trained on company or customer data?",
+        question: "How serious would the consequences be if the AI produced an incorrect or biased output?",
         options: [
-          "No — no company or customer data is used",
-          "Uses anonymised or aggregated internal data only",
-          "Uses identifiable internal business data",
-          "Uses customer PII or sensitive regulated data for training or inference",
+          "Minimal — the error would be easily identified and corrected with no lasting impact",
+          "Moderate — operational disruption, rework, or efficiency loss",
+          "Significant — financial loss, reputational damage, or harm to customers",
+          "Severe — legal liability, safety risk, regulatory breach, or harm to individuals",
           "Not sure"
         ]
       },
       {
-        question: "Is the AI's decision-making process explainable and auditable?",
+        question: "Is the AI system's decision-making process transparent, explainable, and subject to audit?",
         showPatternsLink: true,
         options: [
           "Not applicable — no AI",
-          "Yes — full audit trail and explainability is built in",
-          "Partial — some logging exists but explainability is limited",
-          "No — black-box model with no explainability or audit mechanism",
+          "Yes — full audit trail, explainability tooling, and human-readable rationale are built in",
+          "Partial — some logging and monitoring exist but full explainability is limited",
+          "No — the model operates as a black box with no explainability or audit mechanism",
           "Not sure"
         ]
       }
@@ -354,7 +345,10 @@ function ImpactQuestionCard({
   onRemarks: (value: string) => void;
 }) {
   const Icon = area.icon;
-  const qKeys: ("q1" | "q2" | "q3" | "q4" | "q5")[] = ["q1", "q2", "q3", "q4", "q5"];
+  const qKeys = (["q1", "q2", "q3", "q4", "q5"] as const).slice(0, area.questions.length);
+  const hasNotSure = qKeys.some(k => answers[k] === "Not sure");
+  const remarksRequired = hasNotSure;
+  const remarksMissing = remarksRequired && !answers.remarks.trim();
 
   return (
     <div className={`border rounded-xl overflow-hidden ${area.borderColor}`}>
@@ -380,10 +374,8 @@ function ImpactQuestionCard({
               {q.showPatternsLink && (
                 <a
                   href="/patterns"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="shrink-0 flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap font-medium"
-                  title="View Architecture Patterns for guidance"
+                  title="Browse the Architecture Patterns library for guidance"
                 >
                   <ExternalLink className="w-3 h-3" />
                   Architecture Patterns
@@ -394,7 +386,9 @@ function ImpactQuestionCard({
               value={answers[qKey]}
               onChange={e => onAnswer(qKey, e.target.value)}
               className={`w-full rounded-xl border px-3 py-2.5 text-sm bg-background transition-colors outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 ${
-                answers[qKey]
+                answers[qKey] === "Not sure"
+                  ? "border-amber-300 text-amber-700"
+                  : answers[qKey]
                   ? "border-border text-foreground"
                   : "border-border/60 text-muted-foreground"
               }`}
@@ -408,17 +402,39 @@ function ImpactQuestionCard({
           );
         })}
 
-        <div className="pt-1 border-t border-border/40">
+        <div className={`pt-1 border-t ${remarksMissing ? "border-amber-200" : "border-border/40"}`}>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
-            <Label className="text-xs font-medium text-muted-foreground">Additional comments or remarks (optional)</Label>
+            <MessageSquare className={`w-3.5 h-3.5 ${remarksMissing ? "text-amber-500" : "text-muted-foreground"}`} />
+            <Label className={`text-xs font-medium ${remarksMissing ? "text-amber-600" : "text-muted-foreground"}`}>
+              Additional comments or remarks
+              {remarksRequired ? (
+                <span className="ml-1 text-amber-600 font-semibold">* required when "Not sure" is selected</span>
+              ) : (
+                <span className="ml-1 font-normal opacity-60">(optional)</span>
+              )}
+            </Label>
           </div>
           <Textarea
             value={answers.remarks}
             onChange={e => onRemarks(e.target.value)}
-            placeholder="Any additional context, constraints, or details that should be considered when assessing this impact area…"
-            className="min-h-[72px] text-sm"
+            required={remarksRequired}
+            placeholder={
+              remarksRequired
+                ? "Please describe what you're unsure about so the EA team can help clarify…"
+                : "Any additional context, constraints, or details that should be considered when assessing this impact area…"
+            }
+            className={`min-h-[72px] text-sm transition-colors ${
+              remarksMissing
+                ? "border-amber-300 focus:border-amber-500 focus:ring-amber-200 bg-amber-50/30"
+                : ""
+            }`}
           />
+          {remarksMissing && (
+            <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3 shrink-0" />
+              Please add context for your "Not sure" answer(s) before running the AI analysis.
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -679,10 +695,17 @@ export default function RequestForm() {
 
   const totalAnswered = IMPACT_AREA_CONFIG.reduce((sum, a) => {
     const ans = impactAnswers[a.key];
-    return sum + (["q1","q2","q3","q4","q5"] as const).filter(k => ans[k]).length;
+    const qKeys = (["q1","q2","q3","q4","q5"] as const).slice(0, a.questions.length);
+    return sum + qKeys.filter(k => ans[k]).length;
   }, 0);
-  const totalQuestions = IMPACT_AREA_CONFIG.length * 5;
+  const totalQuestions = IMPACT_AREA_CONFIG.reduce((sum, a) => sum + a.questions.length, 0);
   const hasAnswers = totalAnswered > 0;
+  const hasBlockingRemarks = IMPACT_AREA_CONFIG.some(a => {
+    const ans = impactAnswers[a.key];
+    const qKeys = (["q1","q2","q3","q4","q5"] as const).slice(0, a.questions.length);
+    const hasNotSure = qKeys.some(k => ans[k] === "Not sure");
+    return hasNotSure && !ans.remarks.trim();
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1068,7 +1091,7 @@ export default function RequestForm() {
                   <Button
                     type="button"
                     onClick={handleAnalyseImpact}
-                    disabled={isAnalysing || !hasAnswers}
+                    disabled={isAnalysing || !hasAnswers || hasBlockingRemarks}
                     className="flex items-center gap-2 bg-primary text-primary-foreground"
                   >
                     {isAnalysing ? (
