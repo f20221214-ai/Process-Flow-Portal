@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Textarea, Select, Label, Badge } from "@/components/ui-primitives";
 import { useCreateRequest } from "@workspace/api-client-react";
 import type { CreateArchitectureRequest } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Layers, Info, ChevronDown, Search } from "lucide-react";
+import { ArrowLeft, X, Layers, ChevronDown, Search, Sparkles, Shield, Database, GitBranch, Scale, Bot, CheckCircle2, AlertCircle, ChevronRight, RotateCcw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
 
@@ -17,72 +17,192 @@ const IMPACT_LEVELS = [
   { value: "high", label: "High" }
 ];
 
-function ImpactRow({
-  area,
-  title,
-  fieldName,
-  guidance,
-  formData,
-  handleChange,
-  setImpactLevel,
-}: {
-  area: string;
-  title: string;
-  fieldName: string;
-  guidance: React.ReactNode;
-  formData: CreateArchitectureRequest;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
-  setImpactLevel: (area: string, level: string) => void;
-}) {
-  const levelKey = `${fieldName}ImpactLevel` as keyof CreateArchitectureRequest;
-  const detailsKey = `${fieldName}ImpactDetails` as keyof CreateArchitectureRequest;
-  const currentLevel = formData[levelKey] as string;
-  const [showGuidance, setShowGuidance] = useState(false);
+const IMPACT_COLORS: Record<string, string> = {
+  none: "bg-slate-100 text-slate-600 border-slate-200",
+  low: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  medium: "bg-amber-100 text-amber-700 border-amber-200",
+  high: "bg-red-100 text-red-700 border-red-200"
+};
 
+const IMPACT_AREA_CONFIG = [
+  {
+    key: "security",
+    title: "Security",
+    icon: Shield,
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-100",
+    questions: [
+      "Who will use this system — only internal employees via corporate login, or also people outside the company (partners, customers, public)?",
+      "Will it store or handle sensitive data such as passwords, personal details (names, addresses, health records), or payment card information?",
+      "Does it create any new way to log in or access company systems, or connect corporate systems to external networks?"
+    ]
+  },
+  {
+    key: "data",
+    title: "Data",
+    icon: Database,
+    color: "text-purple-600",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-100",
+    questions: [
+      "What kind of information will this system store or process? (e.g. public product info, internal reports, employee records, customer personal details, financial records)",
+      "Will it handle personal information (PII), financial records, or data that must legally remain within a specific country or region?",
+      "Will it combine or analyse data across multiple business departments or introduce new data analytics capabilities?"
+    ]
+  },
+  {
+    key: "integration",
+    title: "Integration",
+    icon: GitBranch,
+    color: "text-orange-600",
+    bgColor: "bg-orange-50",
+    borderColor: "border-orange-100",
+    questions: [
+      "Will this system connect to other systems? If so, how many, and are any external to the company (e.g. supplier portals, customer platforms, government services)?",
+      "Will data flow between systems in real-time as events happen, or only in scheduled batches?",
+      "Does it introduce any new or non-standard methods for linking systems together that are not already in use at the company?"
+    ]
+  },
+  {
+    key: "regulatory",
+    title: "Regulatory",
+    icon: Scale,
+    color: "text-teal-600",
+    bgColor: "bg-teal-50",
+    borderColor: "border-teal-100",
+    questions: [
+      "Does this system need to comply with any laws, government regulations, or industry standards? (e.g. Australian Privacy Act, GDPR, food safety laws, financial regulations, Peppol e-invoicing)",
+      "Will it affect financial reporting, external audits, or require specific certifications or regulatory approvals?",
+      "If this system were non-compliant, would the consequences be limited to internal policy issues, or could there be fines, legal action, or government sanctions?"
+    ]
+  },
+  {
+    key: "ai",
+    title: "AI / ML",
+    icon: Bot,
+    color: "text-indigo-600",
+    bgColor: "bg-indigo-50",
+    borderColor: "border-indigo-100",
+    questions: [
+      "Will this system use any artificial intelligence or machine learning features? (e.g. predictions, recommendations, automation, generative AI)",
+      "If yes — will AI-generated outputs be automatically acted on, or does a human always review and approve before anything happens?",
+      "How serious would the consequences be if the AI made an error? (e.g. minor inconvenience vs. financial losses, medical harm, legal exposure, or regulatory breach)"
+    ]
+  }
+];
+
+type ImpactLevel = "none" | "low" | "medium" | "high";
+type ImpactAnswers = {
+  [area: string]: { q1: string; q2: string; q3: string };
+};
+
+function ImpactQuestionCard({
+  area,
+  answers,
+  onChange
+}: {
+  area: typeof IMPACT_AREA_CONFIG[0];
+  answers: { q1: string; q2: string; q3: string };
+  onChange: (q: "q1" | "q2" | "q3", value: string) => void;
+}) {
+  const Icon = area.icon;
   return (
-    <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card/50">
+    <div className={`border rounded-xl p-5 space-y-4 ${area.borderColor} ${area.bgColor}/30`}>
+      <div className="flex items-center gap-2">
+        <div className={`p-1.5 rounded-lg ${area.bgColor}`}>
+          <Icon className={`w-4 h-4 ${area.color}`} />
+        </div>
+        <span className="font-semibold text-sm">{area.title} Impact</span>
+      </div>
+      <div className="space-y-3">
+        {(["q1", "q2", "q3"] as const).map((qKey, i) => (
+          <div key={qKey}>
+            <Label className="text-xs text-muted-foreground mb-1.5 leading-snug block">
+              {i + 1}. {area.questions[i]}
+            </Label>
+            <Textarea
+              value={answers[qKey]}
+              onChange={e => onChange(qKey, e.target.value)}
+              placeholder="Your answer…"
+              className="min-h-[60px] text-sm"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DerivedImpactCard({
+  area,
+  level,
+  details,
+  onLevelChange,
+  onDetailsChange
+}: {
+  area: typeof IMPACT_AREA_CONFIG[0];
+  level: ImpactLevel;
+  details: string;
+  onLevelChange: (level: ImpactLevel) => void;
+  onDetailsChange: (value: string) => void;
+}) {
+  const Icon = area.icon;
+  const [editing, setEditing] = useState(false);
+  return (
+    <div className={`border rounded-xl p-4 space-y-3 ${area.borderColor} bg-card`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Label className="mb-0 text-base">{title}</Label>
-          <button type="button" onClick={() => setShowGuidance(!showGuidance)} className="text-muted-foreground hover:text-primary transition-colors">
-            <Info className="w-4 h-4" />
+          <div className={`p-1.5 rounded-lg ${area.bgColor}`}>
+            <Icon className={`w-4 h-4 ${area.color}`} />
+          </div>
+          <span className="font-semibold text-sm">{area.title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`px-3 py-1 rounded-full text-xs font-bold border capitalize ${IMPACT_COLORS[level]}`}>
+            {level}
+          </span>
+          <button
+            type="button"
+            onClick={() => setEditing(!editing)}
+            className="text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-2"
+          >
+            {editing ? "Done" : "Override"}
           </button>
         </div>
-        <div className="flex gap-2">
-          {IMPACT_LEVELS.map(level => (
+      </div>
+
+      {editing && (
+        <div className="flex gap-1.5 flex-wrap">
+          {IMPACT_LEVELS.map(l => (
             <button
-              key={level.value}
+              key={l.value}
               type="button"
-              onClick={() => setImpactLevel(fieldName, level.value)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                currentLevel === level.value
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+              onClick={() => onLevelChange(l.value as ImpactLevel)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                level === l.value
+                  ? IMPACT_COLORS[l.value] + " shadow-sm"
+                  : "bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80"
               }`}
             >
-              {level.label}
+              {l.label}
             </button>
           ))}
         </div>
-      </div>
-
-      {showGuidance && (
-        <div className="bg-primary/5 border border-primary/20 p-3 rounded-xl text-sm text-primary/80 animate-in fade-in slide-in-from-top-2">
-          {guidance}
-        </div>
       )}
 
-      <div>
-        <Label className="text-xs mb-2">Details supporting the impact level selection</Label>
-        <Textarea
-          name={detailsKey}
-          value={(formData[detailsKey] as string) || ""}
-          onChange={handleChange}
-          placeholder={currentLevel === "none" ? "Provide rationale for selecting no impact" : `Elaborate on the ${currentLevel} impact...`}
-          className="min-h-[80px]"
-          required
-        />
-      </div>
+      <p className="text-sm text-muted-foreground leading-relaxed">{details}</p>
+
+      {editing && (
+        <div>
+          <Label className="text-xs mb-1.5">Edit rationale</Label>
+          <Textarea
+            value={details}
+            onChange={e => onDetailsChange(e.target.value)}
+            className="min-h-[70px] text-sm"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -107,7 +227,7 @@ export default function RequestForm() {
     expectedUserBase: "",
     deploymentModel: "tbd",
     targetGoLiveDate: "",
-    
+
     securityImpactLevel: "none",
     securityImpactDetails: "",
     dataImpactLevel: "none",
@@ -118,13 +238,24 @@ export default function RequestForm() {
     regulatoryImpactDetails: "",
     aiImpactLevel: "none",
     aiImpactDetails: "",
-    
+
     submittedBy: "Jane Doe",
     priority: "medium",
     jiraInitiativeId: null
   });
 
   const [regionInput, setRegionInput] = useState("");
+
+  const [impactAnswers, setImpactAnswers] = useState<ImpactAnswers>({
+    security: { q1: "", q2: "", q3: "" },
+    data: { q1: "", q2: "", q3: "" },
+    integration: { q1: "", q2: "", q3: "" },
+    regulatory: { q1: "", q2: "", q3: "" },
+    ai: { q1: "", q2: "", q3: "" }
+  });
+  const [isAnalysing, setIsAnalysing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [analysisComplete, setAnalysisComplete] = useState(false);
 
   const { data: initiatives, isLoading: isLoadingJira } = useQuery<JiraInitiative[]>({
     queryKey: ['/api/jira/initiatives'],
@@ -157,7 +288,6 @@ export default function RequestForm() {
   const handleJiraSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     const jiraId = value ? parseInt(value, 10) : null;
-    
     setFormData(prev => {
       const newData = { ...prev, jiraInitiativeId: jiraId };
       if (jiraId && initiatives) {
@@ -205,6 +335,59 @@ export default function RequestForm() {
   const setImpactLevel = (area: string, level: string) => {
     setFormData(prev => ({ ...prev, [`${area}ImpactLevel`]: level }));
   };
+
+  const handleImpactAnswerChange = (area: string, q: "q1" | "q2" | "q3", value: string) => {
+    setImpactAnswers(prev => ({
+      ...prev,
+      [area]: { ...prev[area], [q]: value }
+    }));
+    if (analysisComplete) setAnalysisComplete(false);
+  };
+
+  const handleAnalyseImpact = async () => {
+    setIsAnalysing(true);
+    setAnalysisError(null);
+    try {
+      const res = await fetch("/api/impact-assessment/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestTitle: formData.title,
+          requestDescription: formData.description,
+          answers: impactAnswers
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Analysis failed");
+      }
+      const data = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        securityImpactLevel: data.securityImpactLevel,
+        securityImpactDetails: data.securityImpactDetails,
+        dataImpactLevel: data.dataImpactLevel,
+        dataImpactDetails: data.dataImpactDetails,
+        integrationImpactLevel: data.integrationImpactLevel,
+        integrationImpactDetails: data.integrationImpactDetails,
+        regulatoryImpactLevel: data.regulatoryImpactLevel,
+        regulatoryImpactDetails: data.regulatoryImpactDetails,
+        aiImpactLevel: data.aiImpactLevel,
+        aiImpactDetails: data.aiImpactDetails
+      }));
+      setAnalysisComplete(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setAnalysisError(msg);
+    } finally {
+      setIsAnalysing(false);
+    }
+  };
+
+  const hasAnswers = IMPACT_AREA_CONFIG.some(a => {
+    const ans = impactAnswers[a.key];
+    return ans.q1.trim() || ans.q2.trim() || ans.q3.trim();
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -354,12 +537,12 @@ export default function RequestForm() {
                 <p className="text-sm text-muted-foreground mb-3">
                   Select the JIRA epic or initiative this ARR relates to. This helps track architecture reviews alongside project delivery.
                 </p>
-                
+
                 {isLoadingJira ? (
                   <div className="h-10 bg-secondary/50 rounded-xl animate-pulse"></div>
                 ) : (
-                  <Select 
-                    value={formData.jiraInitiativeId?.toString() || ""} 
+                  <Select
+                    value={formData.jiraInitiativeId?.toString() || ""}
                     onChange={handleJiraSelect}
                   >
                     <option value="">-- Select an initiative --</option>
@@ -374,9 +557,9 @@ export default function RequestForm() {
 
               {selectedInitiative && (
                 <div className="mt-4 p-4 border border-indigo-100 bg-indigo-50/30 rounded-xl relative">
-                  <button 
+                  <button
                     type="button"
-                    onClick={() => setFormData(prev => ({...prev, jiraInitiativeId: null}))}
+                    onClick={() => setFormData(prev => ({ ...prev, jiraInitiativeId: null }))}
                     className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 transition-colors"
                   >
                     <X className="w-5 h-5" />
@@ -403,7 +586,6 @@ export default function RequestForm() {
               <CardTitle>1. Request Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <Label>Project/Initiative Name</Label>
@@ -431,7 +613,7 @@ export default function RequestForm() {
                     />
                   )}
                 </div>
-                
+
                 <div className="md:col-span-2">
                   <Label>Project/Initiative Description</Label>
                   <Textarea required name="description" value={formData.description} onChange={handleChange} placeholder="Briefly describe the initiative..." />
@@ -451,7 +633,7 @@ export default function RequestForm() {
                     <option value="Supply Chain">Supply Chain</option>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label>Request Type</Label>
                   <Select name="requestType" value={formData.requestType} onChange={handleChange}>
@@ -525,8 +707,8 @@ export default function RequestForm() {
                 <div className="md:col-span-2">
                   <Label>In-Scope Regions / Countries</Label>
                   <div className="space-y-3">
-                    <Input 
-                      placeholder="Type a region and press Enter or comma..." 
+                    <Input
+                      placeholder="Type a region and press Enter or comma..."
                       value={regionInput}
                       onChange={(e) => setRegionInput(e.target.value)}
                       onKeyDown={handleRegionKeyDown}
@@ -536,7 +718,11 @@ export default function RequestForm() {
                         {formData.inScopeRegions.map((region, i) => (
                           <div key={i} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm font-medium">
                             {region}
-                            <button type="button" onClick={() => removeRegion(region)} className="hover:text-destructive transition-colors ml-1 focus:outline-none">
+                            <button
+                              type="button"
+                              onClick={() => removeRegion(region)}
+                              className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
+                            >
                               <X className="w-3 h-3" />
                             </button>
                           </div>
@@ -572,65 +758,119 @@ export default function RequestForm() {
             </CardContent>
           </Card>
 
-          {/* SECTION 2: IMPACT ASSESSMENT */}
+          {/* SECTION 2: IMPACT ASSESSMENT — Question-based with AI analysis */}
           <Card className="mb-8 shadow-sm">
             <CardHeader>
               <CardTitle>2. Impact Assessment</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <p className="text-sm text-muted-foreground mb-6">
-                Refer to the guidance below when selecting impact levels. Accurate scoring ensures the correct depth of review.
-              </p>
+              <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/15 rounded-xl">
+                <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-primary">AI-Assisted Impact Analysis</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Answer the questions below about your initiative. Once complete, click <strong>Analyse with AI</strong> and we'll automatically derive the Security, Data, Integration, Regulatory, and AI impact levels to populate the EA Triage section. You can review and edit the results before submitting.
+                  </p>
+                </div>
+              </div>
 
-              <ImpactRow 
-                area="Security" 
-                title="Security Impact" 
-                fieldName="security"
-                guidance={<><span className="font-bold text-red-600">None:</span> Only used inside the company by employees who already have approved login accounts — no sensitive information is involved. <span className="font-bold text-red-600">Low:</span> Used inside the company with standard login controls; only a small number of people outside the business (e.g. a partner team) may have access. <span className="font-bold text-red-600">Medium:</span> Introduces new ways for people to log in or access data, or handles sensitive internal information such as employee records or confidential business data. <span className="font-bold text-red-600">High:</span> Accessible from the internet and handles passwords, payment card details, personal information (e.g. names, addresses, health records), or connects company systems to external networks.</>}
-                formData={formData}
-                handleChange={handleChange}
-                setImpactLevel={setImpactLevel}
-              />
+              {/* Question cards */}
+              <div className="space-y-5">
+                {IMPACT_AREA_CONFIG.map(area => (
+                  <ImpactQuestionCard
+                    key={area.key}
+                    area={area}
+                    answers={impactAnswers[area.key] as { q1: string; q2: string; q3: string }}
+                    onChange={(q, value) => handleImpactAnswerChange(area.key, q, value)}
+                  />
+                ))}
+              </div>
 
-              <ImpactRow 
-                area="Data" 
-                title="Data Impact" 
-                fieldName="data"
-                guidance={<><span className="font-bold text-red-600">None:</span> Only uses publicly available information — nothing that needs to be kept private or protected. <span className="font-bold text-red-600">Low:</span> Uses everyday internal data (e.g. product lists, operational reports) that is not sensitive and stays within the team. <span className="font-bold text-red-600">Medium:</span> Involves important business data shared across departments, or introduces new ways of analysing data that could affect decisions company-wide. <span className="font-bold text-red-600">High:</span> Handles personal information (e.g. customer names, addresses, health details), financial records, or data that must be kept in specific countries due to local laws.</>}
-                formData={formData}
-                handleChange={handleChange}
-                setImpactLevel={setImpactLevel}
-              />
+              {/* Analyse button */}
+              <div className="pt-2">
+                {analysisError && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 mb-4">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Analysis failed: {analysisError}. Please try again.</span>
+                  </div>
+                )}
 
-              <ImpactRow 
-                area="Integration" 
-                title="Integration Impact" 
-                fieldName="integration"
-                guidance={<><span className="font-bold text-red-600">None:</span> This change does not connect to any other system — it works completely on its own. <span className="font-bold text-red-600">Low:</span> Connects to one or two existing internal systems using well-established, already-approved methods (e.g. a standard data feed or report). <span className="font-bold text-red-600">Medium:</span> Connects to several internal systems, or uses live data feeds where information is exchanged the moment something happens rather than in a scheduled batch. <span className="font-bold text-red-600">High:</span> Connects to systems outside the company (e.g. supplier portals, customer platforms, government services) or introduces a brand-new way of linking systems together.</>}
-                formData={formData}
-                handleChange={handleChange}
-                setImpactLevel={setImpactLevel}
-              />
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    onClick={handleAnalyseImpact}
+                    disabled={isAnalysing || !hasAnswers}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground"
+                  >
+                    {isAnalysing ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        Analysing…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        Analyse with AI
+                      </>
+                    )}
+                  </Button>
+                  {analysisComplete && (
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisComplete(false)}
+                      className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Re-analyse
+                    </button>
+                  )}
+                </div>
+              </div>
 
-              <ImpactRow 
-                area="Regulatory" 
-                title="Regulatory Impact" 
-                fieldName="regulatory"
-                guidance={<><span className="font-bold text-red-600">None:</span> No rules, laws, or audit requirements apply to this change — it has no compliance obligations. <span className="font-bold text-red-600">Low:</span> Must follow internal company policies or guidelines, but there are no external legal or regulatory requirements to meet. <span className="font-bold text-red-600">Medium:</span> Needs to meet external audit standards, financial reporting rules, or industry certification requirements (e.g. quality management, financial controls). <span className="font-bold text-red-600">High:</span> Involves legal obligations related to personal data privacy, food safety, health and safety, financial services regulations, or other laws where non-compliance could result in fines or legal action.</>}
-                formData={formData}
-                handleChange={handleChange}
-                setImpactLevel={setImpactLevel}
-              />
+              {/* Analysis results */}
+              <AnimatePresence>
+                {analysisComplete && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="flex items-center gap-2 pt-2">
+                      <div className="flex-1 border-t border-border" />
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                        <CheckCircle2 className="w-4 h-4" />
+                        Impact levels derived — review below
+                      </div>
+                      <div className="flex-1 border-t border-border" />
+                    </div>
 
-              <ImpactRow 
-                area="AI" 
-                title="AI Impact" 
-                fieldName="ai"
-                guidance={<><span className="font-bold text-red-600">None:</span> Does not use any artificial intelligence, machine learning, or AI-powered features whatsoever. <span className="font-bold text-red-600">Low:</span> Uses a ready-made AI feature that a software vendor has built in (e.g. a smart search or auto-complete toggle); a person always reviews and approves the AI's suggestions before anything happens. <span className="font-bold text-red-600">Medium:</span> Uses AI to route tasks, prioritise work, or make recommendations that influence how the business operates; may use company data to improve the AI's responses. <span className="font-bold text-red-600">High:</span> Uses AI to make or heavily influence decisions with real consequences for customers, employees, or finances (e.g. loan approvals, medical recommendations, automated customer communications) — especially in areas that could be subject to regulation or legal challenge.</>}
-                formData={formData}
-                handleChange={handleChange}
-                setImpactLevel={setImpactLevel}
-              />
+                    <p className="text-sm text-muted-foreground">
+                      The following impact levels have been derived from your answers and will be captured in the EA Triage section. You can override any level by clicking <strong>Override</strong> on the card.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {IMPACT_AREA_CONFIG.map(area => (
+                        <DerivedImpactCard
+                          key={area.key}
+                          area={area}
+                          level={formData[`${area.key}ImpactLevel` as keyof CreateArchitectureRequest] as ImpactLevel}
+                          details={formData[`${area.key}ImpactDetails` as keyof CreateArchitectureRequest] as string}
+                          onLevelChange={(level) => setImpactLevel(area.key, level)}
+                          onDetailsChange={(value) =>
+                            setFormData(prev => ({ ...prev, [`${area.key}ImpactDetails`]: value }))
+                          }
+                        />
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
+                      <ChevronRight className="w-4 h-4 shrink-0" />
+                      These levels are now saved and will be visible to the EA team in the Triage section once submitted.
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </CardContent>
           </Card>
 
