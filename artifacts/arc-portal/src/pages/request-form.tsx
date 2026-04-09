@@ -6,7 +6,7 @@ import { useCreateRequest } from "@workspace/api-client-react";
 import type { CreateArchitectureRequest } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Layers, ChevronDown, Search, Sparkles, Shield, Database, GitBranch, Scale, Bot, CheckCircle2, AlertCircle, ChevronRight, RotateCcw, MessageSquare } from "lucide-react";
+import { ArrowLeft, X, Layers, ChevronDown, Search, Sparkles, Shield, Database, GitBranch, Scale, Bot, CheckCircle2, AlertCircle, ChevronRight, RotateCcw, MessageSquare, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
 
@@ -41,7 +41,8 @@ const IMPACT_AREA_CONFIG = [
           "Internal employees only (via existing corporate login)",
           "Internal employees + small number of external partners (controlled access)",
           "Customers or members of the public (internet-accessible)",
-          "Mixed internal and broad external user base"
+          "Mixed internal and broad external user base",
+          "Not sure"
         ]
       },
       {
@@ -50,16 +51,19 @@ const IMPACT_AREA_CONFIG = [
           "No — public or non-sensitive information only",
           "Internal business data only (no PII or financial data)",
           "Sensitive internal data (e.g. employee records, confidential documents)",
-          "Highly sensitive data (PII, payment cards, health records, passwords)"
+          "Highly sensitive data (PII, payment cards, health records, passwords)",
+          "Not sure"
         ]
       },
       {
         question: "Does it introduce new login methods or connect company systems to external networks?",
+        showPatternsLink: true,
         options: [
           "No new authentication methods or external connections",
           "Minor change to existing access or login approach",
           "New authentication method or identity provider",
-          "New connection to external network or third-party system"
+          "New connection to external network or third-party system",
+          "Not sure"
         ]
       },
       {
@@ -68,7 +72,8 @@ const IMPACT_AREA_CONFIG = [
           "No — internal corporate network only",
           "Limited — accessible to specific external parties via VPN or whitelist",
           "Partially internet-accessible (some public endpoints)",
-          "Fully public-facing application"
+          "Fully public-facing application",
+          "Not sure"
         ]
       },
       {
@@ -77,7 +82,8 @@ const IMPACT_AREA_CONFIG = [
           "No security testing or certification required",
           "Internal security review only",
           "Penetration testing or vulnerability assessment required",
-          "External security audit or compliance certification (e.g. ISO 27001, SOC 2)"
+          "External security audit or compliance certification (e.g. ISO 27001, SOC 2)",
+          "Not sure"
         ]
       }
     ]
@@ -96,7 +102,8 @@ const IMPACT_AREA_CONFIG = [
           "Publicly available information only",
           "Non-sensitive internal operational data (e.g. product lists, reports)",
           "Sensitive internal data (e.g. employee records, confidential business data)",
-          "Customer PII, financial records, or regulated health data"
+          "Customer PII, financial records, or regulated health data",
+          "Not sure"
         ]
       },
       {
@@ -105,16 +112,19 @@ const IMPACT_AREA_CONFIG = [
           "No — no PII, financial data, or residency obligations",
           "Some internal staff data only",
           "Customer or supplier personal data",
-          "Regulated financial data, health records, or strict data residency requirements"
+          "Regulated financial data, health records, or strict data residency requirements",
+          "Not sure"
         ]
       },
       {
         question: "Will data be shared or analysed across multiple business departments?",
+        showPatternsLink: true,
         options: [
           "No cross-department data sharing",
           "Limited sharing within one business unit",
           "Cross-department data integration or reporting",
-          "Enterprise-wide analytics platform or major new data capability"
+          "Enterprise-wide analytics platform or major new data capability",
+          "Not sure"
         ]
       },
       {
@@ -123,7 +133,8 @@ const IMPACT_AREA_CONFIG = [
           "Small volume, short-term retention (less than 1 year)",
           "Moderate volume, standard retention (1–5 years)",
           "Large volume or long-term retention (5+ years)",
-          "Very large volume with regulatory retention requirements"
+          "Very large volume with regulatory retention requirements",
+          "Not sure"
         ]
       },
       {
@@ -132,7 +143,8 @@ const IMPACT_AREA_CONFIG = [
           "No third-party data sharing",
           "Shared with approved internal teams only",
           "Shared with trusted external partners under data-sharing agreement",
-          "Shared with or accessible by government or public entities"
+          "Shared with or accessible by government or public entities",
+          "Not sure"
         ]
       }
     ]
@@ -151,25 +163,30 @@ const IMPACT_AREA_CONFIG = [
           "None — the system operates completely independently",
           "1–2 internal systems only, using existing approved methods",
           "3–5 internal systems, or one external connection",
-          "Multiple systems including external parties (suppliers, customers, or government)"
+          "Multiple systems including external parties (suppliers, customers, or government)",
+          "Not sure"
         ]
       },
       {
         question: "How will data move between systems?",
+        showPatternsLink: true,
         options: [
           "No data movement between systems",
           "Scheduled batch transfers only (e.g. nightly file drops)",
           "Near real-time or event-triggered data flows",
-          "Fully real-time, high-frequency event streaming"
+          "Fully real-time, high-frequency event streaming",
+          "Not sure"
         ]
       },
       {
         question: "Does this introduce new or non-standard integration methods?",
+        showPatternsLink: true,
         options: [
           "No — uses existing approved integration patterns only",
           "Minor variation on existing patterns",
           "New approach but based on industry standards",
-          "Entirely new or bespoke integration method"
+          "Entirely new or bespoke integration method",
+          "Not sure"
         ]
       },
       {
@@ -178,7 +195,8 @@ const IMPACT_AREA_CONFIG = [
           "No impact — the system works independently",
           "Minor inconvenience — users can retry or wait",
           "Significant delay to business operations",
-          "Critical business process stops immediately"
+          "Critical business process stops immediately",
+          "Not sure"
         ]
       },
       {
@@ -187,7 +205,8 @@ const IMPACT_AREA_CONFIG = [
           "All systems are modern or cloud-based",
           "Mostly modern, with one or two legacy components",
           "Significant legacy system involvement",
-          "Primarily legacy systems requiring special technical handling"
+          "Primarily legacy systems requiring special technical handling",
+          "Not sure"
         ]
       }
     ]
@@ -202,11 +221,13 @@ const IMPACT_AREA_CONFIG = [
     questions: [
       {
         question: "Which laws, regulations, or industry standards must this system comply with?",
+        showPatternsLink: true,
         options: [
           "None — no regulatory obligations apply",
           "Internal company policies and guidelines only",
           "Industry standards or certifications (e.g. ISO, SOC 2, quality management)",
-          "Government legislation (e.g. Privacy Act, GDPR, food safety laws, financial regulations)"
+          "Government legislation (e.g. Privacy Act, GDPR, food safety laws, financial regulations)",
+          "Not sure"
         ]
       },
       {
@@ -215,7 +236,8 @@ const IMPACT_AREA_CONFIG = [
           "No financial reporting or audit impact",
           "Affects internal financial tracking or management reporting only",
           "Affects external audit or regulatory reporting",
-          "Requires regulatory certification or formal approval before go-live"
+          "Requires regulatory certification or formal approval before go-live",
+          "Not sure"
         ]
       },
       {
@@ -224,7 +246,8 @@ const IMPACT_AREA_CONFIG = [
           "Internal policy issue — handled through normal governance",
           "Reputational or contractual risk with partners",
           "Financial penalties or regulatory fines are possible",
-          "Legal action, government sanctions, or inability to operate the business"
+          "Legal action, government sanctions, or inability to operate the business",
+          "Not sure"
         ]
       },
       {
@@ -233,7 +256,8 @@ const IMPACT_AREA_CONFIG = [
           "Single country, single jurisdiction",
           "Multiple regions within one country",
           "Multiple countries with broadly similar regulations",
-          "Multiple countries with significantly different regulatory requirements"
+          "Multiple countries with significantly different regulatory requirements",
+          "Not sure"
         ]
       },
       {
@@ -242,7 +266,8 @@ const IMPACT_AREA_CONFIG = [
           "Well established — controls, processes, and expertise already in place",
           "Partially established — some gaps exist but foundation is there",
           "Limited — significant capability uplift needed",
-          "Not established — starting from scratch with no existing capability"
+          "Not established — starting from scratch with no existing capability",
+          "Not sure"
         ]
       }
     ]
@@ -257,11 +282,13 @@ const IMPACT_AREA_CONFIG = [
     questions: [
       {
         question: "Will this system use any artificial intelligence or machine learning?",
+        showPatternsLink: true,
         options: [
           "No AI or ML features whatsoever",
           "Vendor-provided AI feature (e.g. smart search, autocomplete) — off the shelf",
           "Custom ML models, generative AI, or AI-driven recommendations",
-          "AI is the core function — the system primarily operates through AI/ML"
+          "AI is the core function — the system primarily operates through AI/ML",
+          "Not sure"
         ]
       },
       {
@@ -270,7 +297,8 @@ const IMPACT_AREA_CONFIG = [
           "Not applicable — no AI",
           "AI outputs are informational only; humans always decide and approve",
           "AI outputs inform automated processes but significant human oversight exists",
-          "AI outputs trigger automated actions with limited or no human review"
+          "AI outputs trigger automated actions with limited or no human review",
+          "Not sure"
         ]
       },
       {
@@ -279,7 +307,8 @@ const IMPACT_AREA_CONFIG = [
           "Minimal — minor inconvenience with easy correction",
           "Moderate — operational disruption or efficiency loss",
           "Significant — financial loss, reputational damage, or customer harm",
-          "Severe — legal liability, health/safety risk, or regulatory breach"
+          "Severe — legal liability, health/safety risk, or regulatory breach",
+          "Not sure"
         ]
       },
       {
@@ -288,16 +317,19 @@ const IMPACT_AREA_CONFIG = [
           "No — no company or customer data is used",
           "Uses anonymised or aggregated internal data only",
           "Uses identifiable internal business data",
-          "Uses customer PII or sensitive regulated data for training or inference"
+          "Uses customer PII or sensitive regulated data for training or inference",
+          "Not sure"
         ]
       },
       {
         question: "Is the AI's decision-making process explainable and auditable?",
+        showPatternsLink: true,
         options: [
           "Not applicable — no AI",
           "Yes — full audit trail and explainability is built in",
           "Partial — some logging exists but explainability is limited",
-          "No — black-box model with no explainability or audit mechanism"
+          "No — black-box model with no explainability or audit mechanism",
+          "Not sure"
         ]
       }
     ]
@@ -337,11 +369,27 @@ function ImpactQuestionCard({
       </div>
 
       <div className="p-5 space-y-4">
-        {qKeys.map((qKey, i) => (
+        {qKeys.map((qKey, i) => {
+          const q = area.questions[i] as { question: string; options: string[]; showPatternsLink?: boolean };
+          return (
           <div key={qKey}>
-            <Label className="text-xs font-medium mb-1.5 leading-snug block text-foreground/80">
-              {i + 1}. {area.questions[i].question}
-            </Label>
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <Label className="text-xs font-medium leading-snug text-foreground/80">
+                {i + 1}. {q.question}
+              </Label>
+              {q.showPatternsLink && (
+                <a
+                  href="/patterns"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap font-medium"
+                  title="View Architecture Patterns for guidance"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Architecture Patterns
+                </a>
+              )}
+            </div>
             <select
               value={answers[qKey]}
               onChange={e => onAnswer(qKey, e.target.value)}
@@ -352,12 +400,13 @@ function ImpactQuestionCard({
               }`}
             >
               <option value="">— Select an option —</option>
-              {area.questions[i].options.map(opt => (
+              {q.options.map(opt => (
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
           </div>
-        ))}
+          );
+        })}
 
         <div className="pt-1 border-t border-border/40">
           <div className="flex items-center gap-1.5 mb-1.5">
