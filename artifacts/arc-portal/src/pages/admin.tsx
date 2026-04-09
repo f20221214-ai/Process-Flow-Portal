@@ -44,8 +44,9 @@ export default function AdminPage() {
               <h2 className="font-semibold text-foreground mb-1">Seed Demo Data</h2>
               <p className="text-sm text-muted-foreground">
                 This will add 4 JIRA initiatives, 4 architecture review requests (Digital Agriculture,
-                MES Modernisation, E-Invoicing, AI Pilot for Marketing), and 35 KPI metrics.
-                Existing records are not overwritten.
+                MES Modernisation, E-Invoicing, AI Pilot for Marketing), 35 KPI metrics, and
+                8 architecture patterns (API Gateway, Event-Driven, OT/IT Security DMZ, Cloud Landing Zone, and more).
+                Existing records are not overwritten. Architecture patterns are always refreshed to the latest sample set.
               </p>
             </div>
           </div>
@@ -69,10 +70,11 @@ export default function AdminPage() {
                 <li>JIRA initiatives added: <strong>{result.jiraInitiatives}</strong></li>
                 <li>Architecture requests added: <strong>{result.architectureRequests}</strong></li>
                 <li>KPI metrics added: <strong>{result.kpiMetrics}</strong></li>
+                <li>Architecture patterns loaded: <strong>{result.architecturePatterns ?? 0}</strong></li>
               </ul>
-              {result.jiraInitiatives === 0 && result.architectureRequests === 0 && (
+              {result.jiraInitiatives === 0 && result.architectureRequests === 0 && result.kpiMetrics === 0 && (
                 <p className="text-xs text-green-600 dark:text-green-500 pt-1">
-                  All records already exist — no duplicates were created.
+                  All records already exist — no duplicates were created. Architecture patterns refreshed.
                 </p>
               )}
             </div>

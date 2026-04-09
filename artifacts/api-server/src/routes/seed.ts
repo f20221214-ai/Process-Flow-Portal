@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { jiraInitiativesTable, architectureRequestsTable, kpiMetricsTable, knowledgeBaseArticlesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -707,19 +707,17 @@ Required attendees: James Walker (PM), Deepak Sharma (SA), Angela Ross (Sponsor)
       results.kpiMetrics = 0;
     }
 
-    // 6. Seed Architecture Patterns if empty
-    const existingPatterns = await db.select().from(knowledgeBaseArticlesTable).limit(1);
-    if (existingPatterns.length === 0) {
-      const patternsToInsert = PATTERNS_SEED.map(p => ({
-        ...p,
-        tags: JSON.stringify(p.tags),
-        technologies: JSON.stringify(p.technologies),
-      }));
-      await db.insert(knowledgeBaseArticlesTable).values(patternsToInsert as any);
-      results.architecturePatterns = PATTERNS_SEED.length;
-    } else {
-      results.architecturePatterns = 0;
-    }
+    // 6. Seed Architecture Patterns — always delete and re-insert to ensure sample data is present
+    const patternsToInsert = PATTERNS_SEED.map(p => ({
+      ...p,
+      tags: JSON.stringify(p.tags),
+      technologies: JSON.stringify(p.technologies),
+    }));
+    const seedTitles = patternsToInsert.map(p => p.title);
+    await db.delete(knowledgeBaseArticlesTable)
+      .where(inArray(knowledgeBaseArticlesTable.title, seedTitles));
+    await db.insert(knowledgeBaseArticlesTable).values(patternsToInsert as any);
+    results.architecturePatterns = PATTERNS_SEED.length;
 
     res.json({ success: true, seeded: results, message: "Demo data seeded successfully." });
   } catch (err: any) {
