@@ -8,7 +8,8 @@ import { useGetRequest, useUpdateRequest, useListSessions, useListOutcomes } fro
 import { format } from "date-fns";
 import { formatLabel } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity, Sparkles, BookOpen, CheckCircle2, Circle, ArrowRight, TrendingUp } from "lucide-react";
+import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity, Sparkles, BookOpen, CheckCircle2, Circle, ArrowRight, TrendingUp, FileDown } from "lucide-react";
+import { generateArchitectureTemplate } from "@/lib/generate-architecture-template";
 import { Link } from "wouter";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -772,6 +773,28 @@ export default function RequestDetail() {
                     {updateMutation.isPending ? "Saving..." : "Save Triage Updates"}
                   </Button>
                 </form>
+
+                {request && (
+                  <div className="mt-4 pt-4 border-t border-indigo-100">
+                    <div className="flex items-start gap-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl mb-3">
+                      <FileDown className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs font-semibold text-indigo-900">Architecture Document Template</p>
+                        <p className="text-xs text-indigo-700/70 mt-0.5 leading-snug">
+                          Generates a pre-filled Word document with all required architecture views based on the triage above, ready for the Solution Architect to complete.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => generateArchitectureTemplate(request as any, triageData)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-50 text-indigo-700 text-sm font-medium transition-colors"
+                    >
+                      <FileDown className="w-4 h-4" />
+                      Download Architecture Template (.doc)
+                    </button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
