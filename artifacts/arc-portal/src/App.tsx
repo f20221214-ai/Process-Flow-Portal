@@ -13,6 +13,7 @@ import SessionsPage from "./pages/sessions";
 import OutcomesPage from "./pages/outcomes";
 import JiraInitiatives from "./pages/jira-initiatives";
 import KpisPage from "./pages/kpis";
+import ExecutiveDashboardPage from "./pages/executive-dashboard";
 import ProcessGuidePage from "./pages/process-guide";
 import AdminPage from "./pages/admin";
 import KnowledgeBaseIndex from "./pages/knowledge-base-index";
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/sessions" component={SessionsPage} />
       <Route path="/outcomes" component={OutcomesPage} />
       <Route path="/kpis" component={KpisPage} />
+      <Route path="/executive-dashboard" component={ExecutiveDashboardPage} />
       <Route path="/process-guide" component={ProcessGuidePage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/knowledge-base/new" component={KnowledgeBaseForm} />
