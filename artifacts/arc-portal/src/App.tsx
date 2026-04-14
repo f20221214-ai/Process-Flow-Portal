@@ -12,6 +12,7 @@ import RequestDetail from "./pages/request-detail";
 import SessionsPage from "./pages/sessions";
 import OutcomesPage from "./pages/outcomes";
 import JiraInitiatives from "./pages/jira-initiatives";
+import LeanixInitiatives from "./pages/leanix-initiatives";
 import KpisPage from "./pages/kpis";
 import ExecutiveDashboardPage from "./pages/executive-dashboard";
 import ProcessGuidePage from "./pages/process-guide";
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/requests/new" component={RequestForm} />
       <Route path="/requests/:id" component={RequestDetail} />
       <Route path="/jira" component={JiraInitiatives} />
+      <Route path="/leanix" component={LeanixInitiatives} />
       <Route path="/sessions" component={SessionsPage} />
       <Route path="/outcomes" component={OutcomesPage} />
       <Route path="/kpis" component={KpisPage} />

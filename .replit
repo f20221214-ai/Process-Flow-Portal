@@ -31,4 +31,3 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-LeanIX_API_token = "LXT_LPkSKu8RtGmWuHzKM6buwXWeDPeF25teExPDMUku"

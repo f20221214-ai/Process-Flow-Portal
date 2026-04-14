@@ -9,6 +9,27 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface LeanixInitiative {
+  id: number;
+  leanixId: string;
+  name: string;
+  description?: string | null;
+  lifecycle?: string | null;
+  status: string;
+  responsible?: string | null;
+  tags: string[];
+  leanixUrl?: string | null;
+  syncedAt: string;
+  createdAt: string;
+}
+
+export interface LeanixSyncResult {
+  synced: number;
+  added: number;
+  updated: number;
+  lastSyncedAt: string;
+}
+
 export interface JiraInitiative {
   id: number;
   jiraKey: string;
@@ -438,3 +459,85 @@ export interface CreateReviewOutcome {
   notes?: string | null;
   createdBy: string;
 }
+
+export type KbArticleCategory =
+  (typeof KbArticleCategory)[keyof typeof KbArticleCategory];
+
+export const KbArticleCategory = {
+  pattern: "pattern",
+  reference_architecture: "reference_architecture",
+  best_practice: "best_practice",
+  external_link: "external_link",
+} as const;
+
+export type KbArticleStatus =
+  (typeof KbArticleStatus)[keyof typeof KbArticleStatus];
+
+export const KbArticleStatus = {
+  published: "published",
+  draft: "draft",
+  archived: "archived",
+} as const;
+
+export interface KbArticle {
+  id: number;
+  title: string;
+  category: KbArticleCategory;
+  tags: string[];
+  content: string;
+  externalUrl?: string | null;
+  owner: string;
+  technologies: string[];
+  status: KbArticleStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateKbArticleCategory =
+  (typeof CreateKbArticleCategory)[keyof typeof CreateKbArticleCategory];
+
+export const CreateKbArticleCategory = {
+  pattern: "pattern",
+  reference_architecture: "reference_architecture",
+  best_practice: "best_practice",
+  external_link: "external_link",
+} as const;
+
+export type CreateKbArticleStatus =
+  (typeof CreateKbArticleStatus)[keyof typeof CreateKbArticleStatus];
+
+export const CreateKbArticleStatus = {
+  published: "published",
+  draft: "draft",
+  archived: "archived",
+} as const;
+
+export interface CreateKbArticle {
+  title: string;
+  category?: CreateKbArticleCategory;
+  tags?: string[];
+  content?: string;
+  externalUrl?: string | null;
+  owner: string;
+  technologies?: string[];
+  status?: CreateKbArticleStatus;
+}
+
+export interface UpdateKbArticle {
+  title?: string;
+  category?: string;
+  tags?: string[];
+  content?: string;
+  externalUrl?: string | null;
+  owner?: string;
+  technologies?: string[];
+  status?: string;
+}
+
+export type DeleteKbArticle200 = {
+  success?: boolean;
+};
+
+export type LinkKbArticleToRequestBody = {
+  articleId: number;
+};

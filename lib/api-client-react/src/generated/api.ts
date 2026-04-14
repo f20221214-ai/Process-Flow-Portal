@@ -21,13 +21,20 @@ import type {
   ArchitectureRequest,
   CreateArcSession,
   CreateArchitectureRequest,
+  CreateKbArticle,
   CreateReviewOutcome,
+  DeleteKbArticle200,
   HealthStatus,
   JiraInitiative,
   JiraSyncResult,
+  KbArticle,
+  LeanixInitiative,
+  LeanixSyncResult,
+  LinkKbArticleToRequestBody,
   ReviewOutcome,
   UpdateArcSession,
   UpdateArchitectureRequest,
+  UpdateKbArticle,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1012,4 +1019,847 @@ export const useSyncJiraInitiatives = <
   TContext
 > => {
   return useMutation(getSyncJiraInitiativesMutationOptions(options));
+};
+
+/**
+ * @summary List LeanIX initiatives
+ */
+export const getListLeanixInitiativesUrl = () => {
+  return `/api/leanix/initiatives`;
+};
+
+export const listLeanixInitiatives = async (
+  options?: RequestInit,
+): Promise<LeanixInitiative[]> => {
+  return customFetch<LeanixInitiative[]>(getListLeanixInitiativesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListLeanixInitiativesQueryKey = () => {
+  return [`/api/leanix/initiatives`] as const;
+};
+
+export const getListLeanixInitiativesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listLeanixInitiatives>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listLeanixInitiatives>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListLeanixInitiativesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listLeanixInitiatives>>
+  > = ({ signal }) => listLeanixInitiatives({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listLeanixInitiatives>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListLeanixInitiativesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listLeanixInitiatives>>
+>;
+export type ListLeanixInitiativesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List LeanIX initiatives
+ */
+
+export function useListLeanixInitiatives<
+  TData = Awaited<ReturnType<typeof listLeanixInitiatives>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listLeanixInitiatives>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListLeanixInitiativesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Trigger LeanIX sync from API
+ */
+export const getSyncLeanixInitiativesUrl = () => {
+  return `/api/leanix/sync`;
+};
+
+export const syncLeanixInitiatives = async (
+  options?: RequestInit,
+): Promise<LeanixSyncResult> => {
+  return customFetch<LeanixSyncResult>(getSyncLeanixInitiativesUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSyncLeanixInitiativesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof syncLeanixInitiatives>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof syncLeanixInitiatives>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["syncLeanixInitiatives"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof syncLeanixInitiatives>>,
+    void
+  > = () => {
+    return syncLeanixInitiatives(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SyncLeanixInitiativesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof syncLeanixInitiatives>>
+>;
+
+export type SyncLeanixInitiativesMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Trigger LeanIX sync from API
+ */
+export const useSyncLeanixInitiatives = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof syncLeanixInitiatives>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof syncLeanixInitiatives>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getSyncLeanixInitiativesMutationOptions(options));
+};
+
+/**
+ * @summary List all knowledge base articles
+ */
+export const getListKbArticlesUrl = () => {
+  return `/api/knowledge-base`;
+};
+
+export const listKbArticles = async (
+  options?: RequestInit,
+): Promise<KbArticle[]> => {
+  return customFetch<KbArticle[]>(getListKbArticlesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListKbArticlesQueryKey = () => {
+  return [`/api/knowledge-base`] as const;
+};
+
+export const getListKbArticlesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listKbArticles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listKbArticles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListKbArticlesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listKbArticles>>> = ({
+    signal,
+  }) => listKbArticles({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listKbArticles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListKbArticlesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listKbArticles>>
+>;
+export type ListKbArticlesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all knowledge base articles
+ */
+
+export function useListKbArticles<
+  TData = Awaited<ReturnType<typeof listKbArticles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listKbArticles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListKbArticlesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a knowledge base article
+ */
+export const getCreateKbArticleUrl = () => {
+  return `/api/knowledge-base`;
+};
+
+export const createKbArticle = async (
+  createKbArticle: CreateKbArticle,
+  options?: RequestInit,
+): Promise<KbArticle> => {
+  return customFetch<KbArticle>(getCreateKbArticleUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createKbArticle),
+  });
+};
+
+export const getCreateKbArticleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createKbArticle>>,
+    TError,
+    { data: BodyType<CreateKbArticle> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createKbArticle>>,
+  TError,
+  { data: BodyType<CreateKbArticle> },
+  TContext
+> => {
+  const mutationKey = ["createKbArticle"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createKbArticle>>,
+    { data: BodyType<CreateKbArticle> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createKbArticle(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateKbArticleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createKbArticle>>
+>;
+export type CreateKbArticleMutationBody = BodyType<CreateKbArticle>;
+export type CreateKbArticleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a knowledge base article
+ */
+export const useCreateKbArticle = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createKbArticle>>,
+    TError,
+    { data: BodyType<CreateKbArticle> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createKbArticle>>,
+  TError,
+  { data: BodyType<CreateKbArticle> },
+  TContext
+> => {
+  return useMutation(getCreateKbArticleMutationOptions(options));
+};
+
+/**
+ * @summary Get a specific KB article
+ */
+export const getGetKbArticleUrl = (id: number) => {
+  return `/api/knowledge-base/${id}`;
+};
+
+export const getKbArticle = async (
+  id: number,
+  options?: RequestInit,
+): Promise<KbArticle> => {
+  return customFetch<KbArticle>(getGetKbArticleUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetKbArticleQueryKey = (id: number) => {
+  return [`/api/knowledge-base/${id}`] as const;
+};
+
+export const getGetKbArticleQueryOptions = <
+  TData = Awaited<ReturnType<typeof getKbArticle>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getKbArticle>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetKbArticleQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getKbArticle>>> = ({
+    signal,
+  }) => getKbArticle(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getKbArticle>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetKbArticleQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getKbArticle>>
+>;
+export type GetKbArticleQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get a specific KB article
+ */
+
+export function useGetKbArticle<
+  TData = Awaited<ReturnType<typeof getKbArticle>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getKbArticle>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetKbArticleQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update a KB article
+ */
+export const getUpdateKbArticleUrl = (id: number) => {
+  return `/api/knowledge-base/${id}`;
+};
+
+export const updateKbArticle = async (
+  id: number,
+  updateKbArticle: UpdateKbArticle,
+  options?: RequestInit,
+): Promise<KbArticle> => {
+  return customFetch<KbArticle>(getUpdateKbArticleUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateKbArticle),
+  });
+};
+
+export const getUpdateKbArticleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateKbArticle>>,
+    TError,
+    { id: number; data: BodyType<UpdateKbArticle> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateKbArticle>>,
+  TError,
+  { id: number; data: BodyType<UpdateKbArticle> },
+  TContext
+> => {
+  const mutationKey = ["updateKbArticle"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateKbArticle>>,
+    { id: number; data: BodyType<UpdateKbArticle> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateKbArticle(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateKbArticleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateKbArticle>>
+>;
+export type UpdateKbArticleMutationBody = BodyType<UpdateKbArticle>;
+export type UpdateKbArticleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a KB article
+ */
+export const useUpdateKbArticle = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateKbArticle>>,
+    TError,
+    { id: number; data: BodyType<UpdateKbArticle> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateKbArticle>>,
+  TError,
+  { id: number; data: BodyType<UpdateKbArticle> },
+  TContext
+> => {
+  return useMutation(getUpdateKbArticleMutationOptions(options));
+};
+
+/**
+ * @summary Delete a KB article
+ */
+export const getDeleteKbArticleUrl = (id: number) => {
+  return `/api/knowledge-base/${id}`;
+};
+
+export const deleteKbArticle = async (
+  id: number,
+  options?: RequestInit,
+): Promise<DeleteKbArticle200> => {
+  return customFetch<DeleteKbArticle200>(getDeleteKbArticleUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteKbArticleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteKbArticle>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteKbArticle>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteKbArticle"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteKbArticle>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteKbArticle(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteKbArticleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteKbArticle>>
+>;
+
+export type DeleteKbArticleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a KB article
+ */
+export const useDeleteKbArticle = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteKbArticle>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteKbArticle>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteKbArticleMutationOptions(options));
+};
+
+/**
+ * @summary List KB articles linked to a request
+ */
+export const getListRequestKbArticlesUrl = (requestId: number) => {
+  return `/api/requests/${requestId}/kb-articles`;
+};
+
+export const listRequestKbArticles = async (
+  requestId: number,
+  options?: RequestInit,
+): Promise<KbArticle[]> => {
+  return customFetch<KbArticle[]>(getListRequestKbArticlesUrl(requestId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListRequestKbArticlesQueryKey = (requestId: number) => {
+  return [`/api/requests/${requestId}/kb-articles`] as const;
+};
+
+export const getListRequestKbArticlesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listRequestKbArticles>>,
+  TError = ErrorType<unknown>,
+>(
+  requestId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listRequestKbArticles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListRequestKbArticlesQueryKey(requestId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listRequestKbArticles>>
+  > = ({ signal }) =>
+    listRequestKbArticles(requestId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!requestId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listRequestKbArticles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListRequestKbArticlesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listRequestKbArticles>>
+>;
+export type ListRequestKbArticlesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List KB articles linked to a request
+ */
+
+export function useListRequestKbArticles<
+  TData = Awaited<ReturnType<typeof listRequestKbArticles>>,
+  TError = ErrorType<unknown>,
+>(
+  requestId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listRequestKbArticles>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListRequestKbArticlesQueryOptions(requestId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Link a KB article to a request
+ */
+export const getLinkKbArticleToRequestUrl = (requestId: number) => {
+  return `/api/requests/${requestId}/kb-articles`;
+};
+
+export const linkKbArticleToRequest = async (
+  requestId: number,
+  linkKbArticleToRequestBody: LinkKbArticleToRequestBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getLinkKbArticleToRequestUrl(requestId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(linkKbArticleToRequestBody),
+  });
+};
+
+export const getLinkKbArticleToRequestMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkKbArticleToRequest>>,
+    TError,
+    { requestId: number; data: BodyType<LinkKbArticleToRequestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof linkKbArticleToRequest>>,
+  TError,
+  { requestId: number; data: BodyType<LinkKbArticleToRequestBody> },
+  TContext
+> => {
+  const mutationKey = ["linkKbArticleToRequest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof linkKbArticleToRequest>>,
+    { requestId: number; data: BodyType<LinkKbArticleToRequestBody> }
+  > = (props) => {
+    const { requestId, data } = props ?? {};
+
+    return linkKbArticleToRequest(requestId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LinkKbArticleToRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof linkKbArticleToRequest>>
+>;
+export type LinkKbArticleToRequestMutationBody =
+  BodyType<LinkKbArticleToRequestBody>;
+export type LinkKbArticleToRequestMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Link a KB article to a request
+ */
+export const useLinkKbArticleToRequest = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof linkKbArticleToRequest>>,
+    TError,
+    { requestId: number; data: BodyType<LinkKbArticleToRequestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof linkKbArticleToRequest>>,
+  TError,
+  { requestId: number; data: BodyType<LinkKbArticleToRequestBody> },
+  TContext
+> => {
+  return useMutation(getLinkKbArticleToRequestMutationOptions(options));
+};
+
+/**
+ * @summary Remove a KB article link from a request
+ */
+export const getUnlinkKbArticleFromRequestUrl = (
+  requestId: number,
+  articleId: number,
+) => {
+  return `/api/requests/${requestId}/kb-articles/${articleId}`;
+};
+
+export const unlinkKbArticleFromRequest = async (
+  requestId: number,
+  articleId: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(
+    getUnlinkKbArticleFromRequestUrl(requestId, articleId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getUnlinkKbArticleFromRequestMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlinkKbArticleFromRequest>>,
+    TError,
+    { requestId: number; articleId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unlinkKbArticleFromRequest>>,
+  TError,
+  { requestId: number; articleId: number },
+  TContext
+> => {
+  const mutationKey = ["unlinkKbArticleFromRequest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unlinkKbArticleFromRequest>>,
+    { requestId: number; articleId: number }
+  > = (props) => {
+    const { requestId, articleId } = props ?? {};
+
+    return unlinkKbArticleFromRequest(requestId, articleId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnlinkKbArticleFromRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unlinkKbArticleFromRequest>>
+>;
+
+export type UnlinkKbArticleFromRequestMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Remove a KB article link from a request
+ */
+export const useUnlinkKbArticleFromRequest = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unlinkKbArticleFromRequest>>,
+    TError,
+    { requestId: number; articleId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unlinkKbArticleFromRequest>>,
+  TError,
+  { requestId: number; articleId: number },
+  TContext
+> => {
+  return useMutation(getUnlinkKbArticleFromRequestMutationOptions(options));
 };

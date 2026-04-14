@@ -533,3 +533,199 @@ export const SyncJiraInitiativesResponse = zod.object({
   updated: zod.number(),
   lastSyncedAt: zod.date(),
 });
+
+/**
+ * @summary List LeanIX initiatives
+ */
+export const ListLeanixInitiativesResponseItem = zod.object({
+  id: zod.number(),
+  leanixId: zod.string(),
+  name: zod.string(),
+  description: zod.string().nullish(),
+  lifecycle: zod.string().nullish(),
+  status: zod.string(),
+  responsible: zod.string().nullish(),
+  tags: zod.array(zod.string()),
+  leanixUrl: zod.string().nullish(),
+  syncedAt: zod.date(),
+  createdAt: zod.date(),
+});
+export const ListLeanixInitiativesResponse = zod.array(
+  ListLeanixInitiativesResponseItem,
+);
+
+/**
+ * @summary Trigger LeanIX sync from API
+ */
+export const SyncLeanixInitiativesResponse = zod.object({
+  synced: zod.number(),
+  added: zod.number(),
+  updated: zod.number(),
+  lastSyncedAt: zod.date(),
+});
+
+/**
+ * @summary List all knowledge base articles
+ */
+export const ListKbArticlesResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  category: zod.enum([
+    "pattern",
+    "reference_architecture",
+    "best_practice",
+    "external_link",
+  ]),
+  tags: zod.array(zod.string()),
+  content: zod.string(),
+  externalUrl: zod.string().nullish(),
+  owner: zod.string(),
+  technologies: zod.array(zod.string()),
+  status: zod.enum(["published", "draft", "archived"]),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+export const ListKbArticlesResponse = zod.array(ListKbArticlesResponseItem);
+
+/**
+ * @summary Create a knowledge base article
+ */
+export const CreateKbArticleBody = zod.object({
+  title: zod.string(),
+  category: zod
+    .enum([
+      "pattern",
+      "reference_architecture",
+      "best_practice",
+      "external_link",
+    ])
+    .optional(),
+  tags: zod.array(zod.string()).optional(),
+  content: zod.string().optional(),
+  externalUrl: zod.string().nullish(),
+  owner: zod.string(),
+  technologies: zod.array(zod.string()).optional(),
+  status: zod.enum(["published", "draft", "archived"]).optional(),
+});
+
+/**
+ * @summary Get a specific KB article
+ */
+export const GetKbArticleParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetKbArticleResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  category: zod.enum([
+    "pattern",
+    "reference_architecture",
+    "best_practice",
+    "external_link",
+  ]),
+  tags: zod.array(zod.string()),
+  content: zod.string(),
+  externalUrl: zod.string().nullish(),
+  owner: zod.string(),
+  technologies: zod.array(zod.string()),
+  status: zod.enum(["published", "draft", "archived"]),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Update a KB article
+ */
+export const UpdateKbArticleParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateKbArticleBody = zod.object({
+  title: zod.string().optional(),
+  category: zod.string().optional(),
+  tags: zod.array(zod.string()).optional(),
+  content: zod.string().optional(),
+  externalUrl: zod.string().nullish(),
+  owner: zod.string().optional(),
+  technologies: zod.array(zod.string()).optional(),
+  status: zod.string().optional(),
+});
+
+export const UpdateKbArticleResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  category: zod.enum([
+    "pattern",
+    "reference_architecture",
+    "best_practice",
+    "external_link",
+  ]),
+  tags: zod.array(zod.string()),
+  content: zod.string(),
+  externalUrl: zod.string().nullish(),
+  owner: zod.string(),
+  technologies: zod.array(zod.string()),
+  status: zod.enum(["published", "draft", "archived"]),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Delete a KB article
+ */
+export const DeleteKbArticleParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteKbArticleResponse = zod.object({
+  success: zod.boolean().optional(),
+});
+
+/**
+ * @summary List KB articles linked to a request
+ */
+export const ListRequestKbArticlesParams = zod.object({
+  requestId: zod.coerce.number(),
+});
+
+export const ListRequestKbArticlesResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  category: zod.enum([
+    "pattern",
+    "reference_architecture",
+    "best_practice",
+    "external_link",
+  ]),
+  tags: zod.array(zod.string()),
+  content: zod.string(),
+  externalUrl: zod.string().nullish(),
+  owner: zod.string(),
+  technologies: zod.array(zod.string()),
+  status: zod.enum(["published", "draft", "archived"]),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+export const ListRequestKbArticlesResponse = zod.array(
+  ListRequestKbArticlesResponseItem,
+);
+
+/**
+ * @summary Link a KB article to a request
+ */
+export const LinkKbArticleToRequestParams = zod.object({
+  requestId: zod.coerce.number(),
+});
+
+export const LinkKbArticleToRequestBody = zod.object({
+  articleId: zod.number(),
+});
+
+/**
+ * @summary Remove a KB article link from a request
+ */
+export const UnlinkKbArticleFromRequestParams = zod.object({
+  requestId: zod.coerce.number(),
+  articleId: zod.coerce.number(),
+});

@@ -95,6 +95,20 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
 
+## Environment Variables
+
+### LeanIX Integration
+The LeanIX sync feature (`POST /api/leanix/sync`) requires two credentials:
+
+| Variable | Description |
+|---|---|
+| `LEANIX_WORKSPACE` | Your LeanIX workspace name (e.g. `mycompany` for `mycompany.leanix.net`) |
+| `LEANIX_API_TOKEN` | LeanIX API token (generate via LeanIX Admin → Technical Users) |
+
+**In Replit:** Both are stored as Replit Secrets and are automatically injected as environment variables. The `dotenv` package is loaded at API server startup (`import "dotenv/config"`) so a local `.env` file at the project root is also supported for non-Replit development. See `.env.example` for the variable names. The `.env` file is gitignored.
+
+**Sync flow:** `POST /api/leanix/sync` → OAuth2 client_credentials token from `{workspace}.leanix.net/services/mtm/v1/oauth2/token` → GraphQL query for Initiative fact sheets → upsert into `leanix_initiatives` table.
+
 ## Features
 
 ### Architecture Review Portal (`artifacts/arc-portal`)
@@ -107,6 +121,7 @@ Utility scripts package. Each script is a `.ts` file in `src/` with a correspond
   - Create/edit form at `/knowledge-base/new` and `/knowledge-base/:id/edit`
   - Articles can be linked to ARRs from the request detail page ("Relevant Knowledge Base Articles" section)
 - **JIRA Initiatives** (`/jira`) — browse and link JIRA initiatives to ARRs
+- **LeanIX Initiatives** (`/leanix`) — sync and browse LeanIX Initiative fact sheets; requires `LEANIX_WORKSPACE` and `LEANIX_API_TOKEN` credentials
 - **ARC Sessions** (`/sessions`) — schedule and manage ARC review sessions
 - **Review Outcomes** (`/outcomes`) — record and view review decisions
 - **KPI Dashboard** (`/kpis`) — track KPIs across EA outcomes
@@ -117,6 +132,7 @@ Utility scripts package. Each script is a `.ts` file in `src/` with a correspond
 - `arc_sessions` — scheduled ARC sessions linked to requests
 - `review_outcomes` — decisions from ARC sessions
 - `jira_initiatives` — JIRA initiatives synced/linked to ARRs
+- `leanix_initiatives` — LeanIX Initiative fact sheets synced via OAuth2 + GraphQL API
 - `kpi_metrics` — KPI tracking for EA outcomes
 - `knowledge_base_articles` — KB articles (title, category, tags, content, externalUrl, owner, technologies, status)
 - `request_kb_articles` — join table linking requests to KB articles
