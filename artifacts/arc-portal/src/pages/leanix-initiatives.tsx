@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, Button, Badge } from "@/components/ui-primitives";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, ExternalLink, LayoutGrid } from "lucide-react";
+import { RefreshCw, ExternalLink, LayoutGrid, AlertTriangle, ShieldX, WifiOff, KeyRound, ServerCrash, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 
 interface LeanixInitiative {
@@ -28,46 +28,118 @@ interface LeanixSyncResult {
   lastSyncedAt: string;
 }
 
+interface SyncError {
+  kind: "auth" | "access" | "not_found" | "connection" | "graphql" | "config" | "unknown";
+  message: string;
+  status: number;
+}
+
+function classifySyncError(status: number, message: string): SyncError {
+  if (status === 400) return { kind: "config", message, status };
+  if (status === 401) return { kind: "auth", message, status };
+  if (status === 403) return { kind: "access", message, status };
+  if (status === 404) return { kind: "not_found", message, status };
+  if (status === 503) return { kind: "connection", message, status };
+  if (status === 422) return { kind: "graphql", message, status };
+  return { kind: "unknown", message, status };
+}
+
+function SyncErrorBanner({ error, onRetry }: { error: SyncError; onRetry: () => void }) {
+  const iconMap: Record<SyncError["kind"], React.ReactNode> = {
+    auth: <KeyRound className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />,
+    access: <ShieldX className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />,
+    not_found: <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />,
+    connection: <WifiOff className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />,
+    graphql: <ServerCrash className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />,
+    config: <AlertCircle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />,
+    unknown: <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />,
+  };
+
+  const headingMap: Record<SyncError["kind"], string> = {
+    auth: "Authentication Failed",
+    access: "Access Denied",
+    not_found: "Workspace Not Found",
+    connection: "Cannot Reach LeanIX",
+    graphql: "LeanIX Query Error",
+    config: "Configuration Required",
+    unknown: "Sync Failed",
+  };
+
+  const styleMap: Record<SyncError["kind"], string> = {
+    auth: "bg-red-50 border-red-200",
+    access: "bg-amber-50 border-amber-200",
+    not_found: "bg-amber-50 border-amber-200",
+    connection: "bg-slate-50 border-slate-200",
+    graphql: "bg-purple-50 border-purple-200",
+    config: "bg-orange-50 border-orange-200",
+    unknown: "bg-red-50 border-red-200",
+  };
+
+  return (
+    <div className={`border rounded-xl p-4 flex gap-3 items-start ${styleMap[error.kind]}`}>
+      {iconMap[error.kind]}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm text-slate-800 mb-1">{headingMap[error.kind]}</p>
+        <p className="text-sm text-slate-600 leading-relaxed break-words">{error.message}</p>
+      </div>
+      <Button variant="outline" className="shrink-0 text-xs h-8" onClick={onRetry}>
+        Retry
+      </Button>
+    </div>
+  );
+}
+
 export default function LeanixInitiatives() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [lastSyncResult, setLastSyncResult] = useState<LeanixSyncResult | null>(null);
+  const [syncError, setSyncError] = useState<SyncError | null>(null);
 
-  const { data: initiatives, isLoading, refetch } = useQuery<LeanixInitiative[]>({
-    queryKey: ['/api/leanix/initiatives'],
-    queryFn: () => fetch('/api/leanix/initiatives').then(res => res.json()),
+  const { data: initiatives, isLoading } = useQuery<LeanixInitiative[]>({
+    queryKey: ["/api/leanix/initiatives"],
+    queryFn: () => fetch("/api/leanix/initiatives").then(res => res.json()),
   });
 
-  const syncMutation = useMutation<LeanixSyncResult, Error>({
-    mutationFn: () => fetch('/api/leanix/sync', { method: 'POST' }).then(res => {
-      if (!res.ok) return res.json().then(d => Promise.reject(new Error(d.error || 'Sync failed')));
-      return res.json();
-    }),
+  const syncMutation = useMutation<LeanixSyncResult, SyncError>({
+    mutationFn: async () => {
+      const res = await fetch("/api/leanix/sync", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        throw classifySyncError(res.status, data.error || "Sync failed — an unexpected error occurred.");
+      }
+      return data as LeanixSyncResult;
+    },
     onSuccess: (data) => {
+      setSyncError(null);
       setLastSyncResult(data);
       toast({
         title: "Sync Complete",
         description: `Synced ${data.synced} initiatives (${data.added} added, ${data.updated} updated).`,
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/leanix/initiatives'] });
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["/api/leanix/initiatives"] });
     },
     onError: (err) => {
+      setSyncError(err);
       toast({
-        title: "Sync Failed",
-        description: err.message || "Could not sync with LeanIX.",
+        title: err.kind === "auth" ? "Authentication Failed"
+          : err.kind === "access" ? "Access Denied"
+          : err.kind === "not_found" ? "Workspace Not Found"
+          : err.kind === "connection" ? "Cannot Reach LeanIX"
+          : err.kind === "config" ? "Configuration Required"
+          : "Sync Failed",
+        description: err.message,
         variant: "destructive",
       });
     },
   });
 
   const getLifecycleColor = (lifecycle: string | null) => {
-    if (!lifecycle) return 'default';
+    if (!lifecycle) return "default" as const;
     const lc = lifecycle.toLowerCase();
-    if (lc.includes('active') || lc.includes('plan')) return 'primary';
-    if (lc.includes('phaseout') || lc.includes('end')) return 'warning';
-    if (lc.includes('retire')) return 'danger';
-    return 'default';
+    if (lc.includes("active") || lc.includes("plan")) return "primary" as const;
+    if (lc.includes("phaseout") || lc.includes("end")) return "warning" as const;
+    if (lc.includes("retire")) return "danger" as const;
+    return "default" as const;
   };
 
   const LEANIX_BRAND = "#FF6600";
@@ -78,7 +150,7 @@ export default function LeanixInitiatives() {
 
         {/* Connection Banner */}
         <div className="bg-orange-50 border border-orange-200 text-orange-800 text-sm py-2 px-4 rounded-xl flex items-center justify-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+          <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
           <span className="font-medium">Connected to LeanIX</span>
           <span className="text-orange-600/60 mx-1">·</span>
           <span className="font-mono text-xs">Enterprise Architecture Management</span>
@@ -97,21 +169,29 @@ export default function LeanixInitiatives() {
 
           <div className="flex flex-col items-end gap-2">
             <Button
-              onClick={() => syncMutation.mutate()}
+              onClick={() => { setSyncError(null); syncMutation.mutate(); }}
               disabled={syncMutation.isPending}
               className="text-white"
               style={{ backgroundColor: LEANIX_BRAND }}
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-              {syncMutation.isPending ? 'Syncing...' : 'Sync from LeanIX'}
+              <RefreshCw className={`w-4 h-4 mr-2 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+              {syncMutation.isPending ? "Syncing..." : "Sync from LeanIX"}
             </Button>
-            {lastSyncResult && (
+            {lastSyncResult && !syncError && (
               <span className="text-xs text-muted-foreground">
-                Last synced: {format(new Date(lastSyncResult.lastSyncedAt), 'p')}
+                Last synced: {format(new Date(lastSyncResult.lastSyncedAt), "p")}
               </span>
             )}
           </div>
         </div>
+
+        {/* Error panel — shown persistently below header */}
+        {syncError && (
+          <SyncErrorBanner
+            error={syncError}
+            onRetry={() => { setSyncError(null); syncMutation.mutate(); }}
+          />
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 gap-4 mt-8">
@@ -124,31 +204,37 @@ export default function LeanixInitiatives() {
             <div className="bg-secondary p-4 rounded-full mb-4">
               <LayoutGrid className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-bold">No initiatives found</h3>
+            <h3 className="text-lg font-bold">No initiatives synced yet</h3>
             <p className="text-muted-foreground max-w-sm mt-2 mb-6">
-              There are no LeanIX initiatives synced yet. Connect your LeanIX workspace and sync to populate this list.
+              Click "Sync from LeanIX" to pull your enterprise initiatives into the portal.
             </p>
-            <Button onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
-              Sync Now
+            <Button
+              onClick={() => { setSyncError(null); syncMutation.mutate(); }}
+              disabled={syncMutation.isPending}
+              style={{ backgroundColor: LEANIX_BRAND }}
+              className="text-white"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+              {syncMutation.isPending ? "Syncing..." : "Sync Now"}
             </Button>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4 mt-6">
             {initiatives?.map(init => (
-              <Card key={init.id} className="hover:border-orange-200 transition-colors overflow-hidden group">
-                <div className="absolute top-0 left-0 w-1 h-full opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: LEANIX_BRAND }}></div>
+              <Card key={init.id} className="hover:border-orange-200 transition-colors overflow-hidden group relative">
+                <div className="absolute top-0 left-0 w-1 h-full opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: LEANIX_BRAND }} />
                 <CardContent className="p-5">
                   <div className="flex flex-col md:flex-row gap-6 md:items-center">
-
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <Badge variant="primary" className="font-mono bg-orange-50 border-orange-200" style={{ color: LEANIX_BRAND }}>
-                          {init.leanixId.substring(0, 8)}...
+                          {init.leanixId.substring(0, 8)}…
                         </Badge>
-                        <Badge variant={getLifecycleColor(init.lifecycle)}>
-                          {init.lifecycle ?? 'No Lifecycle'}
-                        </Badge>
+                        {init.lifecycle && (
+                          <Badge variant={getLifecycleColor(init.lifecycle)}>
+                            {init.lifecycle}
+                          </Badge>
+                        )}
                         <Badge variant="default">{init.status}</Badge>
                       </div>
 
@@ -171,11 +257,14 @@ export default function LeanixInitiatives() {
                         )}
                         {init.tags && init.tags.length > 0 && (
                           <div className="flex gap-1 flex-wrap">
-                            {init.tags.map(t => (
-                              <span key={t} className="px-2 py-0.5 bg-slate-100 rounded text-xs">{t}</span>
+                            {init.tags.map((t, ti) => (
+                              <span key={`${t}-${ti}`} className="px-2 py-0.5 bg-slate-100 rounded text-xs">{t}</span>
                             ))}
                           </div>
                         )}
+                        <span className="text-xs text-slate-400">
+                          Synced {format(new Date(init.syncedAt), "dd MMM yyyy")}
+                        </span>
                       </div>
                     </div>
 
@@ -184,12 +273,11 @@ export default function LeanixInitiatives() {
                         variant="outline"
                         className="w-full justify-center border-orange-200 hover:bg-orange-50"
                         style={{ color: LEANIX_BRAND }}
-                        onClick={() => window.open(init.leanixUrl ?? `https://app.leanix.net`, '_blank')}
+                        onClick={() => window.open(init.leanixUrl ?? "https://app.leanix.net", "_blank")}
                       >
                         View in LeanIX <ExternalLink className="w-3 h-3 ml-2" />
                       </Button>
                     </div>
-
                   </div>
                 </CardContent>
               </Card>
