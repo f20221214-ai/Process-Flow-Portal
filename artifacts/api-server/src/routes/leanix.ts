@@ -11,26 +11,10 @@ interface LeanixTokenResponse {
   expires_in: number;
 }
 
-interface LeanixLifecyclePhase {
-  phase: string;
-  startDate: string | null;
-}
-
-interface LeanixLifecycle {
-  phases: LeanixLifecyclePhase[];
-  asString: string;
-}
-
-interface LeanixTag {
-  name: string;
-}
-
 interface LeanixFactSheetNode {
   id: string;
   name: string;
-  description: string | null;
-  lifecycle?: LeanixLifecycle;
-  tags: LeanixTag[];
+  type: string;
 }
 
 interface LeanixGraphQLEdge {
@@ -40,6 +24,7 @@ interface LeanixGraphQLEdge {
 interface LeanixGraphQLResponse {
   data: {
     allFactSheets: {
+      totalCount: number;
       edges: LeanixGraphQLEdge[];
     };
   };
@@ -82,30 +67,34 @@ async function fetchLeanixInitiatives(accessToken: string, workspace: string): P
   const graphqlUrl = `https://${workspace}.leanix.net/services/pathfinder/v1/graphql`;
 
   const query = `
-    {
-      allFactSheets(factSheetType: Initiative) {
+    query ($filter: FilterInput!) {
+      allFactSheets(filter: $filter) {
+        totalCount
         edges {
           node {
             id
             name
-            description
-            ... on Initiative {
-              lifecycle {
-                phases {
-                  phase
-                  startDate
-                }
-                asString
-              }
-            }
-            tags {
-              name
-            }
+            type
           }
         }
       }
     }
   `;
+
+  const variables = {
+    filter: {
+      facetFilters: [
+        {
+          facetKey: "FactSheetTypes",
+          keys: ["Project"],
+        },
+        {
+          facetKey: "Subscriptions",
+          keys: ["b671a3be-17ed-4d62-b2cd-f2edc316cf56"],
+        },
+      ],
+    },
+  };
 
   const response = await fetch(graphqlUrl, {
     method: "POST",
@@ -113,7 +102,7 @@ async function fetchLeanixInitiatives(accessToken: string, workspace: string): P
       "Content-Type": "application/json",
       "Authorization": `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables }),
   });
 
   if (!response.ok) {
@@ -156,18 +145,16 @@ router.post("/leanix/sync", async (req, res) => {
     let updated = 0;
 
     for (const fs of factSheets) {
-      const lifecycleStr = fs.lifecycle?.asString ?? null;
-      const tagsJson = JSON.stringify(fs.tags.map((t) => t.name));
-      const leanixUrl = `https://${workspace}.leanix.net/pathfinder/factsheet/Initiative/${fs.id}`;
+      const leanixUrl = `https://${workspace}.leanix.net/pathfinder/factsheet/Project/${fs.id}`;
 
       const record = {
         leanixId: fs.id,
         name: fs.name ?? "Untitled",
-        description: fs.description ?? null,
-        lifecycle: lifecycleStr,
+        description: null,
+        lifecycle: null,
         status: "Active",
         responsible: null,
-        tags: tagsJson,
+        tags: JSON.stringify([]),
         leanixUrl,
         syncedAt: now,
       };
