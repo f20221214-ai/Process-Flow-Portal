@@ -94,6 +94,7 @@ export default function LeanixInitiatives() {
   const queryClient = useQueryClient();
   const [lastSyncResult, setLastSyncResult] = useState<LeanixSyncResult | null>(null);
   const [syncError, setSyncError] = useState<SyncError | null>(null);
+  const [search, setSearch] = useState("");
 
   const { data: initiatives, isLoading } = useQuery<LeanixInitiative[]>({
     queryKey: ["/api/leanix/initiatives"],
@@ -131,6 +132,19 @@ export default function LeanixInitiatives() {
         variant: "destructive",
       });
     },
+  });
+
+  const filteredInitiatives = (initiatives ?? []).filter(init => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      init.name.toLowerCase().includes(q) ||
+      (init.description ?? "").toLowerCase().includes(q) ||
+      (init.status ?? "").toLowerCase().includes(q) ||
+      (init.lifecycle ?? "").toLowerCase().includes(q) ||
+      (init.responsible ?? "").toLowerCase().includes(q) ||
+      init.tags.some(t => t.toLowerCase().includes(q))
+    );
   });
 
   const getLifecycleColor = (lifecycle: string | null) => {
@@ -185,6 +199,42 @@ export default function LeanixInitiatives() {
           </div>
         </div>
 
+        {/* Search bar */}
+        {!isLoading && (initiatives?.length ?? 0) > 0 && (
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name, description, status, or tag…"
+              className="w-full pl-9 pr-4 py-2.5 text-sm border border-input rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-400 transition-colors"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Clear search"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Search result count */}
+        {search && !isLoading && (
+          <p className="text-xs text-muted-foreground -mt-2">
+            {filteredInitiatives.length === 0
+              ? "No results"
+              : `${filteredInitiatives.length} of ${initiatives?.length ?? 0} initiative${(initiatives?.length ?? 0) !== 1 ? "s" : ""}`}
+          </p>
+        )}
+
         {/* Error panel — shown persistently below header */}
         {syncError && (
           <SyncErrorBanner
@@ -218,9 +268,17 @@ export default function LeanixInitiatives() {
               {syncMutation.isPending ? "Syncing..." : "Sync Now"}
             </Button>
           </Card>
+        ) : filteredInitiatives.length === 0 && search ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <svg className="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <p className="font-medium text-slate-700">No initiatives match "<span className="text-orange-600">{search}</span>"</p>
+            <p className="text-sm mt-1">Try a different search term or <button className="underline text-orange-500 hover:text-orange-700" onClick={() => setSearch("")}>clear the search</button>.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 mt-6">
-            {initiatives?.map(init => (
+            {filteredInitiatives.map(init => (
               <Card key={init.id} className="hover:border-orange-200 transition-colors overflow-hidden group relative">
                 <div className="absolute top-0 left-0 w-1 h-full opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: LEANIX_BRAND }} />
                 <CardContent className="p-5">
