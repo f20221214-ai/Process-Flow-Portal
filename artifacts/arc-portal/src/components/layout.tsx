@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { href: "/requests", label: "All Requests", icon: FileText },
   { href: "/knowledge-base", label: "Architecture Patterns", icon: BookOpen },
   { href: "/jira", label: "JIRA Initiatives", icon: Layers },
-  { href: "/leanix", label: "LeanIX Initiatives", icon: LayoutGrid },
+  { href: "/leanix", label: "Initiatives", icon: LayoutGrid },
   { href: "/sessions", label: "ARC Sessions", icon: Calendar },
   { href: "/outcomes", label: "Review Outcomes", icon: ShieldCheck },
   { href: "/kpis", label: "KPI Dashboard", icon: BarChart3 },

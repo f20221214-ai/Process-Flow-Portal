@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, Button, Badge } from "@/components/ui-primitives";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { RefreshCw, ExternalLink, LayoutGrid, AlertTriangle, ShieldX, WifiOff, KeyRound, ServerCrash, AlertCircle } from "lucide-react";
+import { RefreshCw, LayoutGrid, AlertTriangle, ShieldX, WifiOff, KeyRound, ServerCrash, AlertCircle, Plus } from "lucide-react";
 import { format } from "date-fns";
 
 interface LeanixInitiative {
@@ -176,7 +176,7 @@ export default function LeanixInitiatives() {
               <LayoutGrid className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-3xl font-display font-bold">LeanIX Initiatives</h1>
+              <h1 className="text-3xl font-display font-bold">Initiatives</h1>
               <p className="text-muted-foreground text-sm mt-1">Sync and track enterprise initiatives from LeanIX.</p>
             </div>
           </div>
@@ -326,14 +326,14 @@ export default function LeanixInitiatives() {
                       </div>
                     </div>
 
-                    <div className="flex flex-row md:flex-col gap-2 shrink-0 md:w-48 justify-end">
+                    <div className="flex flex-row md:flex-col gap-2 shrink-0 md:w-44 justify-end">
                       <Button
-                        variant="outline"
-                        className="w-full justify-center border-orange-200 hover:bg-orange-50"
-                        style={{ color: LEANIX_BRAND }}
-                        onClick={() => window.open(init.leanixUrl ?? "https://app.leanix.net", "_blank")}
+                        variant="primary"
+                        className="w-full justify-center"
+                        href={`/requests/new?leanixId=${init.id}`}
                       >
-                        View in LeanIX <ExternalLink className="w-3 h-3 ml-2" />
+                        <Plus className="w-4 h-4 mr-2" />
+                        Submit ARR
                       </Button>
                     </div>
                   </div>

@@ -10,6 +10,15 @@ import { ArrowLeft, X, Layers, ChevronDown, Search, Sparkles, Shield, Database, 
 import { useQuery } from "@tanstack/react-query";
 import type { JiraInitiative } from "@workspace/api-client-react";
 
+interface LeanixInitiative {
+  id: number;
+  leanixId: string;
+  name: string;
+  description: string | null;
+  status: string;
+  tags: string[];
+}
+
 const IMPACT_LEVELS = [
   { value: "none", label: "None" },
   { value: "low", label: "Low" },
@@ -569,6 +578,13 @@ export default function RequestForm() {
     queryFn: () => fetch('/api/jira/initiatives').then(res => res.json())
   });
 
+  const [linkedLeanix, setLinkedLeanix] = useState<LeanixInitiative | null>(null);
+
+  const { data: leanixInitiatives } = useQuery<LeanixInitiative[]>({
+    queryKey: ['/api/leanix/initiatives'],
+    queryFn: () => fetch('/api/leanix/initiatives').then(res => res.json())
+  });
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const jiraIdStr = params.get('jiraId');
@@ -584,6 +600,22 @@ export default function RequestForm() {
       }
     }
   }, [initiatives]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const leanixIdStr = params.get('leanixId');
+    if (leanixIdStr && leanixInitiatives) {
+      const leanixId = parseInt(leanixIdStr, 10);
+      const initiative = leanixInitiatives.find(i => i.id === leanixId);
+      if (initiative) {
+        setLinkedLeanix(initiative);
+        setFormData(prev => ({
+          ...prev,
+          title: prev.title || initiative.name
+        }));
+      }
+    }
+  }, [leanixInitiatives]);
 
   const selectedInitiative = initiatives?.find(i => i.id === formData.jiraInitiativeId);
 
@@ -886,6 +918,46 @@ export default function RequestForm() {
               )}
             </CardContent>
           </Card>
+
+          {/* LEANIX LINKED BANNER — shown when form opened via Submit ARR from Initiatives page */}
+          {linkedLeanix && (
+            <div className="mb-8 p-4 border border-orange-200 bg-orange-50/60 rounded-xl flex items-start gap-3">
+              <div className="bg-[#FF6600] text-white p-1.5 rounded-lg shrink-0 mt-0.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="text-xs font-bold text-orange-700 uppercase tracking-wide">LeanIX Initiative Linked</span>
+                  <span className="font-mono text-xs bg-orange-100 border border-orange-200 text-orange-800 px-2 py-0.5 rounded">
+                    {linkedLeanix.leanixId.substring(0, 8)}…
+                  </span>
+                  <span className="text-xs bg-orange-100 border border-orange-200 text-orange-800 px-2 py-0.5 rounded">{linkedLeanix.status}</span>
+                </div>
+                <p className="text-sm font-semibold text-slate-800 leading-snug">{linkedLeanix.name}</p>
+                {linkedLeanix.description && (
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{linkedLeanix.description}</p>
+                )}
+                {linkedLeanix.tags.length > 0 && (
+                  <div className="flex gap-1 flex-wrap mt-2">
+                    {linkedLeanix.tags.slice(0, 5).map((t, i) => (
+                      <span key={i} className="text-xs bg-white border border-orange-200 text-orange-700 px-2 py-0.5 rounded">{t}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setLinkedLeanix(null)}
+                className="text-orange-400 hover:text-orange-600 transition-colors shrink-0"
+                aria-label="Remove LeanIX link"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* SECTION 1: REQUEST INFORMATION */}
           <Card className="mb-8 shadow-sm">
