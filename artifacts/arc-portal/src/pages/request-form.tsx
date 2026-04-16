@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Textarea, Select, Label, Badge } from "@/components/ui-primitives";
@@ -6,9 +6,8 @@ import { useCreateRequest } from "@workspace/api-client-react";
 import type { CreateArchitectureRequest } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Layers, ChevronDown, Search, Sparkles, Shield, Database, GitBranch, Scale, Bot, CheckCircle2, AlertCircle, ChevronRight, RotateCcw, MessageSquare, ExternalLink } from "lucide-react";
+import { ArrowLeft, X, Search, Sparkles, Shield, Database, GitBranch, Scale, Bot, CheckCircle2, AlertCircle, ChevronRight, RotateCcw, MessageSquare, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { JiraInitiative } from "@workspace/api-client-react";
 
 interface LeanixInitiative {
   id: number;
@@ -557,7 +556,6 @@ export default function RequestForm() {
 
     submittedBy: "Jane Doe",
     priority: "medium",
-    jiraInitiativeId: null
   });
 
   const [regionInput, setRegionInput] = useState("");
@@ -573,33 +571,12 @@ export default function RequestForm() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analysisComplete, setAnalysisComplete] = useState(false);
 
-  const { data: initiatives, isLoading: isLoadingJira } = useQuery<JiraInitiative[]>({
-    queryKey: ['/api/jira/initiatives'],
-    queryFn: () => fetch('/api/jira/initiatives').then(res => res.json())
-  });
-
   const [linkedLeanix, setLinkedLeanix] = useState<LeanixInitiative | null>(null);
 
   const { data: leanixInitiatives } = useQuery<LeanixInitiative[]>({
     queryKey: ['/api/leanix/initiatives'],
     queryFn: () => fetch('/api/leanix/initiatives').then(res => res.json())
   });
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const jiraIdStr = params.get('jiraId');
-    if (jiraIdStr && initiatives) {
-      const jiraId = parseInt(jiraIdStr, 10);
-      const initiative = initiatives.find(i => i.id === jiraId);
-      if (initiative) {
-        setFormData(prev => ({
-          ...prev,
-          jiraInitiativeId: jiraId,
-          title: prev.title || initiative.summary
-        }));
-      }
-    }
-  }, [initiatives]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -617,26 +594,9 @@ export default function RequestForm() {
     }
   }, [leanixInitiatives]);
 
-  const selectedInitiative = initiatives?.find(i => i.id === formData.jiraInitiativeId);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleJiraSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    const jiraId = value ? parseInt(value, 10) : null;
-    setFormData(prev => {
-      const newData = { ...prev, jiraInitiativeId: jiraId };
-      if (jiraId && initiatives) {
-        const initiative = initiatives.find(i => i.id === jiraId);
-        if (initiative && !prev.title) {
-          newData.title = initiative.summary;
-        }
-      }
-      return newData;
-    });
   };
 
   const handleRegionKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -752,113 +712,6 @@ export default function RequestForm() {
     });
   };
 
-  const InitiativeCombobox = ({ initiatives, jiraId, isLoading, onSelect }: {
-    initiatives?: JiraInitiative[];
-    jiraId: number | null | undefined;
-    isLoading: boolean;
-    onSelect: (initiative: JiraInitiative | null) => void;
-  }) => {
-    const [open, setOpen] = useState(false);
-    const [search, setSearch] = useState("");
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    const filtered = initiatives?.filter(i =>
-      `${i.jiraKey} ${i.summary} ${i.projectName}`.toLowerCase().includes(search.toLowerCase())
-    ) ?? [];
-
-    const selected = initiatives?.find(i => i.id === jiraId) ?? null;
-
-    useEffect(() => {
-      const handleClickOutside = (e: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-          setOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    return (
-      <div className="relative" ref={containerRef}>
-        <div
-          role="combobox"
-          aria-expanded={open}
-          className="flex items-center border border-border rounded-xl px-3 py-2.5 cursor-pointer bg-background hover:border-primary/50 transition-colors min-h-[42px]"
-          onClick={() => setOpen(!open)}
-        >
-          <div className="flex-1 min-w-0">
-            {selected ? (
-              <div className="flex items-center gap-2">
-                <Badge variant="primary" className="font-mono text-xs bg-blue-100 text-blue-800 border-blue-200 shrink-0">
-                  {selected.jiraKey}
-                </Badge>
-                <span className="text-sm truncate">{selected.summary}</span>
-              </div>
-            ) : (
-              <span className="text-sm text-muted-foreground">
-                {isLoading ? "Loading initiatives…" : "Select a JIRA initiative…"}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1 ml-2 shrink-0">
-            {selected && (
-              <button
-                type="button"
-                aria-label="Clear selection"
-                onClick={(e) => { e.stopPropagation(); onSelect(null); setSearch(""); }}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
-          </div>
-        </div>
-
-        {open && (
-          <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-xl shadow-lg overflow-hidden">
-            <div className="p-2 border-b border-border">
-              <div className="flex items-center gap-2 px-2">
-                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by key, name, or project…"
-                  className="flex-1 text-sm outline-none bg-transparent py-1"
-                  autoFocus
-                />
-              </div>
-            </div>
-            <div className="max-h-64 overflow-y-auto">
-              {isLoading ? (
-                <div className="p-4 text-sm text-muted-foreground text-center">Loading initiatives…</div>
-              ) : filtered.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground text-center">No initiatives match your search.</div>
-              ) : (
-                filtered.map(init => (
-                  <button
-                    key={init.id}
-                    type="button"
-                    onClick={() => { onSelect(init); setOpen(false); setSearch(""); }}
-                    className={`w-full text-left px-4 py-2.5 hover:bg-secondary transition-colors flex items-start gap-3 ${jiraId === init.id ? "bg-primary/5" : ""}`}
-                  >
-                    <Badge variant="primary" className="font-mono text-xs bg-blue-100 text-blue-800 border-blue-200 shrink-0 mt-0.5">
-                      {init.jiraKey}
-                    </Badge>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium truncate">{init.summary}</div>
-                      <div className="text-xs text-muted-foreground">{init.projectName} · {init.status}</div>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <Layout>
@@ -873,52 +726,6 @@ export default function RequestForm() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* SECTION 0: JIRA INITIATIVE */}
-          <Card className="mb-8 border-indigo-100 shadow-sm">
-            <CardHeader className="bg-indigo-50/50 flex flex-row items-center gap-2">
-              <div className="bg-blue-600 text-white p-1 rounded-lg">
-                <Layers className="w-4 h-4" />
-              </div>
-              <CardTitle className="text-indigo-900">0. Linked JIRA Initiative</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Link to JIRA Initiative (Optional)</Label>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Select the JIRA epic or initiative this ARR relates to. This helps track architecture reviews alongside project delivery.
-                </p>
-                {isLoadingJira ? (
-                  <div className="h-10 bg-secondary/50 rounded-xl animate-pulse"></div>
-                ) : (
-                  <Select value={formData.jiraInitiativeId?.toString() || ""} onChange={handleJiraSelect}>
-                    <option value="">-- Select an initiative --</option>
-                    {initiatives?.map(init => (
-                      <option key={init.id} value={init.id}>
-                        {init.jiraKey} - {init.summary} ({init.projectName})
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </div>
-              {selectedInitiative && (
-                <div className="mt-4 p-4 border border-indigo-100 bg-indigo-50/30 rounded-xl relative">
-                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, jiraInitiativeId: null }))} className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 transition-colors">
-                    <X className="w-5 h-5" />
-                  </button>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="primary" className="font-mono bg-blue-100 text-blue-800 border-blue-200">{selectedInitiative.jiraKey}</Badge>
-                    <span className="text-sm font-semibold">{selectedInitiative.summary}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>Project: {selectedInitiative.projectName}</span>
-                    <span>Status: {selectedInitiative.status}</span>
-                    {selectedInitiative.assignee && <span>Assignee: {selectedInitiative.assignee}</span>}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           {/* LEANIX LINKED BANNER — shown when form opened via Submit ARR from Initiatives page */}
           {linkedLeanix && (
             <div className="mb-8 p-4 border border-orange-200 bg-orange-50/60 rounded-xl flex items-start gap-3">
@@ -968,22 +775,7 @@ export default function RequestForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <Label>Project/Initiative Name</Label>
-                  <p className="text-xs text-muted-foreground mb-1.5">Pick from a synced JIRA initiative below, or clear to enter a custom name.</p>
-                  <InitiativeCombobox
-                    initiatives={initiatives}
-                    jiraId={formData.jiraInitiativeId}
-                    isLoading={isLoadingJira}
-                    onSelect={(initiative) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        jiraInitiativeId: initiative?.id ?? null,
-                        title: initiative?.summary ?? ""
-                      }));
-                    }}
-                  />
-                  {!formData.jiraInitiativeId && (
-                    <Input required name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Migration to AWS Cloud" className="mt-2" />
-                  )}
+                  <Input required name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Migration to AWS Cloud" />
                 </div>
 
                 <div className="md:col-span-2">
