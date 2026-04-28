@@ -7,7 +7,7 @@ type ImpactLevel = "none" | "low" | "medium" | "high";
 
 interface AreaAnswers {
   q1: string; q2: string; q3: string; q4: string; q5: string;
-  q6?: string; q7?: string; q8?: string;
+  q6?: string; q7?: string; q8?: string; q9?: string; q10?: string;
   remarks: string;
 }
 
@@ -37,7 +37,7 @@ const SYSTEM_PROMPT = `You are an Enterprise Architecture analyst helping to ass
 Given answers to scoping questions for a technology initiative, you must assess the impact level for each of five categories and provide a concise rationale for each.
 
 Impact Level Definitions:
-- SECURITY: none=internal only, standard login, no sensitive data, not internet-facing; low=internal with limited partner access, standard controls; medium=new auth methods OR sensitive internal data (employee records, confidential data) OR limited external exposure; high=internet-accessible OR handles PII/passwords/payment/health data OR connects to external networks OR external security audit required
+- SECURITY: none=internal only, standard corporate login, no sensitive data, internal network, standard TLS, no privileged access, existing monitoring, no third-party risk, secrets managed, no formal security test needed; low=limited partner access, general internal data, standard controls, managed TLS, minor admin elevation, basic logging; medium=new auth methods OR sensitive internal data (employee records, confidential) OR partial internet exposure OR no encryption at rest OR privileged access without PAM OR SIEM integration needed OR open-source/third-party supply chain risk OR secrets in config without rotation OR SAST only; high=internet-accessible OR PII/payment/health/credentials OR external network connections OR no encryption at rest for sensitive data OR unmanaged privileged access OR no security monitoring OR significant unassessed supply chain risk OR hardcoded/unmanaged secrets OR independent penetration test required
 - DATA: none=publicly available info only; low=everyday non-sensitive internal data, short retention; medium=cross-department data, moderate volume/retention, or third-party sharing under agreement; high=PII/financial/health records OR data residency requirements OR sharing with government/public entities
 - INTEGRATION: none=no connections to other systems; low=1–2 internal systems, standard approved methods; medium=several systems or real-time feeds or minor legacy involvement; high=external party connections (suppliers/customers/government) OR new integration methods OR critical business-stopping failure risk OR significant legacy complexity
 - REGULATORY: none=no compliance obligations; low=internal policies only; medium=external audits, financial reporting, certifications, multiple countries with similar rules; high=government legislation (privacy laws, food safety, financial regulations) with legal/financial consequences OR multiple jurisdictions with differing requirements OR no existing compliance capability
@@ -60,11 +60,16 @@ You MUST respond with valid JSON only — no markdown, no explanation outside th
 }`;
 
 const SECURITY_QUESTIONS = [
-  "Who will use this system?",
-  "Will it store or handle sensitive data (passwords, PII, health records, payment data)?",
-  "Does it introduce new login methods or connect company systems to external networks?",
-  "Will the system be accessible from the internet (public-facing)?",
-  "Does this system require security testing or certification before go-live?"
+  "Who will access this system, and by what means?",
+  "Will the system store, transmit, or process sensitive, personal, or regulated data?",
+  "Does the solution introduce new authentication mechanisms, identity providers, or connections to external networks?",
+  "What is the expected network exposure of this system?",
+  "How will data be protected at rest and in transit?",
+  "Does this system require privileged or elevated access beyond standard user permissions?",
+  "What is the approach to security monitoring, event logging, and alerting for this system?",
+  "Does this system rely on third-party software packages, open-source components, or vendor-managed services?",
+  "How are secrets, credentials, and cryptographic keys managed for this system?",
+  "What is the planned security testing and review posture for this system before go-live?"
 ];
 
 const DATA_QUESTIONS = [
@@ -103,7 +108,7 @@ const AI_QUESTIONS = [
 ];
 
 function buildSection(label: string, questions: string[], answers: AreaAnswers): string {
-  const allKeys: (keyof AreaAnswers)[] = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8"];
+  const allKeys: (keyof AreaAnswers)[] = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"];
   const qKeys = allKeys.slice(0, questions.length);
   const lines = [`${label} QUESTIONS:`];
   qKeys.forEach((k, i) => {

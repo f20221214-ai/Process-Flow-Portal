@@ -83,6 +83,67 @@ const IMPACT_AREA_CONFIG = [
           "Fully public-facing — accessible from the open internet without network-level restrictions",
           "Not sure"
         ]
+      },
+      {
+        question: "How will data be protected at rest and in transit?",
+        options: [
+          "No sensitive data stored or transmitted — encryption not required",
+          "Data in transit is encrypted using standard TLS; no sensitive data stored at rest",
+          "Encryption in transit (TLS) and at rest using platform-managed keys",
+          "Encryption in transit and at rest using customer-managed or bring-your-own keys (BYOK/CMK)",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Does this system require privileged or elevated access beyond standard user permissions?",
+        options: [
+          "No — all users operate with standard business application permissions",
+          "Minor elevation required for a small number of administrators using existing controls",
+          "Privileged access required for system administrators or service accounts, managed through existing PAM tooling",
+          "Significant privileged access with no current privileged access management (PAM) controls in place",
+          "Not sure"
+        ]
+      },
+      {
+        question: "What is the approach to security monitoring, event logging, and alerting for this system?",
+        options: [
+          "No specific monitoring required — low-risk internal system",
+          "Standard application and infrastructure logging through existing enterprise tooling",
+          "Enhanced security event logging integrated into the SIEM, with defined alert thresholds",
+          "Real-time threat detection, automated alerting, and SOC integration required",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Does this system rely on third-party software packages, open-source components, or vendor-managed services?",
+        showPatternsLink: true,
+        options: [
+          "No third-party or open-source dependencies",
+          "Standard commercial software or SaaS with a current enterprise agreement",
+          "Open-source components or third-party packages included in the software supply chain",
+          "Significant reliance on third-party or open-source components with no existing supply chain risk assessment",
+          "Not sure"
+        ]
+      },
+      {
+        question: "How are secrets, credentials, and cryptographic keys managed for this system?",
+        options: [
+          "No secrets or credentials required — system does not authenticate to other services",
+          "Secrets managed through the existing approved secret management platform (e.g. Vault, Key Vault, Secrets Manager)",
+          "Secrets stored in application configuration or environment variables without a centralised secret manager",
+          "Hardcoded or manually distributed credentials with no automated rotation",
+          "Not sure"
+        ]
+      },
+      {
+        question: "What is the planned security testing and review posture for this system before go-live?",
+        options: [
+          "No formal security testing required — low-risk internal system with no sensitive data or external exposure",
+          "Standard SDLC security practices (e.g. SAST, dependency scanning) as part of the CI/CD pipeline",
+          "Structured security review by the internal security team, including threat modelling",
+          "Independent penetration test or third-party security assessment required before go-live",
+          "Not sure"
+        ]
       }
     ]
   },
@@ -369,10 +430,10 @@ const IMPACT_AREA_CONFIG = [
 ];
 
 type ImpactLevel = "none" | "low" | "medium" | "high";
-type AreaAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string; q6: string; q7: string; q8: string; remarks: string };
+type AreaAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string; q6: string; q7: string; q8: string; q9: string; q10: string; remarks: string };
 type ImpactAnswers = { [area: string]: AreaAnswers };
 
-const EMPTY_AREA: AreaAnswers = { q1: UNSELECTED, q2: UNSELECTED, q3: UNSELECTED, q4: UNSELECTED, q5: UNSELECTED, q6: UNSELECTED, q7: UNSELECTED, q8: UNSELECTED, remarks: "" };
+const EMPTY_AREA: AreaAnswers = { q1: UNSELECTED, q2: UNSELECTED, q3: UNSELECTED, q4: UNSELECTED, q5: UNSELECTED, q6: UNSELECTED, q7: UNSELECTED, q8: UNSELECTED, q9: UNSELECTED, q10: UNSELECTED, remarks: "" };
 
 function ImpactQuestionCard({
   area,
@@ -382,11 +443,11 @@ function ImpactQuestionCard({
 }: {
   area: typeof IMPACT_AREA_CONFIG[0];
   answers: AreaAnswers;
-  onAnswer: (q: "q1" | "q2" | "q3" | "q4" | "q5" | "q6" | "q7" | "q8", value: string) => void;
+  onAnswer: (q: "q1" | "q2" | "q3" | "q4" | "q5" | "q6" | "q7" | "q8" | "q9" | "q10", value: string) => void;
   onRemarks: (value: string) => void;
 }) {
   const Icon = area.icon;
-  const qKeys = (["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8"] as const).slice(0, area.questions.length);
+  const qKeys = (["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"] as const).slice(0, area.questions.length);
   const hasNotSure = qKeys.some(k => answers[k] === "Not sure");
   const remarksRequired = hasNotSure;
   const remarksMissing = remarksRequired && !answers.remarks.trim();
@@ -668,7 +729,7 @@ export default function RequestForm() {
     setFormData(prev => ({ ...prev, [`${area}ImpactLevel`]: level }));
   };
 
-  const handleAnswer = (area: string, q: "q1" | "q2" | "q3" | "q4" | "q5" | "q6" | "q7" | "q8", value: string) => {
+  const handleAnswer = (area: string, q: "q1" | "q2" | "q3" | "q4" | "q5" | "q6" | "q7" | "q8" | "q9" | "q10", value: string) => {
     setImpactAnswers(prev => ({ ...prev, [area]: { ...prev[area], [q]: value } }));
     if (analysisComplete) setAnalysisComplete(false);
   };
@@ -718,7 +779,7 @@ export default function RequestForm() {
     }
   };
 
-  const ALL_Q_KEYS = ["q1","q2","q3","q4","q5","q6","q7","q8"] as const;
+  const ALL_Q_KEYS = ["q1","q2","q3","q4","q5","q6","q7","q8","q9","q10"] as const;
   const totalAnswered = IMPACT_AREA_CONFIG.reduce((sum, a) => {
     const ans = impactAnswers[a.key];
     const qKeys = ALL_Q_KEYS.slice(0, a.questions.length);
