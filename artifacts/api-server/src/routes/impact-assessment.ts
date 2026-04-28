@@ -38,8 +38,8 @@ Given answers to scoping questions for a technology initiative, you must assess 
 
 Impact Level Definitions:
 - SECURITY: none=internal only, standard corporate login, no sensitive data, internal network, standard TLS, no privileged access, existing monitoring, no third-party risk, secrets managed, no formal security test needed; low=limited partner access, general internal data, standard controls, managed TLS, minor admin elevation, basic logging; medium=new auth methods OR sensitive internal data (employee records, confidential) OR partial internet exposure OR no encryption at rest OR privileged access without PAM OR SIEM integration needed OR open-source/third-party supply chain risk OR secrets in config without rotation OR SAST only; high=internet-accessible OR PII/payment/health/credentials OR external network connections OR no encryption at rest for sensitive data OR unmanaged privileged access OR no security monitoring OR significant unassessed supply chain risk OR hardcoded/unmanaged secrets OR independent penetration test required
-- DATA: none=publicly available info only; low=everyday non-sensitive internal data, short retention; medium=cross-department data, moderate volume/retention, or third-party sharing under agreement; high=PII/financial/health records OR data residency requirements OR sharing with government/public entities
-- INTEGRATION: none=no connections to other systems; low=1–2 internal systems, standard approved methods; medium=several systems or real-time feeds or minor legacy involvement; high=external party connections (suppliers/customers/government) OR new integration methods OR critical business-stopping failure risk OR significant legacy complexity
+- DATA: none=publicly available info only, no residency constraints, no cross-department use, small volume short retention, no external sharing, no quality SLAs, no master data dependency, no lineage needed, no personal data; low=internal non-sensitive data, standard retention, limited internal sharing, no residency constraint, basic data quality validation, no master data or lineage; medium=cross-department or enterprise analytics data, moderate volume/retention, third-party sharing under agreement, defined data quality rules, reads from master data, lineage tracking within the system, standard anonymisation; high=PII/financial/health/regulated records OR data residency/sovereignty mandate OR government/regulator sharing OR strict data quality SLAs OR master data write authority OR end-to-end lineage required across systems OR formal erasure/portability/consent management required
+- INTEGRATION: none=no connections to other systems; low=1–2 internal systems, standard approved methods, no API governance, manual retry acceptable, best-effort SLA, basic monitoring; medium=several systems or real-time feeds, minor legacy involvement, informal API versioning, automated retry, soft SLA, environment-level integration testing; high=external party connections (suppliers/customers/government) OR new/non-standard integration methods OR critical business-stopping failure risk OR significant legacy/OT complexity OR enterprise API gateway registration required OR idempotent/exactly-once delivery needed OR strict latency/throughput SLA with contractual penalties OR distributed tracing and synthetic monitoring required
 - REGULATORY: none=no compliance obligations; low=internal policies only; medium=external audits, financial reporting, certifications, multiple countries with similar rules; high=government legislation (privacy laws, food safety, financial regulations) with legal/financial consequences OR multiple jurisdictions with differing requirements OR no existing compliance capability
 - AI: none=no AI/ML; low=vendor off-the-shelf feature only, human always reviews all outputs, public/synthetic data only, minimal consequence if wrong, full explainability, formal monitoring in place, no AI-specific regulations; medium=AI informing operations with some oversight, uses anonymised or internal data, partial explainability or monitoring; high=custom-built or open-source model OR customer PII or identifiable data used for training/inference OR AI outputs trigger automated decisions with limited/no human review OR severe consequence if AI errors OR black-box with no explainability OR no monitoring or model governance plan OR specific AI legislation applies (e.g. EU AI Act, algorithmic accountability laws) OR any combination of custom/open-source model + no monitoring plan + PII training data or applicable AI legislation
 
@@ -73,19 +73,28 @@ const SECURITY_QUESTIONS = [
 ];
 
 const DATA_QUESTIONS = [
-  "What type of data will this system store or process?",
-  "Will it handle personal information (PII), financial records, or data with residency requirements?",
-  "Will data be shared or analysed across multiple departments?",
-  "What is the expected data volume and how long must it be retained?",
-  "Will data be shared with or accessible by third parties (vendors, partners, government)?"
+  "What is the highest classification of data this system will store or process?",
+  "Are there data residency, sovereignty, or legal jurisdiction constraints on where this data can be stored or processed?",
+  "Will data be shared or integrated across multiple business units, or used in enterprise-wide reporting or analytics?",
+  "What is the expected data volume and how long must data be retained?",
+  "Will data be shared with or accessible by parties outside the organisation?",
+  "What are the data quality requirements, and are there controls in place to detect and remediate data quality issues?",
+  "Does this system depend on or contribute to master data domains (e.g. customer, product, employee, or supplier records)?",
+  "Is there a requirement to trace data lineage — i.e. track where data originated, how it was transformed, and where it was consumed?",
+  "How will personal or sensitive data be handled when it is no longer required — including anonymisation, pseudonymisation, and deletion?",
+  "Does this system collect or process personal data in a way that requires consent management or data subject rights fulfilment?"
 ];
 
 const INTEGRATION_QUESTIONS = [
-  "How many systems will this connect to, and are any external to the company?",
-  "How will data move between systems?",
-  "Does this introduce new or non-standard integration methods?",
-  "What happens to the business if an integration connection fails?",
-  "Do any of the systems being integrated involve older or legacy technology?"
+  "How many other systems will this solution connect to, and are any of them outside the organisation?",
+  "How will data flow between this system and the systems it connects to?",
+  "Does this solution introduce integration patterns that are new to the organisation or deviate from approved standards?",
+  "What is the business impact if an integration between this system and a connected system fails?",
+  "Does this solution need to connect to legacy systems, operational technology (OT), plant equipment, or industrial control systems?",
+  "Does this solution require formal API versioning, backward-compatibility guarantees, or participation in an enterprise API governance process?",
+  "How will the solution handle integration failures, partial failures, and the need to retry or replay messages?",
+  "Are there latency, throughput, or availability SLA requirements for any of the integrations this solution relies on or provides?",
+  "How will the integrations be monitored, tested, and validated in production?"
 ];
 
 const REGULATORY_QUESTIONS = [

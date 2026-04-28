@@ -206,6 +206,57 @@ const IMPACT_AREA_CONFIG = [
           "Accessible by or shared with government bodies, regulators, or public entities",
           "Not sure"
         ]
+      },
+      {
+        question: "What are the data quality requirements, and are there controls in place to detect and remediate data quality issues?",
+        options: [
+          "No specific data quality requirements — accuracy is not critical for this system",
+          "Basic validation at point of entry; errors are acceptable and handled manually",
+          "Defined data quality rules with automated checks and exception handling processes",
+          "Strict data quality SLAs with automated monitoring, alerting, and remediation workflows",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Does this system depend on or contribute to master data domains (e.g. customer, product, employee, or supplier records)?",
+        showPatternsLink: true,
+        options: [
+          "No — the system manages its own data independently with no master data dependencies",
+          "Reads from master data but does not update or contribute to it",
+          "Both reads and writes to one or more master data domains",
+          "This system is itself a master data management or golden-record platform",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Is there a requirement to trace data lineage — i.e. track where data originated, how it was transformed, and where it was consumed?",
+        options: [
+          "No — lineage traceability is not required for this system",
+          "Informal lineage tracking via documentation or manual processes",
+          "Automated lineage capture for key data entities within this system",
+          "End-to-end lineage required across upstream sources and downstream consumers",
+          "Not sure"
+        ]
+      },
+      {
+        question: "How will personal or sensitive data be handled when it is no longer required — including anonymisation, pseudonymisation, and deletion?",
+        options: [
+          "No personal or sensitive data is stored — not applicable",
+          "Standard retention and deletion policies apply; no special anonymisation needed",
+          "Anonymisation or pseudonymisation is applied before archival or downstream sharing",
+          "Formal data subject rights processes required (right to erasure, portability, correction)",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Does this system collect or process personal data in a way that requires consent management or data subject rights fulfilment?",
+        options: [
+          "No — no personal data is collected or consent is not required",
+          "Consent is implicit or covered by existing organisational policies",
+          "Explicit consent capture and withdrawal mechanisms must be built into the system",
+          "Full data subject rights portal required (access, erasure, correction, portability requests)",
+          "Not sure"
+        ]
       }
     ]
   },
@@ -266,6 +317,47 @@ const IMPACT_AREA_CONFIG = [
           "Mostly modern systems with one or two legacy components",
           "Significant involvement of legacy or on-premises systems requiring special technical handling",
           "Direct integration with OT systems, plant equipment, or industrial control systems",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Does this solution require formal API versioning, backward-compatibility guarantees, or participation in an enterprise API governance process?",
+        showPatternsLink: true,
+        options: [
+          "No APIs are exposed — the solution is consumed internally with no versioning requirements",
+          "Informal versioning; consumers are internal and breaking changes are coordinated informally",
+          "Formal API versioning required with a deprecation policy and consumer notification process",
+          "APIs must be registered in and approved by an enterprise API gateway or API management platform",
+          "Not sure"
+        ]
+      },
+      {
+        question: "How will the solution handle integration failures, partial failures, and the need to retry or replay messages?",
+        options: [
+          "Not applicable — the solution has no integrations",
+          "Failures are logged and surfaced to users; manual retry or re-processing is acceptable",
+          "Automated retry with exponential back-off and dead-letter queue for failed messages",
+          "Idempotent processing with guaranteed at-least-once or exactly-once delivery semantics",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Are there latency, throughput, or availability SLA requirements for any of the integrations this solution relies on or provides?",
+        options: [
+          "No — integration performance is best-effort with no defined SLA",
+          "Soft SLA — response within a few seconds is acceptable for most use cases",
+          "Defined SLA — sub-second response or high-throughput processing required for key flows",
+          "Strict SLA — real-time, mission-critical performance with financial or contractual penalties for breach",
+          "Not sure"
+        ]
+      },
+      {
+        question: "How will the integrations be monitored, tested, and validated in production?",
+        options: [
+          "No formal monitoring planned — issues will be identified reactively",
+          "Basic health checks and alerting via existing infrastructure monitoring",
+          "End-to-end integration testing in a non-production environment plus production monitoring dashboards",
+          "Continuous synthetic testing, distributed tracing, and automated alerting for integration degradation",
           "Not sure"
         ]
       }
