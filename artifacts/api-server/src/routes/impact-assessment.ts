@@ -6,7 +6,9 @@ const router = Router();
 type ImpactLevel = "none" | "low" | "medium" | "high";
 
 interface AreaAnswers {
-  q1: string; q2: string; q3: string; q4: string; q5: string; remarks: string;
+  q1: string; q2: string; q3: string; q4: string; q5: string;
+  q6?: string; q7?: string; q8?: string;
+  remarks: string;
 }
 
 interface ImpactAnswers {
@@ -39,7 +41,7 @@ Impact Level Definitions:
 - DATA: none=publicly available info only; low=everyday non-sensitive internal data, short retention; medium=cross-department data, moderate volume/retention, or third-party sharing under agreement; high=PII/financial/health records OR data residency requirements OR sharing with government/public entities
 - INTEGRATION: none=no connections to other systems; low=1–2 internal systems, standard approved methods; medium=several systems or real-time feeds or minor legacy involvement; high=external party connections (suppliers/customers/government) OR new integration methods OR critical business-stopping failure risk OR significant legacy complexity
 - REGULATORY: none=no compliance obligations; low=internal policies only; medium=external audits, financial reporting, certifications, multiple countries with similar rules; high=government legislation (privacy laws, food safety, financial regulations) with legal/financial consequences OR multiple jurisdictions with differing requirements OR no existing compliance capability
-- AI: none=no AI/ML; low=vendor built-in feature, human always reviews, minimal consequence if wrong; medium=AI informing operations with some oversight, uses internal data; high=AI making/influencing high-consequence decisions OR customer PII used for training OR black-box with no explainability OR severe consequence if AI errors
+- AI: none=no AI/ML; low=vendor off-the-shelf feature only, human always reviews all outputs, public/synthetic data only, minimal consequence if wrong, full explainability, formal monitoring in place, no AI-specific regulations; medium=AI informing operations with some oversight, uses anonymised or internal data, partial explainability or monitoring; high=custom-built or open-source model OR customer PII or identifiable data used for training/inference OR AI outputs trigger automated decisions with limited/no human review OR severe consequence if AI errors OR black-box with no explainability OR no monitoring or model governance plan OR specific AI legislation applies (e.g. EU AI Act, algorithmic accountability laws) OR any combination of custom/open-source model + no monitoring plan + PII training data or applicable AI legislation
 
 Use ALL answers and additional remarks to derive the most accurate level. When answers conflict, weight the highest-risk answer.
 
@@ -90,15 +92,19 @@ const REGULATORY_QUESTIONS = [
 ];
 
 const AI_QUESTIONS = [
-  "Will this system use any artificial intelligence or machine learning?",
-  "How are AI-generated outputs used?",
-  "How serious would the consequences be if the AI made an error?",
-  "Will the AI system use or be trained on company or customer data?",
-  "Is the AI's decision-making process explainable and auditable?"
+  "Will this system incorporate artificial intelligence or machine learning functionality?",
+  "How is the AI capability being sourced or developed?",
+  "What data will the AI use for training or inference, and does it include personal or sensitive company data?",
+  "Will AI-generated outputs directly trigger automated actions or decisions without human review?",
+  "How serious would the consequences be if the AI produced an incorrect or biased output?",
+  "Is the AI system's decision-making process explainable and subject to audit?",
+  "Is there a plan for monitoring model performance, detecting drift, and managing retraining or updates?",
+  "Are there specific AI-related regulations or policies that apply to this use case?"
 ];
 
 function buildSection(label: string, questions: string[], answers: AreaAnswers): string {
-  const qKeys: (keyof AreaAnswers)[] = ["q1", "q2", "q3", "q4", "q5"];
+  const allKeys: (keyof AreaAnswers)[] = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8"];
+  const qKeys = allKeys.slice(0, questions.length);
   const lines = [`${label} QUESTIONS:`];
   qKeys.forEach((k, i) => {
     lines.push(`Q${i + 1}: ${questions[i]}`);

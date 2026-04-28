@@ -283,51 +283,84 @@ const IMPACT_AREA_CONFIG = [
         question: "Will this system incorporate artificial intelligence or machine learning functionality?",
         showPatternsLink: true,
         options: [
-          "No — no AI or ML is used anywhere in the solution",
-          "A vendor-provided AI feature used off the shelf (e.g. smart search, autocomplete, anomaly detection)",
-          "Custom-built ML models, generative AI, or AI-driven recommendations developed for this system",
-          "AI or ML is the primary function — the system's core operation depends on it",
+          "No AI",
+          "Vendor off-the-shelf feature",
+          "Custom-built or internally trained model",
+          "AI is the primary function",
           "Not sure"
         ]
       },
       {
-        question: "What data will the AI system use, and does it include company or personal data?",
+        question: "How is the AI capability being sourced or developed?",
         options: [
           "Not applicable — no AI",
-          "No company or customer data — trained or operated on publicly available or synthetic data only",
-          "Anonymised or aggregated internal data with no individual identifiers",
-          "Identifiable internal business data or customer personal data",
+          "Vendor-provided AI used off the shelf (embedded feature, API or SaaS)",
+          "Open-source model integrated and deployed internally",
+          "Custom-built or internally trained model",
+          "Hybrid combination",
           "Not sure"
         ]
       },
       {
-        question: "Will AI-generated outputs directly trigger automated actions, decisions, or transactions without human review?",
+        question: "What data will the AI use for training or inference, and does it include personal or sensitive company data?",
         options: [
           "Not applicable — no AI",
-          "No — AI outputs are informational only; all decisions require human approval",
-          "Partially — AI outputs inform automated processes, but humans review significant decisions",
-          "Yes — AI outputs directly trigger actions or decisions with limited or no human oversight",
+          "Public or fully synthetic data only",
+          "Anonymised or aggregated internal data",
+          "Identifiable internal business data",
+          "Customer personal data or PII",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Will AI-generated outputs directly trigger automated actions or decisions without human review?",
+        options: [
+          "Not applicable — no AI",
+          "No — outputs are informational only",
+          "Partially — humans review significant decisions",
+          "Yes — limited or no human oversight",
           "Not sure"
         ]
       },
       {
         question: "How serious would the consequences be if the AI produced an incorrect or biased output?",
         options: [
-          "Minimal — the error would be easily identified and corrected with no lasting impact",
-          "Moderate — operational disruption, rework, or efficiency loss",
-          "Significant — financial loss, reputational damage, or harm to customers",
-          "Severe — legal liability, safety risk, regulatory breach, or harm to individuals",
+          "Minimal",
+          "Moderate — operational disruption",
+          "Significant — financial, reputational or customer harm",
+          "Severe — legal liability, safety risk or regulatory breach",
           "Not sure"
         ]
       },
       {
-        question: "Is the AI system's decision-making process transparent, explainable, and subject to audit?",
+        question: "Is the AI system's decision-making process explainable and subject to audit?",
         showPatternsLink: true,
         options: [
           "Not applicable — no AI",
-          "Yes — full audit trail, explainability tooling, and human-readable rationale are built in",
-          "Partial — some logging and monitoring exist but full explainability is limited",
-          "No — the model operates as a black box with no explainability or audit mechanism",
+          "Yes — full audit trail and explainability built in",
+          "Partial — some logging but limited explainability",
+          "No — black box with no explainability",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Is there a plan for monitoring model performance, detecting drift, and managing retraining or updates?",
+        options: [
+          "Not applicable — no AI",
+          "Yes — formal MLOps or model governance process in place or planned",
+          "Partial — some monitoring exists but no formal drift detection or retraining",
+          "No — no monitoring or model maintenance plan",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Are there specific AI-related regulations or policies that apply to this use case?",
+        options: [
+          "Not applicable — no AI",
+          "No known AI-specific regulations (standard data and privacy rules apply)",
+          "Sector-specific AI guidance applies (e.g. financial services, healthcare)",
+          "Specific AI legislation applies (e.g. EU AI Act, algorithmic accountability laws)",
+          "Uncertain — legal or compliance review needed",
           "Not sure"
         ]
       }
@@ -336,10 +369,10 @@ const IMPACT_AREA_CONFIG = [
 ];
 
 type ImpactLevel = "none" | "low" | "medium" | "high";
-type AreaAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string; remarks: string };
+type AreaAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string; q6: string; q7: string; q8: string; remarks: string };
 type ImpactAnswers = { [area: string]: AreaAnswers };
 
-const EMPTY_AREA: AreaAnswers = { q1: UNSELECTED, q2: UNSELECTED, q3: UNSELECTED, q4: UNSELECTED, q5: UNSELECTED, remarks: "" };
+const EMPTY_AREA: AreaAnswers = { q1: UNSELECTED, q2: UNSELECTED, q3: UNSELECTED, q4: UNSELECTED, q5: UNSELECTED, q6: UNSELECTED, q7: UNSELECTED, q8: UNSELECTED, remarks: "" };
 
 function ImpactQuestionCard({
   area,
@@ -349,11 +382,11 @@ function ImpactQuestionCard({
 }: {
   area: typeof IMPACT_AREA_CONFIG[0];
   answers: AreaAnswers;
-  onAnswer: (q: "q1" | "q2" | "q3" | "q4" | "q5", value: string) => void;
+  onAnswer: (q: "q1" | "q2" | "q3" | "q4" | "q5" | "q6" | "q7" | "q8", value: string) => void;
   onRemarks: (value: string) => void;
 }) {
   const Icon = area.icon;
-  const qKeys = (["q1", "q2", "q3", "q4", "q5"] as const).slice(0, area.questions.length);
+  const qKeys = (["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8"] as const).slice(0, area.questions.length);
   const hasNotSure = qKeys.some(k => answers[k] === "Not sure");
   const remarksRequired = hasNotSure;
   const remarksMissing = remarksRequired && !answers.remarks.trim();
@@ -635,7 +668,7 @@ export default function RequestForm() {
     setFormData(prev => ({ ...prev, [`${area}ImpactLevel`]: level }));
   };
 
-  const handleAnswer = (area: string, q: "q1" | "q2" | "q3" | "q4" | "q5", value: string) => {
+  const handleAnswer = (area: string, q: "q1" | "q2" | "q3" | "q4" | "q5" | "q6" | "q7" | "q8", value: string) => {
     setImpactAnswers(prev => ({ ...prev, [area]: { ...prev[area], [q]: value } }));
     if (analysisComplete) setAnalysisComplete(false);
   };
@@ -685,16 +718,17 @@ export default function RequestForm() {
     }
   };
 
+  const ALL_Q_KEYS = ["q1","q2","q3","q4","q5","q6","q7","q8"] as const;
   const totalAnswered = IMPACT_AREA_CONFIG.reduce((sum, a) => {
     const ans = impactAnswers[a.key];
-    const qKeys = (["q1","q2","q3","q4","q5"] as const).slice(0, a.questions.length);
+    const qKeys = ALL_Q_KEYS.slice(0, a.questions.length);
     return sum + qKeys.filter(k => ans[k]).length;
   }, 0);
   const totalQuestions = IMPACT_AREA_CONFIG.reduce((sum, a) => sum + a.questions.length, 0);
   const hasAnswers = totalAnswered > 0;
   const hasBlockingRemarks = IMPACT_AREA_CONFIG.some(a => {
     const ans = impactAnswers[a.key];
-    const qKeys = (["q1","q2","q3","q4","q5"] as const).slice(0, a.questions.length);
+    const qKeys = ALL_Q_KEYS.slice(0, a.questions.length);
     const hasNotSure = qKeys.some(k => ans[k] === "Not sure");
     return hasNotSure && !ans.remarks.trim();
   });
