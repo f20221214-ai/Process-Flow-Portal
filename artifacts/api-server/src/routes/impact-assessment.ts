@@ -62,7 +62,7 @@ You MUST respond with valid JSON only — no markdown, no explanation outside th
 const SECURITY_QUESTIONS = [
   "Who will access this system, and by what means?",
   "Will the system store, transmit, or process sensitive, personal, or regulated data?",
-  "Does the solution introduce new authentication mechanisms, identity providers, or connections to external networks?",
+  "Does the solution introduce new authentication mechanisms, identity providers, or connections to external networks or third-party systems?",
   "What is the expected network exposure of this system?",
   "How will data be protected at rest and in transit?",
   "Does this system require privileged or elevated access beyond standard user permissions?",
