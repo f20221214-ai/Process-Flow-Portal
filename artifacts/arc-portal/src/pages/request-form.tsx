@@ -421,6 +421,47 @@ const IMPACT_AREA_CONFIG = [
           "Not established — this is a new compliance domain with no existing capability",
           "Not sure"
         ]
+      },
+      {
+        question: "Does this system require specific operational licences, permits, or regulatory authorisations before it can go live or process data?",
+        options: [
+          "No — no licences or permits are required beyond standard corporate approvals",
+          "Existing licences or permits cover this system without modification",
+          "A licence or permit variation or extension is required before go-live",
+          "A new operational licence, regulatory authorisation, or government approval must be obtained",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Does this system involve personal data processing activities that require involvement of a Data Protection Officer (DPO) or Privacy Officer?",
+        showPatternsLink: true,
+        options: [
+          "No personal data is processed — DPO involvement is not required",
+          "Personal data is processed but existing DPIA coverage or exemptions apply",
+          "A Data Protection Impact Assessment (DPIA) should be conducted with DPO review",
+          "Mandatory DPO consultation required (e.g. large-scale systematic processing or high-risk profiling)",
+          "Not sure"
+        ]
+      },
+      {
+        question: "Does this system transfer personal data across international borders, and if so, what legal mechanism governs those transfers?",
+        options: [
+          "No cross-border data transfers — all data remains within the originating jurisdiction",
+          "Transfers occur to jurisdictions covered by an adequacy decision (e.g. EU–UK, EU–Switzerland)",
+          "Transfers rely on Standard Contractual Clauses (SCCs) or Binding Corporate Rules (BCRs)",
+          "Transfer mechanism is unclear or not yet established — legal review required",
+          "Not sure"
+        ]
+      },
+      {
+        question: "How will this system adapt if the applicable regulatory requirements change after go-live?",
+        options: [
+          "No anticipated regulatory change — requirements are stable and well-established",
+          "Changes would be handled reactively through the standard change management process",
+          "Regulatory change monitoring is in place and a formal change management process exists",
+          "The system is designed for regulatory agility with modular controls and a dedicated compliance uplift process",
+          "Not sure"
+        ]
       }
     ]
   },
