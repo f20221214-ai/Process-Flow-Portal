@@ -787,6 +787,11 @@ export default function RequestForm() {
   }, 0);
   const totalQuestions = IMPACT_AREA_CONFIG.reduce((sum, a) => sum + a.questions.length, 0);
   const hasAnswers = totalAnswered > 0;
+  const aiAreaConfig = IMPACT_AREA_CONFIG.find(a => a.key === "ai");
+  const aiAnswers = impactAnswers["ai"];
+  const allAiQuestionsAnswered = !!aiAreaConfig && ALL_Q_KEYS
+    .slice(0, aiAreaConfig.questions.length)
+    .every(k => !!aiAnswers[k]);
   const hasBlockingRemarks = IMPACT_AREA_CONFIG.some(a => {
     const ans = impactAnswers[a.key];
     const qKeys = ALL_Q_KEYS.slice(0, a.questions.length);
@@ -1137,7 +1142,7 @@ export default function RequestForm() {
 
           <div className="flex justify-end gap-4">
             <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
-            <Button type="submit" disabled={createMutation.isPending} className="px-8">
+            <Button type="submit" disabled={createMutation.isPending || !allAiQuestionsAnswered} className="px-8" title={!allAiQuestionsAnswered ? "Please answer all 8 AI / ML questions before submitting" : undefined}>
               {createMutation.isPending ? "Submitting..." : "Submit ARR"}
             </Button>
           </div>
