@@ -433,17 +433,6 @@ const IMPACT_AREA_CONFIG = [
         ]
       },
       {
-        question: "Does this system involve personal data processing activities that require involvement of a Data Protection Officer (DPO) or Privacy Officer?",
-        showPatternsLink: true,
-        options: [
-          "No personal data is processed — DPO involvement is not required",
-          "Personal data is processed but existing DPIA coverage or exemptions apply",
-          "A Data Protection Impact Assessment (DPIA) should be conducted with DPO review",
-          "Mandatory DPO consultation required (e.g. large-scale systematic processing or high-risk profiling)",
-          "Not sure"
-        ]
-      },
-      {
         question: "Does this system transfer personal data across international borders, and if so, what legal mechanism governs those transfers?",
         options: [
           "No cross-border data transfers — all data remains within the originating jurisdiction",
