@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1742342400000,
+      "tag": "0001_leanix_initiatives",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1745625600000,
+      "tag": "0002_ai_impact_answers",
+      "breakpoints": true
+    }
+  ]
+}

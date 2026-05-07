@@ -90,6 +90,12 @@ export const ListRequestsResponseItem = zod.object({
   regulatoryImpactDetails: zod.string().nullish(),
   aiImpactLevel: zod.enum(["none", "low", "medium", "high"]),
   aiImpactDetails: zod.string().nullish(),
+  aiImpactAnswers: zod
+    .string()
+    .nullish()
+    .describe(
+      "JSON-encoded q2\/q7\/q8 AI questionnaire answers used to derive structured risk flags",
+    ),
   architectureSpecifications: zod.string().nullish(),
   eaAssignee: zod.string().nullish(),
   scopeNotes: zod.string().nullish(),
@@ -150,6 +156,12 @@ export const CreateRequestBody = zod.object({
   regulatoryImpactDetails: zod.string().nullish(),
   aiImpactLevel: zod.string().optional(),
   aiImpactDetails: zod.string().nullish(),
+  aiImpactAnswers: zod
+    .string()
+    .nullish()
+    .describe(
+      "JSON-encoded q2\/q7\/q8 AI questionnaire answers used to derive structured risk flags",
+    ),
   architectureSpecifications: zod.string().nullish(),
   jiraInitiativeId: zod.number().nullish(),
 });
@@ -234,6 +246,12 @@ export const GetRequestResponse = zod.object({
   regulatoryImpactDetails: zod.string().nullish(),
   aiImpactLevel: zod.enum(["none", "low", "medium", "high"]),
   aiImpactDetails: zod.string().nullish(),
+  aiImpactAnswers: zod
+    .string()
+    .nullish()
+    .describe(
+      "JSON-encoded q2\/q7\/q8 AI questionnaire answers used to derive structured risk flags",
+    ),
   architectureSpecifications: zod.string().nullish(),
   eaAssignee: zod.string().nullish(),
   scopeNotes: zod.string().nullish(),
@@ -366,6 +384,12 @@ export const UpdateRequestResponse = zod.object({
   regulatoryImpactDetails: zod.string().nullish(),
   aiImpactLevel: zod.enum(["none", "low", "medium", "high"]),
   aiImpactDetails: zod.string().nullish(),
+  aiImpactAnswers: zod
+    .string()
+    .nullish()
+    .describe(
+      "JSON-encoded q2\/q7\/q8 AI questionnaire answers used to derive structured risk flags",
+    ),
   architectureSpecifications: zod.string().nullish(),
   eaAssignee: zod.string().nullish(),
   scopeNotes: zod.string().nullish(),

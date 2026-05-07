@@ -923,7 +923,12 @@ export default function RequestForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate({ data: formData }, {
+    const aiAnswers = impactAnswers.ai;
+    const dataWithAnswers = {
+      ...formData,
+      aiImpactAnswers: JSON.stringify({ q2: aiAnswers.q2, q7: aiAnswers.q7, q8: aiAnswers.q8 }),
+    };
+    createMutation.mutate({ data: dataWithAnswers }, {
       onSuccess: (data) => {
         toast({ title: "Request Submitted", description: "Your architecture review request has been created." });
         setLocation(`/requests/${data.id}`);

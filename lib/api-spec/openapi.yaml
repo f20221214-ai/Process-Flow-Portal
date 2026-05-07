@@ -616,6 +616,10 @@ components:
         aiImpactDetails:
           type: string
           nullable: true
+        aiImpactAnswers:
+          type: string
+          nullable: true
+          description: JSON-encoded q2/q7/q8 AI questionnaire answers used to derive structured risk flags
         # Specs
         architectureSpecifications:
           type: string
@@ -754,6 +758,10 @@ components:
         aiImpactDetails:
           type: string
           nullable: true
+        aiImpactAnswers:
+          type: string
+          nullable: true
+          description: JSON-encoded q2/q7/q8 AI questionnaire answers used to derive structured risk flags
         architectureSpecifications:
           type: string
           nullable: true

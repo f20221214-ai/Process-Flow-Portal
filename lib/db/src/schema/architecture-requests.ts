@@ -40,6 +40,7 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   regulatoryImpactDetails: text("regulatory_impact_details"),
   aiImpactLevel: text("ai_impact_level").default("none"),
   aiImpactDetails: text("ai_impact_details"),
+  aiImpactAnswers: text("ai_impact_answers"),
 
   // Architecture specifications (legacy / additional notes)
   architectureSpecifications: text("architecture_specifications"),

@@ -229,6 +229,8 @@ export interface ArchitectureRequest {
   regulatoryImpactDetails?: string | null;
   aiImpactLevel: ArchitectureRequestAiImpactLevel;
   aiImpactDetails?: string | null;
+  /** JSON-encoded q2/q7/q8 AI questionnaire answers used to derive structured risk flags */
+  aiImpactAnswers?: string | null;
   architectureSpecifications?: string | null;
   eaAssignee?: string | null;
   scopeNotes?: string | null;
@@ -300,6 +302,8 @@ export interface CreateArchitectureRequest {
   regulatoryImpactDetails?: string | null;
   aiImpactLevel?: string;
   aiImpactDetails?: string | null;
+  /** JSON-encoded q2/q7/q8 AI questionnaire answers used to derive structured risk flags */
+  aiImpactAnswers?: string | null;
   architectureSpecifications?: string | null;
   jiraInitiativeId?: number | null;
 }
