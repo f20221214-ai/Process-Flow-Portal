@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "f2HkSRFvjf_mJ3GHJqbZq"
+uri = "file://arc-requests-export.xlsx"
+type = "table"
+title = "ARC Requests Export — All 4 Requests"
