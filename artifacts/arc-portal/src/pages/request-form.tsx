@@ -1267,11 +1267,18 @@ export default function RequestForm() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-4">
-            <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
-            <Button type="submit" disabled={createMutation.isPending || !allAiQuestionsAnswered} className="px-8" title={!allAiQuestionsAnswered ? "Please answer all 8 AI / ML questions before submitting" : undefined}>
-              {createMutation.isPending ? "Submitting..." : "Submit ARR"}
-            </Button>
+          <div className="flex flex-col items-end gap-2">
+            {!allAiQuestionsAnswered && (
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                Please answer all 8 AI / ML questions to submit.
+              </p>
+            )}
+            <div className="flex gap-4">
+              <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
+              <Button type="submit" disabled={createMutation.isPending || !allAiQuestionsAnswered} className="px-8">
+                {createMutation.isPending ? "Submitting..." : "Submit ARR"}
+              </Button>
+            </div>
           </div>
         </form>
       </motion.div>
