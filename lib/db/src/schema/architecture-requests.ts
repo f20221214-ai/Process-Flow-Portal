@@ -32,15 +32,22 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   // Impact levels & details
   securityImpactLevel: text("security_impact_level").default("none"),
   securityImpactDetails: text("security_impact_details"),
+  securityImpactAnswers: text("security_impact_answers"),                   // JSON
   dataImpactLevel: text("data_impact_level").default("none"),
   dataImpactDetails: text("data_impact_details"),
+  dataImpactAnswers: text("data_impact_answers"),                           // JSON
   integrationImpactLevel: text("integration_impact_level").default("none"),
   integrationImpactDetails: text("integration_impact_details"),
+  integrationImpactAnswers: text("integration_impact_answers"),             // JSON
   regulatoryImpactLevel: text("regulatory_impact_level").default("none"),
   regulatoryImpactDetails: text("regulatory_impact_details"),
+  regulatoryImpactAnswers: text("regulatory_impact_answers"),               // JSON
   aiImpactLevel: text("ai_impact_level").default("none"),
   aiImpactDetails: text("ai_impact_details"),
-  aiImpactAnswers: text("ai_impact_answers"),
+  aiImpactAnswers: text("ai_impact_answers"),                               // JSON q2/q3/q4/q8
+  operationalImpactLevel: text("operational_impact_level").default("none"),
+  operationalImpactDetails: text("operational_impact_details"),
+  operationalImpactAnswers: text("operational_impact_answers"),             // JSON Yes/No + details
 
   // Architecture specifications (legacy / additional notes)
   architectureSpecifications: text("architecture_specifications"),
@@ -53,6 +60,7 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   eaIntegrationComplexityRating: text("ea_integration_complexity_rating"),
   eaRegulatoryRiskRating: text("ea_regulatory_risk_rating"),
   eaAiRiskRating: text("ea_ai_risk_rating"),
+  eaOperationalRiskRating: text("ea_operational_risk_rating"),
   eaOverallComplexity: text("ea_overall_complexity"),
   eaOverallRiskLevel: text("ea_overall_risk_level"),
   eaReviewType: text("ea_review_type"),

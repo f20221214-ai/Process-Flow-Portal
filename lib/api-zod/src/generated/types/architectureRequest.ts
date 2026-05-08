@@ -42,16 +42,29 @@ export interface ArchitectureRequest {
   targetGoLiveDate?: string | null;
   securityImpactLevel: ArchitectureRequestSecurityImpactLevel;
   securityImpactDetails?: string | null;
+  /** JSON-encoded security questionnaire answers (q1–q5) */
+  securityImpactAnswers?: string | null;
   dataImpactLevel: ArchitectureRequestDataImpactLevel;
   dataImpactDetails?: string | null;
+  /** JSON-encoded data questionnaire answers (q1–q7) */
+  dataImpactAnswers?: string | null;
   integrationImpactLevel: ArchitectureRequestIntegrationImpactLevel;
   integrationImpactDetails?: string | null;
+  /** JSON-encoded integration questionnaire answers (q1–q4) */
+  integrationImpactAnswers?: string | null;
   regulatoryImpactLevel: ArchitectureRequestRegulatoryImpactLevel;
   regulatoryImpactDetails?: string | null;
+  /** JSON-encoded regulatory questionnaire answers (q1–q5) */
+  regulatoryImpactAnswers?: string | null;
   aiImpactLevel: ArchitectureRequestAiImpactLevel;
   aiImpactDetails?: string | null;
-  /** JSON-encoded q2/q7/q8 AI questionnaire answers used to derive structured risk flags */
+  /** JSON-encoded AI questionnaire answers (q2=sourcing, q3=inference data, q4=automation, q8=monitoring) */
   aiImpactAnswers?: string | null;
+  /** none|low|medium|high — scored from operational readiness answers */
+  operationalImpactLevel?: string | null;
+  operationalImpactDetails?: string | null;
+  /** JSON-encoded operational readiness Yes/No answers with details (q1–q4) */
+  operationalImpactAnswers?: string | null;
   architectureSpecifications?: string | null;
   eaAssignee?: string | null;
   scopeNotes?: string | null;
@@ -60,6 +73,7 @@ export interface ArchitectureRequest {
   eaIntegrationComplexityRating?: string | null;
   eaRegulatoryRiskRating?: string | null;
   eaAiRiskRating?: string | null;
+  eaOperationalRiskRating?: string | null;
   eaOverallComplexity?: string | null;
   eaOverallRiskLevel?: string | null;
   eaReviewType?: ArchitectureRequestEaReviewType;

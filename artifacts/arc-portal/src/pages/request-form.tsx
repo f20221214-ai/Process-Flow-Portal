@@ -6,7 +6,11 @@ import { useCreateRequest } from "@workspace/api-client-react";
 import type { CreateArchitectureRequest } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, X, Search, Sparkles, Shield, Database, GitBranch, Scale, Bot, CheckCircle2, AlertCircle, ChevronRight, RotateCcw, MessageSquare, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft, X, Sparkles, Shield, Database, GitBranch, Scale, Bot,
+  CheckCircle2, AlertCircle, ChevronRight, RotateCcw, MessageSquare,
+  ExternalLink, Activity, Info
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 interface LeanixInitiative {
@@ -34,6 +38,54 @@ const IMPACT_COLORS: Record<string, string> = {
 
 const UNSELECTED = "";
 
+// ---------------------------------------------------------------------------
+// Solution Context — Q1–Q4 (non-scored, provides AI model context)
+// ---------------------------------------------------------------------------
+const SOLUTION_CONTEXT_QUESTIONS = [
+  {
+    question: "What stage is this initiative currently at?",
+    options: [
+      "Concept — early exploration, no business case yet",
+      "Business case in development",
+      "Approved — solution not yet selected",
+      "Approved — solution selected and in delivery",
+    ]
+  },
+  {
+    question: "What type of solution is being delivered?",
+    options: [
+      "Packaged software or SaaS",
+      "Custom build",
+      "Upgrade or extension to an existing system",
+      "Infrastructure or platform change",
+      "Not yet determined",
+    ]
+  },
+  {
+    question: "Who are the primary users of this system?",
+    options: [
+      "Internal staff only",
+      "Internal staff and trusted external partners or contractors",
+      "External customers or consumers (public-facing)",
+      "Mixed internal and external users",
+      "Not yet determined",
+    ]
+  },
+  {
+    question: "Approximately how many users are expected?",
+    options: [
+      "Fewer than 50",
+      "50–500",
+      "500–5,000",
+      "More than 5,000",
+      "Unknown at this stage",
+    ]
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Impact Domains — Q5–Q33
+// ---------------------------------------------------------------------------
 const IMPACT_AREA_CONFIG = [
   {
     key: "security",
@@ -44,74 +96,43 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-blue-100",
     questions: [
       {
-        question: "Who will access this system, and by what means?",
+        question: "How will users authenticate to sign in to this system?",
         options: [
-          "Internal employees only, through the existing corporate identity provider",
-          "Internal employees plus a controlled set of external partners or contractors",
-          "Customers or members of the public via the internet",
-          "A broad mix of internal staff and external users across multiple channels",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Will the system store, transmit, or process sensitive, personal, or regulated data?",
-        options: [
-          "No — publicly available or non-sensitive information only",
-          "General internal business data (non-sensitive operational records)",
-          "Sensitive internal data such as employee records or commercially confidential information",
-          "Highly sensitive or regulated data (PII, payment card data, health records, or credentials)",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Does the solution introduce new authentication mechanisms, identity providers, or connections to external networks or third-party systems?",
-        showPatternsLink: true,
-        options: [
-          "No — no changes to existing authentication or external connectivity",
-          "A minor change using existing approved patterns",
-          "A new identity provider, SSO integration, or authentication mechanism",
-          "A new external network connection or integration with a third-party system outside the corporate perimeter",
-          "Not sure"
+          "Existing corporate SSO / identity provider only",
+          "New or separate authentication mechanism",
+          "Third-party identity provider (e.g. social login, external IdP)",
+          "Mixed or multiple authentication methods",
+          "Not sure",
         ]
       },
       {
         question: "What is the expected network exposure of this system?",
         options: [
           "Fully internal — accessible only within the corporate network",
-          "Partially restricted — accessible to specific external parties via VPN or IP allowlisting",
-          "Partially internet-facing — some public-facing endpoints alongside internal components",
-          "Fully public-facing — accessible from the open internet without network-level restrictions",
-          "Not sure"
-        ]
-      },
-      {
-        question: "How will data be protected at rest and in transit?",
-        options: [
-          "No sensitive data stored or transmitted — encryption not required",
-          "Data in transit is encrypted using standard TLS; no sensitive data stored at rest",
-          "Encryption in transit (TLS) and at rest using platform-managed keys",
-          "Encryption in transit and at rest using customer-managed or bring-your-own keys (BYOK/CMK)",
-          "Not sure"
+          "Restricted external access via VPN or IP allowlisting",
+          "Partially internet-facing — some public-facing endpoints",
+          "Fully public-facing — open internet access, no network-level restrictions",
+          "Not sure",
         ]
       },
       {
         question: "Does this system require privileged or elevated access beyond standard user permissions?",
         options: [
-          "No — all users operate with standard business application permissions",
-          "Minor elevation required for a small number of administrators using existing controls",
-          "Privileged access required for system administrators or service accounts, managed through existing PAM tooling",
-          "Significant privileged access with no current privileged access management (PAM) controls in place",
-          "Not sure"
+          "No — standard user permissions only",
+          "Limited admin elevation using existing approved controls",
+          "Privileged access managed through approved PAM tooling",
+          "Significant privileged access with no current PAM controls in place",
+          "Not sure",
         ]
       },
       {
-        question: "What is the approach to security monitoring, event logging, and alerting for this system?",
+        question: "How will secrets, credentials, and API keys be managed for this system?",
         options: [
-          "No specific monitoring required — low-risk internal system",
-          "Standard application and infrastructure logging through existing enterprise tooling",
-          "Enhanced security event logging integrated into the SIEM, with defined alert thresholds",
-          "Real-time threat detection, automated alerting, and SOC integration required",
-          "Not sure"
+          "No credentials required — system does not authenticate to other services",
+          "Managed through an approved secrets management platform (e.g. Vault, Key Vault)",
+          "Stored in configuration files or environment variables without centralised management",
+          "Hardcoded or manually distributed credentials",
+          "Not sure",
         ]
       },
       {
@@ -119,32 +140,12 @@ const IMPACT_AREA_CONFIG = [
         showPatternsLink: true,
         options: [
           "No third-party or open-source dependencies",
-          "Standard commercial software or SaaS with a current enterprise agreement",
-          "Open-source components or third-party packages included in the software supply chain",
-          "Significant reliance on third-party or open-source components with no existing supply chain risk assessment",
-          "Not sure"
+          "Standard commercial software with a current enterprise agreement",
+          "Open-source components or third-party packages in the software supply chain",
+          "Significant third-party dependency with no existing supply-chain risk assessment",
+          "Not sure",
         ]
       },
-      {
-        question: "How are secrets, credentials, and cryptographic keys managed for this system?",
-        options: [
-          "No secrets or credentials required — system does not authenticate to other services",
-          "Secrets managed through the existing approved secret management platform (e.g. Vault, Key Vault, Secrets Manager)",
-          "Secrets stored in application configuration or environment variables without a centralised secret manager",
-          "Hardcoded or manually distributed credentials with no automated rotation",
-          "Not sure"
-        ]
-      },
-      {
-        question: "What is the planned security testing and review posture for this system before go-live?",
-        options: [
-          "No formal security testing required — low-risk internal system with no sensitive data or external exposure",
-          "Standard SDLC security practices (e.g. SAST, dependency scanning) as part of the CI/CD pipeline",
-          "Structured security review by the internal security team, including threat modelling",
-          "Independent penetration test or third-party security assessment required before go-live",
-          "Not sure"
-        ]
-      }
     ]
   },
   {
@@ -160,104 +161,73 @@ const IMPACT_AREA_CONFIG = [
         options: [
           "Public — no restrictions on access or disclosure",
           "Internal — suitable for internal use but not for public release",
-          "Confidential — restricted access within the organisation (e.g. employee records, strategic plans)",
-          "Regulated or highly sensitive — subject to legal obligations (e.g. PII, health records, payment data)",
-          "Not sure"
+          "Confidential — restricted access within the organisation",
+          "Regulated or highly sensitive (e.g. PII, health records, payment data, credentials)",
+          "Not sure",
         ]
       },
       {
-        question: "Are there data residency, sovereignty, or legal jurisdiction constraints on where this data can be stored or processed?",
+        question: "Does the system store or process sensitive or regulated personal data?",
+        options: [
+          "No personal data",
+          "Basic contact data only (e.g. name, work email)",
+          "Sensitive personal data (e.g. health, financial, biometric)",
+          "Special category or regulated data requiring formal privacy controls (GDPR, Privacy Act)",
+          "Not sure",
+        ]
+      },
+      {
+        question: "Does this system depend on or contribute to master data domains (e.g. customer, product, supplier, employee)?",
+        showPatternsLink: true,
+        options: [
+          "No — fully self-contained data with no master data dependencies",
+          "Reads from master data but does not update it",
+          "Reads and writes to one or more master data domains",
+          "This system is itself a master data management or golden-record platform",
+          "Not sure",
+        ]
+      },
+      {
+        question: "Is data lineage tracking required — i.e. tracing where data originated, how it was transformed, and where it flows?",
+        options: [
+          "No — lineage traceability is not required",
+          "Informal documentation only (no automated tracking)",
+          "Automated lineage capture within this system",
+          "End-to-end lineage required across upstream sources and downstream consumers",
+          "Not sure",
+        ]
+      },
+      {
+        question: "Are there data residency or data sovereignty constraints on where data can be stored or processed?",
         showPatternsLink: true,
         options: [
           "No constraints — data can be stored or processed anywhere",
-          "Soft preference for local storage but no legal or contractual requirement",
-          "Regulatory or contractual requirement to keep data within specific countries or regions",
-          "Strict government or legal mandate with enforcement consequences for non-compliance",
-          "Not sure"
+          "Soft preference for local storage — no legal or contractual obligation",
+          "Regulatory or contractual requirement for specific countries or regions",
+          "Strict government mandate with enforcement consequences for non-compliance",
+          "Not sure",
         ]
       },
       {
-        question: "Will data be shared or integrated across multiple business units, or used in enterprise-wide reporting or analytics?",
-        showPatternsLink: true,
+        question: "What is the expected data retention period for this system?",
         options: [
-          "No — the system operates within a single team or business function",
-          "Limited sharing within one business unit only",
-          "Data is shared across departments or integrated into cross-functional reporting",
-          "The system is a major data platform or enterprise analytics capability",
-          "Not sure"
-        ]
-      },
-      {
-        question: "What is the expected data volume and how long must data be retained?",
-        options: [
-          "Small volume with short-term retention (less than 1 year)",
-          "Moderate volume with standard retention (1–5 years)",
-          "Large volume or extended retention (5+ years)",
-          "Very large volume with mandatory long-term or regulatory retention requirements",
-          "Not sure"
+          "Short-term — less than 1 year",
+          "Standard — 1 to 5 years",
+          "Extended — 5 to 10 years",
+          "Long-term or permanent (e.g. legal or regulatory archival requirements)",
+          "Not sure",
         ]
       },
       {
         question: "Will data be shared with or accessible by parties outside the organisation?",
         options: [
           "No — data remains entirely within the organisation",
-          "Shared only with pre-approved internal teams or subsidiaries",
-          "Shared with trusted external partners under a formal data-sharing agreement",
-          "Accessible by or shared with government bodies, regulators, or public entities",
-          "Not sure"
+          "Shared only with approved internal subsidiaries",
+          "Shared with external partners under a formal data-sharing agreement",
+          "Accessible by government bodies, regulators, or the public",
+          "Not sure",
         ]
       },
-      {
-        question: "What are the data quality requirements, and are there controls in place to detect and remediate data quality issues?",
-        options: [
-          "No specific data quality requirements — accuracy is not critical for this system",
-          "Basic validation at point of entry; errors are acceptable and handled manually",
-          "Defined data quality rules with automated checks and exception handling processes",
-          "Strict data quality SLAs with automated monitoring, alerting, and remediation workflows",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Does this system depend on or contribute to master data domains (e.g. customer, product, employee, or supplier records)?",
-        showPatternsLink: true,
-        options: [
-          "No — the system manages its own data independently with no master data dependencies",
-          "Reads from master data but does not update or contribute to it",
-          "Both reads and writes to one or more master data domains",
-          "This system is itself a master data management or golden-record platform",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Is there a requirement to trace data lineage — i.e. track where data originated, how it was transformed, and where it was consumed?",
-        options: [
-          "No — lineage traceability is not required for this system",
-          "Informal lineage tracking via documentation or manual processes",
-          "Automated lineage capture for key data entities within this system",
-          "End-to-end lineage required across upstream sources and downstream consumers",
-          "Not sure"
-        ]
-      },
-      {
-        question: "How will personal or sensitive data be handled when it is no longer required — including anonymisation, pseudonymisation, and deletion?",
-        options: [
-          "No personal or sensitive data is stored — not applicable",
-          "Standard retention and deletion policies apply; no special anonymisation needed",
-          "Anonymisation or pseudonymisation is applied before archival or downstream sharing",
-          "Formal data subject rights processes required (right to erasure, portability, correction)",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Does this system collect or process personal data in a way that requires consent management or data subject rights fulfilment?",
-        options: [
-          "No — no personal data is collected or consent is not required",
-          "Consent is implicit or covered by existing organisational policies",
-          "Explicit consent capture and withdrawal mechanisms must be built into the system",
-          "Full data subject rights portal required (access, erasure, correction, portability requests)",
-          "Not sure"
-        ]
-      }
     ]
   },
   {
@@ -269,98 +239,47 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-orange-100",
     questions: [
       {
-        question: "How many other systems will this solution connect to, and are any of them outside the organisation?",
+        question: "How many systems will this solution integrate with, and are any of them outside the organisation?",
         options: [
           "None — the solution operates in complete isolation",
-          "One or two internal systems using existing approved methods",
-          "Three or more internal systems, or a single external connection",
-          "Multiple systems including external parties such as suppliers, customers, or government agencies",
-          "Not sure"
+          "1–2 internal systems only",
+          "3 or more internal systems, or one external system",
+          "Multiple systems including external parties (partners, government, cloud platforms)",
+          "Not sure",
         ]
       },
       {
-        question: "How will data flow between this system and the systems it connects to?",
+        question: "What integration style best describes the data flows for this solution?",
         showPatternsLink: true,
         options: [
-          "No data movement — the system does not exchange data with other systems",
-          "Scheduled batch transfers (e.g. nightly file drops or periodic extracts)",
-          "Near real-time or event-triggered data flows",
-          "Continuous high-frequency event streaming",
-          "Not sure"
+          "No data flows — fully standalone system",
+          "Batch or file transfers (scheduled extracts or file drops)",
+          "API-based or event-driven integration (near-real-time)",
+          "Continuous high-volume event streaming",
+          "Not sure",
         ]
       },
       {
-        question: "Does this solution introduce integration patterns that are new to the organisation or deviate from approved standards?",
+        question: "Does this solution need to connect to legacy systems, on-premises infrastructure, or operational technology (OT)?",
+        options: [
+          "No — all connected systems are modern and cloud-compatible",
+          "One or two legacy or on-premises components",
+          "Significant legacy or on-premises involvement requiring special handling",
+          "Direct integration with OT, plant equipment, or industrial control systems",
+          "Not sure",
+        ]
+      },
+      {
+        question: "Does this solution expose APIs that will be consumed by other teams or external parties?",
         showPatternsLink: true,
         options: [
-          "No — it uses only existing approved integration patterns and middleware",
-          "A minor variation of an existing approved pattern",
-          "A new approach aligned with industry standards but not yet used here",
-          "A bespoke or non-standard integration approach with no existing precedent",
-          "Not sure"
+          "No APIs exposed",
+          "Internal APIs consumed by known teams within the organisation",
+          "External-facing APIs or APIs registered in the enterprise API gateway",
+          "Public-facing APIs available to third parties or partners",
+          "Not sure",
         ]
       },
-      {
-        question: "What is the business impact if an integration between this system and a connected system fails?",
-        options: [
-          "Negligible — the system functions independently if connections are unavailable",
-          "Minor inconvenience — users can retry or manually work around the issue",
-          "Significant disruption — a key business process is delayed or degraded",
-          "Critical failure — a core business process stops and cannot continue",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Does this solution need to connect to legacy systems, operational technology (OT), plant equipment, or industrial control systems?",
-        options: [
-          "No — all connected systems are modern and cloud- or network-compatible",
-          "Mostly modern systems with one or two legacy components",
-          "Significant involvement of legacy or on-premises systems requiring special technical handling",
-          "Direct integration with OT systems, plant equipment, or industrial control systems",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Does this solution require formal API versioning, backward-compatibility guarantees, or participation in an enterprise API governance process?",
-        showPatternsLink: true,
-        options: [
-          "No APIs are exposed — the solution is consumed internally with no versioning requirements",
-          "Informal versioning; consumers are internal and breaking changes are coordinated informally",
-          "Formal API versioning required with a deprecation policy and consumer notification process",
-          "APIs must be registered in and approved by an enterprise API gateway or API management platform",
-          "Not sure"
-        ]
-      },
-      {
-        question: "How will the solution handle integration failures, partial failures, and the need to retry or replay messages?",
-        options: [
-          "Not applicable — the solution has no integrations",
-          "Failures are logged and surfaced to users; manual retry or re-processing is acceptable",
-          "Automated retry with exponential back-off and dead-letter queue for failed messages",
-          "Idempotent processing with guaranteed at-least-once or exactly-once delivery semantics",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Are there latency, throughput, or availability SLA requirements for any of the integrations this solution relies on or provides?",
-        options: [
-          "No — integration performance is best-effort with no defined SLA",
-          "Soft SLA — response within a few seconds is acceptable for most use cases",
-          "Defined SLA — sub-second response or high-throughput processing required for key flows",
-          "Strict SLA — real-time, mission-critical performance with financial or contractual penalties for breach",
-          "Not sure"
-        ]
-      },
-      {
-        question: "How will the integrations be monitored, tested, and validated in production?",
-        options: [
-          "No formal monitoring planned — issues will be identified reactively",
-          "Basic health checks and alerting via existing infrastructure monitoring",
-          "End-to-end integration testing in a non-production environment plus production monitoring dashboards",
-          "Continuous synthetic testing, distributed tracing, and automated alerting for integration degradation",
-          "Not sure"
-        ]
-      }
     ]
   },
   {
@@ -372,86 +291,56 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-teal-100",
     questions: [
       {
-        question: "Which category of regulation most closely applies to this system?",
+        question: "Which category of regulation most closely applies to this initiative?",
         showPatternsLink: true,
         options: [
-          "None — no external regulatory obligations apply to this system",
-          "Internal governance only — must comply with company policies and standards",
-          "Industry standards or certification frameworks (e.g. ISO, SOC 2, food safety standards)",
-          "Government legislation or regulatory requirements (e.g. Privacy Act, GDPR, financial regulations)",
-          "Not sure"
+          "None — no external regulatory obligations apply",
+          "Internal governance and company policies only",
+          "Industry standards or certification frameworks (e.g. ISO 27001, SOC 2, food safety)",
+          "Government legislation or formal regulatory requirements (e.g. Privacy Act, GDPR, FDA)",
+          "Not sure",
         ]
       },
       {
-        question: "Will this system give rise to new compliance obligations — such as mandatory notifications, auditable controls, certifications, or reporting to regulators or auditors?",
+        question: "In how many jurisdictions will this system operate or process data?",
         options: [
-          "No new obligations — existing controls and reporting are sufficient",
-          "Some additional internal controls or documentation will be required",
-          "New external reporting, certification, or audit obligations will be introduced",
-          "Formal regulatory approval or licence required before the system can go live",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Does this initiative operate across multiple countries or jurisdictions with differing regulatory requirements?",
-        options: [
-          "No — single country and jurisdiction only",
+          "Single country only",
           "Multiple regions within the same country",
           "Multiple countries with broadly comparable regulatory requirements",
-          "Multiple countries with significantly different or conflicting regulatory requirements",
-          "Not sure"
+          "Multiple countries with significantly different or conflicting legal requirements",
+          "Not sure",
+        ]
+      },
+      {
+        question: "Does this system involve cross-border transfers of personal data?",
+        options: [
+          "No — all data stays within the originating jurisdiction",
+          "Transfers to jurisdictions covered by an adequacy decision (e.g. EU–UK)",
+          "Transfers covered by Standard Contractual Clauses (SCCs) or Binding Corporate Rules",
+          "Cross-border transfers with no established legal mechanism — legal review required",
+          "Not sure",
         ]
       },
       {
         question: "What would be the consequence if this system were found to be non-compliant?",
         options: [
-          "Low — an internal governance matter handled through normal processes",
-          "Moderate — reputational damage or breach of contract with a partner or customer",
+          "Low — an internal governance matter only",
+          "Moderate — reputational damage or contractual breach",
           "High — regulatory fines, financial penalties, or loss of certification",
           "Severe — legal action, inability to operate, or direct harm to individuals",
-          "Not sure"
+          "Not sure",
         ]
       },
       {
-        question: "How mature is the organisation's current compliance capability in the area this system touches?",
+        question: "Does this initiative introduce new audit controls, certifications, or regulatory reporting obligations?",
         options: [
-          "Well established — robust controls, processes, and expertise already in place",
-          "Partially established — some capability exists but gaps remain",
-          "Limited — significant uplift to controls and processes will be required",
-          "Not established — this is a new compliance domain with no existing capability",
-          "Not sure"
+          "No new obligations — existing controls are sufficient",
+          "Minor additional internal controls or documentation required",
+          "New external reporting, audit, or certification requirements introduced",
+          "Formal regulatory approval or licence required before go-live",
+          "Not sure",
         ]
       },
-      {
-        question: "Does this system require specific operational licences, permits, or regulatory authorisations before it can go live or process data?",
-        options: [
-          "No — no licences or permits are required beyond standard corporate approvals",
-          "Existing licences or permits cover this system without modification",
-          "A licence or permit variation or extension is required before go-live",
-          "A new operational licence, regulatory authorisation, or government approval must be obtained",
-          "Not sure"
-        ]
-      },
-      {
-        question: "Does this system transfer personal data across international borders, and if so, what legal mechanism governs those transfers?",
-        options: [
-          "No cross-border data transfers — all data remains within the originating jurisdiction",
-          "Transfers occur to jurisdictions covered by an adequacy decision (e.g. EU–UK, EU–Switzerland)",
-          "Transfers rely on Standard Contractual Clauses (SCCs) or Binding Corporate Rules (BCRs)",
-          "Transfer mechanism is unclear or not yet established — legal review required",
-          "Not sure"
-        ]
-      },
-      {
-        question: "How will this system adapt if the applicable regulatory requirements change after go-live?",
-        options: [
-          "No anticipated regulatory change — requirements are stable and well-established",
-          "Changes would be handled reactively through the standard change management process",
-          "Regulatory change monitoring is in place and a formal change management process exists",
-          "The system is designed for regulatory agility with modular controls and a dedicated compliance uplift process",
-          "Not sure"
-        ]
-      }
     ]
   },
   {
@@ -463,100 +352,184 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-indigo-100",
     questions: [
       {
-        question: "Will this system incorporate artificial intelligence or machine learning functionality?",
+        question: "Will this system incorporate artificial intelligence or machine learning?",
         showPatternsLink: true,
         options: [
-          "No AI",
-          "Vendor off-the-shelf feature",
-          "Custom-built or internally trained model",
-          "AI is the primary function",
-          "Not sure"
+          "No — no AI/ML involved",
+          "Yes — a minor AI feature (vendor-provided or embedded)",
+          "Yes — AI is a significant component of the system",
+          "Yes — AI/ML is the primary function of this system",
         ]
       },
       {
-        question: "How is the AI capability being sourced or developed?",
+        question: "How will the AI capability be sourced or developed?",
         options: [
           "Not applicable — no AI",
-          "Vendor-provided AI used off the shelf (embedded feature, API or SaaS)",
+          "Vendor-provided, off-the-shelf AI (embedded feature, API, or SaaS)",
           "Open-source model integrated and deployed internally",
           "Custom-built or internally trained model",
-          "Hybrid combination",
-          "Not sure"
+          "Hybrid combination of the above",
+          "Not sure",
         ]
       },
       {
-        question: "What data will the AI use for training or inference, and does it include personal or sensitive company data?",
+        question: "What data will the AI use for training or inference?",
         options: [
           "Not applicable — no AI",
           "Public or fully synthetic data only",
           "Anonymised or aggregated internal data",
-          "Identifiable internal business data",
+          "Identifiable internal business data (e.g. operational records)",
           "Customer personal data or PII",
-          "Not sure"
+          "Not sure",
         ]
       },
       {
-        question: "Will AI-generated outputs directly trigger automated actions or decisions without human review?",
+        question: "Will AI-generated outputs directly trigger automated decisions or actions without human review?",
         options: [
           "Not applicable — no AI",
-          "No — outputs are informational only",
-          "Partially — humans review significant decisions",
-          "Yes — limited or no human oversight",
-          "Not sure"
+          "No — outputs are informational and reviewed by humans before any action",
+          "Partial automation — humans review significant or high-risk decisions",
+          "Yes — automated decisions with limited or no human review",
+          "Not sure",
         ]
       },
       {
-        question: "How serious would the consequences be if the AI produced an incorrect or biased output?",
+        question: "How serious would the impact be if the AI produced an incorrect or biased output?",
         options: [
-          "Minimal",
-          "Moderate — operational disruption",
-          "Significant — financial, reputational or customer harm",
-          "Severe — legal liability, safety risk or regulatory breach",
-          "Not sure"
+          "Not applicable — no AI",
+          "Minimal — easily corrected with no business impact",
+          "Moderate — operational disruption or customer inconvenience",
+          "Significant — financial loss, regulatory breach, safety risk, or reputational harm",
+          "Not sure",
         ]
       },
       {
-        question: "Is the AI system's decision-making process explainable and subject to audit?",
+        question: "Will humans be able to review, override, or contest AI-generated outputs?",
+        options: [
+          "Not applicable — no AI",
+          "Yes — all outputs reviewed by humans before any action is taken",
+          "Partial oversight — humans review significant or high-stakes decisions",
+          "No — outputs are acted upon directly with no human intervention",
+          "Not sure",
+        ]
+      },
+      {
+        question: "Is the AI model's decision-making process explainable and auditable?",
         showPatternsLink: true,
         options: [
           "Not applicable — no AI",
-          "Yes — full audit trail and explainability built in",
-          "Partial — some logging but limited explainability",
-          "No — black box with no explainability",
-          "Not sure"
+          "Fully explainable — human-readable rationale for every output",
+          "Partially explainable — summary-level reasoning available",
+          "Black box — outputs cannot be explained or attributed to specific inputs",
+          "Not sure",
         ]
       },
       {
-        question: "Is there a plan for monitoring model performance, detecting drift, and managing retraining or updates?",
+        question: "Is there a plan for monitoring model performance, detecting drift, and managing retraining?",
         options: [
           "Not applicable — no AI",
-          "Yes — formal MLOps or model governance process in place or planned",
-          "Partial — some monitoring exists but no formal drift detection or retraining",
-          "No — no monitoring or model maintenance plan",
-          "Not sure"
+          "Yes — a formal MLOps or model governance process is in place or planned",
+          "Partial — some monitoring exists but no formal drift detection or retraining plan",
+          "No — no model monitoring or maintenance plan defined",
+          "Not sure",
         ]
       },
-      {
-        question: "Are there specific AI-related regulations or policies that apply to this use case?",
-        options: [
-          "Not applicable — no AI",
-          "No known AI-specific regulations (standard data and privacy rules apply)",
-          "Sector-specific AI guidance applies (e.g. financial services, healthcare)",
-          "Specific AI legislation applies (e.g. EU AI Act, algorithmic accountability laws)",
-          "Uncertain — legal or compliance review needed",
-          "Not sure"
-        ]
-      }
     ]
-  }
+  },
 ];
 
+// ---------------------------------------------------------------------------
+// Operational Readiness — Q34–Q37 (Yes/No with conditional details)
+// ---------------------------------------------------------------------------
+const OPERATIONAL_READINESS_QUESTIONS = [
+  "Has a logging, monitoring, and audit strategy been defined for this system?",
+  "Have expected transaction volumes and peak load scenarios been assessed?",
+  "Have availability requirements and DR targets (RTO/RPO) been defined?",
+  "Has a support ownership model and escalation path been established?",
+];
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 type ImpactLevel = "none" | "low" | "medium" | "high";
-type AreaAnswers = { q1: string; q2: string; q3: string; q4: string; q5: string; q6: string; q7: string; q8: string; q9: string; q10: string; remarks: string };
+type AreaAnswers = {
+  q1: string; q2: string; q3: string; q4: string; q5: string;
+  q6: string; q7: string; q8: string;
+  remarks: string;
+};
 type ImpactAnswers = { [area: string]: AreaAnswers };
 
-const EMPTY_AREA: AreaAnswers = { q1: UNSELECTED, q2: UNSELECTED, q3: UNSELECTED, q4: UNSELECTED, q5: UNSELECTED, q6: UNSELECTED, q7: UNSELECTED, q8: UNSELECTED, q9: UNSELECTED, q10: UNSELECTED, remarks: "" };
+type ContextAnswers = { q1: string; q2: string; q3: string; q4: string };
 
+type OperationalAnswer = { value: "Yes" | "No" | ""; details: string };
+type OperationalReadinessAnswers = {
+  q1: OperationalAnswer; q2: OperationalAnswer; q3: OperationalAnswer; q4: OperationalAnswer;
+};
+
+const EMPTY_AREA: AreaAnswers = {
+  q1: UNSELECTED, q2: UNSELECTED, q3: UNSELECTED, q4: UNSELECTED,
+  q5: UNSELECTED, q6: UNSELECTED, q7: UNSELECTED, q8: UNSELECTED,
+  remarks: ""
+};
+const EMPTY_OP: OperationalAnswer = { value: "", details: "" };
+
+const ALL_Q_KEYS = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8"] as const;
+
+// ---------------------------------------------------------------------------
+// SolutionContextCard
+// ---------------------------------------------------------------------------
+function SolutionContextCard({
+  answers,
+  onAnswer
+}: {
+  answers: ContextAnswers;
+  onAnswer: (q: keyof ContextAnswers, value: string) => void;
+}) {
+  const qKeys = (["q1", "q2", "q3", "q4"] as const);
+  const answeredCount = qKeys.filter(k => answers[k]).length;
+  return (
+    <div className="border rounded-xl overflow-hidden border-slate-200">
+      <div className="flex items-center gap-2.5 px-5 py-3.5 bg-slate-50/70 border-b border-slate-200">
+        <div className="p-1.5 rounded-lg bg-slate-100">
+          <Info className="w-4 h-4 text-slate-500" />
+        </div>
+        <div>
+          <span className="font-semibold text-sm">Solution Context</span>
+          <span className="text-xs text-muted-foreground ml-2">Helps the AI model score your initiative accurately</span>
+        </div>
+        <span className="text-xs text-muted-foreground ml-auto">{answeredCount}/4 answered</span>
+      </div>
+      <div className="p-5 space-y-4">
+        {SOLUTION_CONTEXT_QUESTIONS.map((q, i) => {
+          const qKey = qKeys[i];
+          return (
+            <div key={qKey}>
+              <Label className="text-xs font-medium leading-snug text-foreground/80 mb-1.5 block">
+                {i + 1}. {q.question}
+              </Label>
+              <select
+                value={answers[qKey]}
+                onChange={e => onAnswer(qKey, e.target.value)}
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm bg-background transition-colors outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 ${
+                  answers[qKey] ? "border-border text-foreground" : "border-border/60 text-muted-foreground"
+                }`}
+              >
+                <option value="">— Select an option —</option>
+                {q.options.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ImpactQuestionCard
+// ---------------------------------------------------------------------------
 function ImpactQuestionCard({
   area,
   answers,
@@ -565,11 +538,11 @@ function ImpactQuestionCard({
 }: {
   area: typeof IMPACT_AREA_CONFIG[0];
   answers: AreaAnswers;
-  onAnswer: (q: "q1" | "q2" | "q3" | "q4" | "q5" | "q6" | "q7" | "q8" | "q9" | "q10", value: string) => void;
+  onAnswer: (q: typeof ALL_Q_KEYS[number], value: string) => void;
   onRemarks: (value: string) => void;
 }) {
   const Icon = area.icon;
-  const qKeys = (["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"] as const).slice(0, area.questions.length);
+  const qKeys = ALL_Q_KEYS.slice(0, area.questions.length);
   const hasNotSure = qKeys.some(k => answers[k] === "Not sure");
   const remarksRequired = hasNotSure;
   const remarksMissing = remarksRequired && !answers.remarks.trim();
@@ -590,39 +563,39 @@ function ImpactQuestionCard({
         {qKeys.map((qKey, i) => {
           const q = area.questions[i] as { question: string; options: string[]; showPatternsLink?: boolean };
           return (
-          <div key={qKey}>
-            <div className="flex items-start justify-between gap-2 mb-1.5">
-              <Label className="text-xs font-medium leading-snug text-foreground/80">
-                {i + 1}. {q.question}
-              </Label>
-              {q.showPatternsLink && (
-                <a
-                  href="/patterns"
-                  className="shrink-0 flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap font-medium"
-                  title="Browse the Architecture Patterns library for guidance"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  Architecture Patterns
-                </a>
-              )}
+            <div key={qKey}>
+              <div className="flex items-start justify-between gap-2 mb-1.5">
+                <Label className="text-xs font-medium leading-snug text-foreground/80">
+                  {i + 1}. {q.question}
+                </Label>
+                {q.showPatternsLink && (
+                  <a
+                    href="/patterns"
+                    className="shrink-0 flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap font-medium"
+                    title="Browse the Architecture Patterns library for guidance"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Architecture Patterns
+                  </a>
+                )}
+              </div>
+              <select
+                value={answers[qKey]}
+                onChange={e => onAnswer(qKey, e.target.value)}
+                className={`w-full rounded-xl border px-3 py-2.5 text-sm bg-background transition-colors outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 ${
+                  answers[qKey] === "Not sure"
+                    ? "border-amber-300 text-amber-700"
+                    : answers[qKey]
+                    ? "border-border text-foreground"
+                    : "border-border/60 text-muted-foreground"
+                }`}
+              >
+                <option value="">— Select an option —</option>
+                {q.options.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
             </div>
-            <select
-              value={answers[qKey]}
-              onChange={e => onAnswer(qKey, e.target.value)}
-              className={`w-full rounded-xl border px-3 py-2.5 text-sm bg-background transition-colors outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 ${
-                answers[qKey] === "Not sure"
-                  ? "border-amber-300 text-amber-700"
-                  : answers[qKey]
-                  ? "border-border text-foreground"
-                  : "border-border/60 text-muted-foreground"
-              }`}
-            >
-              <option value="">— Select an option —</option>
-              {q.options.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
           );
         })}
 
@@ -665,6 +638,98 @@ function ImpactQuestionCard({
   );
 }
 
+// ---------------------------------------------------------------------------
+// OperationalReadinessCard
+// ---------------------------------------------------------------------------
+function OperationalReadinessCard({
+  answers,
+  onAnswer
+}: {
+  answers: OperationalReadinessAnswers;
+  onAnswer: (q: keyof OperationalReadinessAnswers, field: "value" | "details", val: string) => void;
+}) {
+  const qKeys = (["q1", "q2", "q3", "q4"] as const);
+  const answeredCount = qKeys.filter(k => answers[k].value !== "").length;
+
+  return (
+    <div className="border rounded-xl overflow-hidden border-emerald-100">
+      <div className="flex items-center gap-2.5 px-5 py-3.5 bg-emerald-50/40 border-b border-emerald-100">
+        <div className="p-1.5 rounded-lg bg-emerald-50">
+          <Activity className="w-4 h-4 text-emerald-600" />
+        </div>
+        <span className="font-semibold text-sm">Operational Readiness</span>
+        <span className="text-xs text-muted-foreground ml-auto">{answeredCount}/4 answered</span>
+      </div>
+      <div className="p-5 space-y-5">
+        {OPERATIONAL_READINESS_QUESTIONS.map((question, i) => {
+          const qKey = qKeys[i];
+          const ans = answers[qKey];
+          return (
+            <div key={qKey} className="space-y-2">
+              <Label className="text-xs font-medium leading-snug text-foreground/80 block">
+                {i + 1}. {question}
+              </Label>
+              <div className="flex gap-3">
+                {(["Yes", "No"] as const).map(opt => (
+                  <label
+                    key={opt}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-lg border cursor-pointer transition-colors text-sm font-medium ${
+                      ans.value === opt
+                        ? opt === "Yes"
+                          ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                          : "border-red-300 bg-red-50 text-red-700"
+                        : "border-border hover:bg-secondary/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`${qKey}-or`}
+                      value={opt}
+                      checked={ans.value === opt}
+                      onChange={() => onAnswer(qKey, "value", opt)}
+                      className="sr-only"
+                    />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+              <AnimatePresence>
+                {ans.value === "Yes" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <Textarea
+                      value={ans.details}
+                      onChange={e => onAnswer(qKey, "details", e.target.value)}
+                      placeholder="Provide details — e.g. tool names, RTO/RPO targets, owner names, or links to documentation…"
+                      className="min-h-[60px] text-sm mt-1"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DerivedImpactCard
+// ---------------------------------------------------------------------------
+type AreaConfig = {
+  key: string;
+  title: string;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+};
+
 function DerivedImpactCard({
   area,
   level,
@@ -672,7 +737,7 @@ function DerivedImpactCard({
   onLevelChange,
   onDetailsChange
 }: {
-  area: typeof IMPACT_AREA_CONFIG[0];
+  area: AreaConfig;
   level: ImpactLevel;
   details: string;
   onLevelChange: (level: ImpactLevel) => void;
@@ -738,12 +803,27 @@ function DerivedImpactCard({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+const OPERATIONAL_AREA_CONFIG: AreaConfig = {
+  key: "operational",
+  title: "Operational Readiness",
+  icon: Activity,
+  color: "text-emerald-600",
+  bgColor: "bg-emerald-50",
+  borderColor: "border-emerald-100",
+};
+
 export default function RequestForm() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const createMutation = useCreateRequest();
 
-  const [formData, setFormData] = useState<CreateArchitectureRequest>({
+  const [formData, setFormData] = useState<CreateArchitectureRequest & {
+    operationalImpactLevel?: string;
+    operationalImpactDetails?: string;
+  }>({
     title: "",
     description: "",
     businessUnit: "",
@@ -769,6 +849,8 @@ export default function RequestForm() {
     regulatoryImpactDetails: "",
     aiImpactLevel: "none",
     aiImpactDetails: "",
+    operationalImpactLevel: "none",
+    operationalImpactDetails: "",
 
     submittedBy: "Jane Doe",
     priority: "medium",
@@ -776,13 +858,22 @@ export default function RequestForm() {
 
   const [regionInput, setRegionInput] = useState("");
 
+  const [contextAnswers, setContextAnswers] = useState<ContextAnswers>({
+    q1: "", q2: "", q3: "", q4: ""
+  });
+
   const [impactAnswers, setImpactAnswers] = useState<ImpactAnswers>({
     security: { ...EMPTY_AREA },
     data: { ...EMPTY_AREA },
     integration: { ...EMPTY_AREA },
     regulatory: { ...EMPTY_AREA },
-    ai: { ...EMPTY_AREA }
+    ai: { ...EMPTY_AREA },
   });
+
+  const [operationalAnswers, setOperationalAnswers] = useState<OperationalReadinessAnswers>({
+    q1: { ...EMPTY_OP }, q2: { ...EMPTY_OP }, q3: { ...EMPTY_OP }, q4: { ...EMPTY_OP },
+  });
+
   const [isAnalysing, setIsAnalysing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analysisComplete, setAnalysisComplete] = useState(false);
@@ -851,13 +942,27 @@ export default function RequestForm() {
     setFormData(prev => ({ ...prev, [`${area}ImpactLevel`]: level }));
   };
 
-  const handleAnswer = (area: string, q: "q1" | "q2" | "q3" | "q4" | "q5" | "q6" | "q7" | "q8" | "q9" | "q10", value: string) => {
+  const handleAnswer = (area: string, q: typeof ALL_Q_KEYS[number], value: string) => {
     setImpactAnswers(prev => ({ ...prev, [area]: { ...prev[area], [q]: value } }));
     if (analysisComplete) setAnalysisComplete(false);
   };
 
   const handleRemarks = (area: string, value: string) => {
     setImpactAnswers(prev => ({ ...prev, [area]: { ...prev[area], remarks: value } }));
+    if (analysisComplete) setAnalysisComplete(false);
+  };
+
+  const handleContextAnswer = (q: keyof ContextAnswers, value: string) => {
+    setContextAnswers(prev => ({ ...prev, [q]: value }));
+    if (analysisComplete) setAnalysisComplete(false);
+  };
+
+  const handleOperationalAnswer = (
+    q: keyof OperationalReadinessAnswers,
+    field: "value" | "details",
+    val: string
+  ) => {
+    setOperationalAnswers(prev => ({ ...prev, [q]: { ...prev[q], [field]: val } }));
     if (analysisComplete) setAnalysisComplete(false);
   };
 
@@ -871,7 +976,9 @@ export default function RequestForm() {
         body: JSON.stringify({
           requestTitle: formData.title,
           requestDescription: formData.description,
-          answers: impactAnswers
+          answers: impactAnswers,
+          contextAnswers,
+          operationalAnswers,
         })
       });
       if (!res.ok) {
@@ -890,7 +997,9 @@ export default function RequestForm() {
         regulatoryImpactLevel: data.regulatoryImpactLevel,
         regulatoryImpactDetails: data.regulatoryImpactDetails,
         aiImpactLevel: data.aiImpactLevel,
-        aiImpactDetails: data.aiImpactDetails
+        aiImpactDetails: data.aiImpactDetails,
+        operationalImpactLevel: data.operationalImpactLevel,
+        operationalImpactDetails: data.operationalImpactDetails,
       }));
       setAnalysisComplete(true);
     } catch (err: unknown) {
@@ -901,7 +1010,9 @@ export default function RequestForm() {
     }
   };
 
-  const ALL_Q_KEYS = ["q1","q2","q3","q4","q5","q6","q7","q8","q9","q10"] as const;
+  // ---------------------------------------------------------------------------
+  // Validation
+  // ---------------------------------------------------------------------------
   const totalAnswered = IMPACT_AREA_CONFIG.reduce((sum, a) => {
     const ans = impactAnswers[a.key];
     const qKeys = ALL_Q_KEYS.slice(0, a.questions.length);
@@ -909,11 +1020,18 @@ export default function RequestForm() {
   }, 0);
   const totalQuestions = IMPACT_AREA_CONFIG.reduce((sum, a) => sum + a.questions.length, 0);
   const hasAnswers = totalAnswered > 0;
-  const aiAreaConfig = IMPACT_AREA_CONFIG.find(a => a.key === "ai");
-  const aiAnswers = impactAnswers["ai"];
-  const allAiQuestionsAnswered = !!aiAreaConfig && ALL_Q_KEYS
-    .slice(0, aiAreaConfig.questions.length)
-    .every(k => !!aiAnswers[k]);
+
+  const allContextAnswered = (["q1", "q2", "q3", "q4"] as const).every(k => !!contextAnswers[k]);
+
+  const allDomainQuestionsAnswered = IMPACT_AREA_CONFIG.every(a => {
+    const ans = impactAnswers[a.key];
+    return ALL_Q_KEYS.slice(0, a.questions.length).every(k => !!ans[k]);
+  });
+
+  const allOperationalAnswered = (["q1", "q2", "q3", "q4"] as const).every(
+    k => operationalAnswers[k].value !== ""
+  );
+
   const hasBlockingRemarks = IMPACT_AREA_CONFIG.some(a => {
     const ans = impactAnswers[a.key];
     const qKeys = ALL_Q_KEYS.slice(0, a.questions.length);
@@ -921,14 +1039,34 @@ export default function RequestForm() {
     return hasNotSure && !ans.remarks.trim();
   });
 
+  const canSubmit = allContextAnswered && allDomainQuestionsAnswered && allOperationalAnswered && !hasBlockingRemarks;
+
+  const submitHint = !allContextAnswered
+    ? "Please answer all 4 Solution Context questions."
+    : !allDomainQuestionsAnswered
+    ? "Please answer all impact domain questions across each section."
+    : !allOperationalAnswered
+    ? "Please answer all 4 Operational Readiness questions."
+    : hasBlockingRemarks
+    ? "Please add context for 'Not sure' answers before submitting."
+    : null;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const aiAnswers = impactAnswers.ai;
+    const ai = impactAnswers.ai;
     const dataWithAnswers = {
       ...formData,
-      aiImpactAnswers: JSON.stringify({ q2: aiAnswers.q2, q7: aiAnswers.q7, q8: aiAnswers.q8 }),
+      // All domain answers stored for future reviewer display
+      securityImpactAnswers: JSON.stringify(impactAnswers.security),
+      dataImpactAnswers: JSON.stringify(impactAnswers.data),
+      integrationImpactAnswers: JSON.stringify(impactAnswers.integration),
+      regulatoryImpactAnswers: JSON.stringify(impactAnswers.regulatory),
+      // AI: store q2 (sourcing), q3 (inference data), q4 (automation), q8 (monitoring)
+      aiImpactAnswers: JSON.stringify({ q2: ai.q2, q3: ai.q3, q4: ai.q4, q8: ai.q8 }),
+      // Operational readiness
+      operationalImpactAnswers: JSON.stringify(operationalAnswers),
     };
-    createMutation.mutate({ data: dataWithAnswers }, {
+    createMutation.mutate({ data: dataWithAnswers as CreateArchitectureRequest }, {
       onSuccess: (data) => {
         toast({ title: "Request Submitted", description: "Your architecture review request has been created." });
         setLocation(`/requests/${data.id}`);
@@ -938,7 +1076,6 @@ export default function RequestForm() {
       }
     });
   };
-
 
   return (
     <Layout>
@@ -953,7 +1090,7 @@ export default function RequestForm() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* LEANIX LINKED BANNER — shown when form opened via Submit ARR from Initiatives page */}
+          {/* LEANIX LINKED BANNER */}
           {linkedLeanix && (
             <div className="mb-8 p-4 border border-orange-200 bg-orange-50/60 rounded-xl flex items-start gap-3">
               <div className="bg-[#FF6600] text-white p-1.5 rounded-lg shrink-0 mt-0.5">
@@ -1146,19 +1283,27 @@ export default function RequestForm() {
                 <div className="flex-1">
                   <p className="text-sm font-medium text-primary">AI-Assisted Impact Analysis</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Select an option for each question across the five impact areas. Add any additional remarks where helpful. When ready, click <strong>Analyse with AI</strong> — impact levels will be automatically derived and populated into the EA Triage section for review.
+                    Complete the Solution Context, all five impact domain sections, and the Operational Readiness questions.
+                    When ready, click <strong>Analyse with AI</strong> — impact levels will be automatically derived for review.
                   </p>
                 </div>
                 {totalAnswered > 0 && (
                   <div className="shrink-0 text-right">
                     <div className="text-xs text-muted-foreground">{totalAnswered}/{totalQuestions}</div>
-                    <div className="text-xs font-medium text-primary">answered</div>
+                    <div className="text-xs font-medium text-primary">domain answered</div>
                   </div>
                 )}
               </div>
 
               {/* Question cards */}
               <div className="space-y-5">
+                {/* Solution Context (non-scored preamble) */}
+                <SolutionContextCard
+                  answers={contextAnswers}
+                  onAnswer={handleContextAnswer}
+                />
+
+                {/* Five impact domains */}
                 {IMPACT_AREA_CONFIG.map(area => (
                   <ImpactQuestionCard
                     key={area.key}
@@ -1168,6 +1313,12 @@ export default function RequestForm() {
                     onRemarks={(value) => handleRemarks(area.key, value)}
                   />
                 ))}
+
+                {/* Operational Readiness */}
+                <OperationalReadinessCard
+                  answers={operationalAnswers}
+                  onAnswer={handleOperationalAnswer}
+                />
               </div>
 
               {/* Analyse button */}
@@ -1226,12 +1377,20 @@ export default function RequestForm() {
                         <DerivedImpactCard
                           key={area.key}
                           area={area}
-                          level={formData[`${area.key}ImpactLevel` as keyof CreateArchitectureRequest] as ImpactLevel}
-                          details={formData[`${area.key}ImpactDetails` as keyof CreateArchitectureRequest] as string}
+                          level={formData[`${area.key}ImpactLevel` as keyof typeof formData] as ImpactLevel}
+                          details={formData[`${area.key}ImpactDetails` as keyof typeof formData] as string}
                           onLevelChange={(level) => setImpactLevel(area.key, level)}
                           onDetailsChange={(value) => setFormData(prev => ({ ...prev, [`${area.key}ImpactDetails`]: value }))}
                         />
                       ))}
+                      {/* Operational Readiness derived card */}
+                      <DerivedImpactCard
+                        area={OPERATIONAL_AREA_CONFIG}
+                        level={(formData.operationalImpactLevel || "none") as ImpactLevel}
+                        details={formData.operationalImpactDetails || ""}
+                        onLevelChange={(level) => setFormData(prev => ({ ...prev, operationalImpactLevel: level }))}
+                        onDetailsChange={(value) => setFormData(prev => ({ ...prev, operationalImpactDetails: value }))}
+                      />
                     </div>
                     <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
                       <ChevronRight className="w-4 h-4 shrink-0" />
@@ -1268,14 +1427,12 @@ export default function RequestForm() {
           </Card>
 
           <div className="flex flex-col items-end gap-2">
-            {!allAiQuestionsAnswered && (
-              <p className="text-sm text-amber-600 dark:text-amber-400">
-                Please answer all 8 AI / ML questions to submit.
-              </p>
+            {submitHint && (
+              <p className="text-sm text-amber-600 dark:text-amber-400">{submitHint}</p>
             )}
             <div className="flex gap-4">
               <Button variant="outline" type="button" onClick={() => window.history.back()}>Cancel</Button>
-              <Button type="submit" disabled={createMutation.isPending || !allAiQuestionsAnswered} className="px-8">
+              <Button type="submit" disabled={createMutation.isPending || !canSubmit} className="px-8">
                 {createMutation.isPending ? "Submitting..." : "Submit ARR"}
               </Button>
             </div>

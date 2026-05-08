@@ -32,6 +32,7 @@ function deriveEaBaseline(body: {
   integrationImpactLevel?: string;
   regulatoryImpactLevel?: string;
   aiImpactLevel?: string;
+  operationalImpactLevel?: string;
   requestType?: string;
   businessCriticality?: string;
   deploymentModel?: string;
@@ -42,6 +43,7 @@ function deriveEaBaseline(body: {
     body.integrationImpactLevel,
     body.regulatoryImpactLevel,
     body.aiImpactLevel,
+    body.operationalImpactLevel,
   ];
   const overallRisk = levels.includes("high")
     ? "high"
@@ -70,12 +72,13 @@ function deriveEaBaseline(body: {
   const present = (l?: string) => !!l && l !== "none";
 
   const views: string[] = ["Solution Architecture"];
-  if (present(body.securityImpactLevel))    views.push("Security Architecture");
-  if (present(body.dataImpactLevel))        views.push("Data Architecture");
-  if (present(body.integrationImpactLevel)) views.push("Integration Architecture");
-  if (present(body.regulatoryImpactLevel))  views.push("Compliance & Regulatory");
-  if (present(body.aiImpactLevel))          views.push("AI/ML Architecture");
-  if (isCloud)                              views.push("Infrastructure / Cloud Architecture");
+  if (present(body.securityImpactLevel))     views.push("Security Architecture");
+  if (present(body.dataImpactLevel))         views.push("Data Architecture");
+  if (present(body.integrationImpactLevel))  views.push("Integration Architecture");
+  if (present(body.regulatoryImpactLevel))   views.push("Compliance & Regulatory");
+  if (present(body.aiImpactLevel))           views.push("AI/ML Architecture");
+  if (present(body.operationalImpactLevel))  views.push("Operational Architecture");
+  if (isCloud)                               views.push("Infrastructure / Cloud Architecture");
 
   // --- Required SMEs ---
   const significant = (l?: string) => l === "medium" || l === "high";
@@ -86,6 +89,7 @@ function deriveEaBaseline(body: {
   if (significant(body.integrationImpactLevel)) smes.push("Integration Architect");
   if (significant(body.regulatoryImpactLevel))  smes.push("Compliance / Legal");
   if (significant(body.aiImpactLevel))          smes.push("AI/ML Specialist");
+  if (significant(body.operationalImpactLevel)) smes.push("Platform / Operations Engineer");
   if (isCloud)                                  smes.push("Cloud Platform Engineer");
 
   return {
@@ -94,6 +98,7 @@ function deriveEaBaseline(body: {
     eaIntegrationComplexityRating: impactToRating(body.integrationImpactLevel),
     eaRegulatoryRiskRating:        impactToRating(body.regulatoryImpactLevel),
     eaAiRiskRating:                impactToRating(body.aiImpactLevel),
+    eaOperationalRiskRating:       impactToRating(body.operationalImpactLevel),
     eaOverallRiskLevel:            overallRisk,
     eaReviewType,
     eaRequiredArchitectureViews:   views.join(", "),
@@ -145,15 +150,22 @@ router.post("/requests", async (req, res) => {
       targetGoLiveDate: body.targetGoLiveDate ?? null,
       securityImpactLevel: body.securityImpactLevel ?? "none",
       securityImpactDetails: body.securityImpactDetails ?? null,
+      securityImpactAnswers: body.securityImpactAnswers ?? null,
       dataImpactLevel: body.dataImpactLevel ?? "none",
       dataImpactDetails: body.dataImpactDetails ?? null,
+      dataImpactAnswers: body.dataImpactAnswers ?? null,
       integrationImpactLevel: body.integrationImpactLevel ?? "none",
       integrationImpactDetails: body.integrationImpactDetails ?? null,
+      integrationImpactAnswers: body.integrationImpactAnswers ?? null,
       regulatoryImpactLevel: body.regulatoryImpactLevel ?? "none",
       regulatoryImpactDetails: body.regulatoryImpactDetails ?? null,
+      regulatoryImpactAnswers: body.regulatoryImpactAnswers ?? null,
       aiImpactLevel: body.aiImpactLevel ?? "none",
       aiImpactDetails: body.aiImpactDetails ?? null,
       aiImpactAnswers: body.aiImpactAnswers ?? null,
+      operationalImpactLevel: body.operationalImpactLevel ?? "none",
+      operationalImpactDetails: body.operationalImpactDetails ?? null,
+      operationalImpactAnswers: body.operationalImpactAnswers ?? null,
       architectureSpecifications: body.architectureSpecifications ?? null,
       jiraInitiativeId: body.jiraInitiativeId ?? null,
       jiraKey,
@@ -163,6 +175,7 @@ router.post("/requests", async (req, res) => {
       eaIntegrationComplexityRating: eaBaseline.eaIntegrationComplexityRating,
       eaRegulatoryRiskRating:        eaBaseline.eaRegulatoryRiskRating,
       eaAiRiskRating:                eaBaseline.eaAiRiskRating,
+      eaOperationalRiskRating:       eaBaseline.eaOperationalRiskRating,
       eaOverallRiskLevel:            eaBaseline.eaOverallRiskLevel,
       eaReviewType:                  eaBaseline.eaReviewType,
       eaRequiredArchitectureViews:   eaBaseline.eaRequiredArchitectureViews,
@@ -198,11 +211,15 @@ router.patch("/requests/:id", async (req, res) => {
       "status", "priority", "eaAssignee", "scopeNotes", "architectureSpecifications",
       "sponsorProductOwner", "solutionArchitect", "businessContext", "businessCriticality",
       "costEstimate", "expectedUserBase", "deploymentModel", "targetGoLiveDate",
-      "securityImpactLevel", "securityImpactDetails", "dataImpactLevel", "dataImpactDetails",
-      "integrationImpactLevel", "integrationImpactDetails", "regulatoryImpactLevel", "regulatoryImpactDetails",
+      "securityImpactLevel", "securityImpactDetails", "securityImpactAnswers",
+      "dataImpactLevel", "dataImpactDetails", "dataImpactAnswers",
+      "integrationImpactLevel", "integrationImpactDetails", "integrationImpactAnswers",
+      "regulatoryImpactLevel", "regulatoryImpactDetails", "regulatoryImpactAnswers",
       "aiImpactLevel", "aiImpactDetails", "aiImpactAnswers",
+      "operationalImpactLevel", "operationalImpactDetails", "operationalImpactAnswers",
       "eaSecurityRiskRating", "eaDataComplexityRating", "eaIntegrationComplexityRating",
-      "eaRegulatoryRiskRating", "eaAiRiskRating", "eaOverallComplexity", "eaOverallRiskLevel",
+      "eaRegulatoryRiskRating", "eaAiRiskRating", "eaOperationalRiskRating",
+      "eaOverallComplexity", "eaOverallRiskLevel",
       "eaReviewType", "eaRequiredArchitectureViews", "eaRequiredSmes", "eaArcSchedule",
     ];
     for (const field of simpleFields) {
