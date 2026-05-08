@@ -244,6 +244,8 @@ export interface ArchitectureRequest {
   operationalImpactDetails?: string | null;
   /** JSON-encoded operational readiness Yes/No answers with details (q1–q4) */
   operationalImpactAnswers?: string | null;
+  /** JSON-encoded Solution Context answers (q1–q4, non-scored, used for AI calibration) */
+  contextAnswers?: string | null;
   architectureSpecifications?: string | null;
   eaAssignee?: string | null;
   scopeNotes?: string | null;
@@ -325,6 +327,8 @@ export interface CreateArchitectureRequest {
   operationalImpactLevel?: string | null;
   operationalImpactDetails?: string | null;
   operationalImpactAnswers?: string | null;
+  /** JSON-encoded Solution Context answers (q1–q4, non-scored, used for AI calibration) */
+  contextAnswers?: string | null;
   architectureSpecifications?: string | null;
   jiraInitiativeId?: number | null;
 }

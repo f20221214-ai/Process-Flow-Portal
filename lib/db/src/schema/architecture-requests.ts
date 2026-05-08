@@ -48,6 +48,7 @@ export const architectureRequestsTable = pgTable("architecture_requests", {
   operationalImpactLevel: text("operational_impact_level").default("none"),
   operationalImpactDetails: text("operational_impact_details"),
   operationalImpactAnswers: text("operational_impact_answers"),             // JSON Yes/No + details
+  contextAnswers: text("context_answers"),                                  // JSON Q1-Q4 non-scored
 
   // Architecture specifications (legacy / additional notes)
   architectureSpecifications: text("architecture_specifications"),

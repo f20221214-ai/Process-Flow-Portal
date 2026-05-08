@@ -1053,18 +1053,19 @@ export default function RequestForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const ai = impactAnswers.ai;
     const dataWithAnswers = {
       ...formData,
-      // All domain answers stored for future reviewer display
+      // All six domain answer objects stored in full for reviewer access
       securityImpactAnswers: JSON.stringify(impactAnswers.security),
       dataImpactAnswers: JSON.stringify(impactAnswers.data),
       integrationImpactAnswers: JSON.stringify(impactAnswers.integration),
       regulatoryImpactAnswers: JSON.stringify(impactAnswers.regulatory),
-      // AI: store q2 (sourcing), q3 (inference data), q4 (automation), q8 (monitoring)
-      aiImpactAnswers: JSON.stringify({ q2: ai.q2, q3: ai.q3, q4: ai.q4, q8: ai.q8 }),
-      // Operational readiness
+      // Full AI domain answers (q1–q8 + remarks); q2/q3/q4/q8 drive structured risk flags
+      aiImpactAnswers: JSON.stringify(impactAnswers.ai),
+      // Operational readiness Yes/No answers with details
       operationalImpactAnswers: JSON.stringify(operationalAnswers),
+      // Solution Context (non-scored, stored for reviewer reference and AI calibration)
+      contextAnswers: JSON.stringify(contextAnswers),
     };
     createMutation.mutate({ data: dataWithAnswers as CreateArchitectureRequest }, {
       onSuccess: (data) => {

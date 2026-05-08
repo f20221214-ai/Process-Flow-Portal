@@ -28,16 +28,31 @@ export interface CreateArchitectureRequest {
   targetGoLiveDate?: string | null;
   securityImpactLevel?: string;
   securityImpactDetails?: string | null;
+  /** JSON-encoded security questionnaire answers (q1–q5 + remarks) */
+  securityImpactAnswers?: string | null;
   dataImpactLevel?: string;
   dataImpactDetails?: string | null;
+  /** JSON-encoded data questionnaire answers (q1–q7 + remarks) */
+  dataImpactAnswers?: string | null;
   integrationImpactLevel?: string;
   integrationImpactDetails?: string | null;
+  /** JSON-encoded integration questionnaire answers (q1–q4 + remarks) */
+  integrationImpactAnswers?: string | null;
   regulatoryImpactLevel?: string;
   regulatoryImpactDetails?: string | null;
+  /** JSON-encoded regulatory questionnaire answers (q1–q5 + remarks) */
+  regulatoryImpactAnswers?: string | null;
   aiImpactLevel?: string;
   aiImpactDetails?: string | null;
-  /** JSON-encoded q2/q7/q8 AI questionnaire answers used to derive structured risk flags */
+  /** JSON-encoded AI questionnaire answers (q1–q8 + remarks); q2/q3/q4/q8 drive structured risk flags */
   aiImpactAnswers?: string | null;
+  /** none|low|medium|high — scored from operational readiness answers */
+  operationalImpactLevel?: string | null;
+  operationalImpactDetails?: string | null;
+  /** JSON-encoded operational readiness Yes/No answers with details (q1–q4) */
+  operationalImpactAnswers?: string | null;
+  /** JSON-encoded Solution Context answers (q1–q4, non-scored, used for AI calibration) */
+  contextAnswers?: string | null;
   architectureSpecifications?: string | null;
   jiraInitiativeId?: number | null;
 }
