@@ -83,7 +83,7 @@ Impact Level Definitions:
   medium = "Industry standards/certifications", "Multiple countries (similar rules)", "Yes (SCC/BCR or approved mechanism)", "High (fines/penalties)", "Full audit trail required";
   high = "Government legislation/regulation", "Multiple countries (conflicting rules)", "Transfer mechanism unclear", "Severe (unable to operate/legal action)", "Regulatory approval/license required before go-live"
 
-- AI (Q26–Q33: AI inclusion, sourcing, inference data, decision automation, impact of errors, human oversight, explainability, monitoring):
+- AI (Q26–Q33: AI inclusion [4 options: No/Embedded vendor feature/Custom model or fine-tuning/AI is a core function], sourcing, inference data, decision automation, impact of errors, human oversight, explainability, monitoring):
   none = "No" AI included (Q26);
   low = "Embedded vendor feature", "Vendor managed (SaaS/API)" sourcing, "Public/synthetic only" data, "Informational only" decisions, "Low (easy to correct)" impact, "Yes for all high-impact decisions" oversight, "Fully explainable + auditable", "Formal MLOps (drift detection, retraining, approvals)" monitoring;
   medium = "Custom model or fine-tuning" OR "Anonymized/aggregated internal data" OR "Identifiable internal business data" OR "Decision support (human reviews)" OR "Medium (rework / inconvenience)" OR "Yes for exceptions only" oversight OR "Partially explainable" OR "Basic monitoring";

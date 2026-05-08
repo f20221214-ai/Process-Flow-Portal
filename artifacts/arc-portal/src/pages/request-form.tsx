@@ -360,7 +360,6 @@ const IMPACT_AREA_CONFIG = [
           "Embedded vendor feature",
           "Custom model or fine-tuning",
           "AI is a core function",
-          "Not sure",
         ]
       },
       {
