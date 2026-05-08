@@ -1036,7 +1036,7 @@ export default function RequestForm() {
   const hasBlockingRemarks = IMPACT_AREA_CONFIG.some(a => {
     const ans = impactAnswers[a.key];
     const qKeys = ALL_Q_KEYS.slice(0, a.questions.length);
-    const hasNotSure = qKeys.some(k => ans[k] === "Not sure");
+    const hasNotSure = qKeys.some(k => ans[k].toLowerCase() === "not sure");
     return hasNotSure && !ans.remarks.trim();
   });
 
