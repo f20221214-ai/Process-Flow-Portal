@@ -3,23 +3,24 @@ export interface AiRiskFlag {
   description: string;
 }
 
+// Exact Excel option values for Q27 (sourcing), Q28 (inference data), Q29 (automation), Q33 (monitoring)
 const CUSTOM_MODEL_ANSWERS = [
-  "Open-source model integrated and deployed internally",
-  "Custom-built or internally trained model",
-  "Hybrid combination of the above",
+  "Open-source model deployed internally",
+  "Custom-built/trained internally",
+  "Hybrid",
 ];
 
 /**
  * Derive structured AI risk flags deterministically from stored questionnaire answers.
  *
- * New question mapping (37-question set):
- *   q2 = sourcing (Q27)  → custom/open-source model flag
- *   q3 = inference data (Q28) → PII in training/inference flag
- *   q4 = decision automation (Q29) → automated decisions flag
- *   q8 = monitoring (Q33) → no monitoring plan flag
+ * New question mapping (37-question Excel set):
+ *   q2 = Q27 sourcing     → custom/open-source model flag
+ *   q3 = Q28 inference    → PII in training/inference flag
+ *   q4 = Q29 decisions    → automated decisions flag
+ *   q8 = Q33 monitoring   → no monitoring plan flag
  *
  * Falls back to rationale text keyword matching for requests without stored answers
- * (including legacy records that used the old q2/q7/q8 format).
+ * (legacy records that used the old q2/q7/q8 format).
  */
 export function deriveAiRiskFlags(
   level: string | undefined | null,
@@ -38,7 +39,7 @@ export function deriveAiRiskFlags(
         q8?: string;
       };
 
-      // Custom / open-source model (q2 = sourcing)
+      // Custom / open-source model (q2 = Q27 sourcing)
       if (a.q2 && CUSTOM_MODEL_ANSWERS.includes(a.q2)) {
         flags.push({
           label: "Custom/open-source model detected",
@@ -47,8 +48,8 @@ export function deriveAiRiskFlags(
         });
       }
 
-      // PII or personal data in training / inference (q3 = inference data)
-      if (a.q3 === "Customer personal data or PII") {
+      // PII or personal data in training / inference (q3 = Q28 inference data)
+      if (a.q3 === "Customer personal data/PII") {
         flags.push({
           label: "Personal data used in AI",
           description:
@@ -56,8 +57,8 @@ export function deriveAiRiskFlags(
         });
       }
 
-      // Automated decisions with limited human review (q4 = decision automation)
-      if (a.q4 === "Yes — automated decisions with limited or no human review") {
+      // Automated decisions with limited human review (q4 = Q29 decision automation)
+      if (a.q4 === "Automated actions with limited oversight") {
         flags.push({
           label: "Automated decisions — limited human oversight",
           description:
@@ -65,8 +66,8 @@ export function deriveAiRiskFlags(
         });
       }
 
-      // No model monitoring plan (q8 = monitoring)
-      if (a.q8 === "No — no model monitoring or maintenance plan defined") {
+      // No model monitoring plan (q8 = Q33 monitoring)
+      if (a.q8 === "No monitoring plan") {
         flags.push({
           label: "No monitoring plan",
           description:

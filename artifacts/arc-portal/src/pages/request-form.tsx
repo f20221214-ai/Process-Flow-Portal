@@ -43,42 +43,43 @@ const UNSELECTED = "";
 // ---------------------------------------------------------------------------
 const SOLUTION_CONTEXT_QUESTIONS = [
   {
-    question: "What stage is this initiative currently at?",
+    question: "What is the initiative stage?",
     options: [
-      "Concept — early exploration, no business case yet",
-      "Business case in development",
-      "Approved — solution not yet selected",
-      "Approved — solution selected and in delivery",
+      "Early idea / exploration",
+      "Vendor/technology evaluation/PoC",
+      "Solution architecture/design in progress",
+      "Build/implementation underway",
+      "Not sure",
     ]
   },
   {
-    question: "What type of solution is being delivered?",
+    question: "What is the solution type?",
     options: [
-      "Packaged software or SaaS",
-      "Custom build",
-      "Upgrade or extension to an existing system",
-      "Infrastructure or platform change",
-      "Not yet determined",
+      "Build custom",
+      "Buy SaaS/PaaS",
+      "Configure COTS",
+      "Integrate existing systems",
+      "Not sure",
     ]
   },
   {
-    question: "Who are the primary users of this system?",
+    question: "Who are the users of the solution?",
     options: [
-      "Internal staff only",
-      "Internal staff and trusted external partners or contractors",
-      "External customers or consumers (public-facing)",
-      "Mixed internal and external users",
-      "Not yet determined",
+      "Internal employees only",
+      "Internal + selected partners/contractors",
+      "Customers/public users",
+      "Mixed users across multiple channels",
+      "Not sure",
     ]
   },
   {
-    question: "Approximately how many users are expected?",
+    question: "How many users are expected?",
     options: [
-      "Fewer than 50",
-      "50–500",
-      "500–5,000",
-      "More than 5,000",
-      "Unknown at this stage",
+      "<10",
+      "10 -30",
+      "30-50",
+      "50-100",
+      ">100",
     ]
   },
 ];
@@ -96,53 +97,53 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-blue-100",
     questions: [
       {
-        question: "How will users authenticate to sign in to this system?",
+        question: "How will users sign in?",
         options: [
-          "Existing corporate SSO / identity provider only",
-          "New or separate authentication mechanism",
-          "Third-party identity provider (e.g. social login, external IdP)",
-          "Mixed or multiple authentication methods",
+          "Existing corporate SSO (Entra ID)",
+          "SSO + MFA enforced",
+          "New identity provider/SSO integration",
+          "Local accounts / custom auth",
           "Not sure",
         ]
       },
       {
-        question: "What is the expected network exposure of this system?",
+        question: "What is the expected network exposure?",
         options: [
-          "Fully internal — accessible only within the corporate network",
-          "Restricted external access via VPN or IP allowlisting",
-          "Partially internet-facing — some public-facing endpoints",
-          "Fully public-facing — open internet access, no network-level restrictions",
+          "Internal only",
+          "Private access for externals (ZTNA/VPN)",
+          "Internet-facing components",
+          "Fully public internet-facing",
           "Not sure",
         ]
       },
       {
-        question: "Does this system require privileged or elevated access beyond standard user permissions?",
+        question: "Is privileged/admin access required?",
         options: [
-          "No — standard user permissions only",
-          "Limited admin elevation using existing approved controls",
-          "Privileged access managed through approved PAM tooling",
-          "Significant privileged access with no current PAM controls in place",
+          "No",
+          "Limited admins with existing controls",
+          "Privileged access via PAM tooling",
+          "Privileged access without PAM controls",
           "Not sure",
         ]
       },
       {
-        question: "How will secrets, credentials, and API keys be managed for this system?",
+        question: "How will access keys/secrets be managed?",
         options: [
-          "No credentials required — system does not authenticate to other services",
-          "Managed through an approved secrets management platform (e.g. Vault, Key Vault)",
-          "Stored in configuration files or environment variables without centralised management",
-          "Hardcoded or manually distributed credentials",
+          "No secrets required",
+          "Enterprise secret manager (e.g., Key Vault)",
+          "App config/env vars without central manager",
+          "Hardcoded/manual credentials",
           "Not sure",
         ]
       },
       {
-        question: "Does this system rely on third-party software packages, open-source components, or vendor-managed services?",
+        question: "Does the solution depend on third-party software/services or open-source packages?",
         showPatternsLink: true,
         options: [
-          "No third-party or open-source dependencies",
-          "Standard commercial software with a current enterprise agreement",
-          "Open-source components or third-party packages in the software supply chain",
-          "Significant third-party dependency with no existing supply-chain risk assessment",
+          "No",
+          "Approved vendor/SaaS",
+          "Open-source/third-party packages",
+          "Significant dependencies without supply-chain assessment",
           "Not sure",
         ]
       },
@@ -157,74 +158,74 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-purple-100",
     questions: [
       {
-        question: "What is the highest classification of data this system will store or process?",
+        question: "What is the highest data classification involved?",
         options: [
-          "Public — no restrictions on access or disclosure",
-          "Internal — suitable for internal use but not for public release",
-          "Confidential — restricted access within the organisation",
-          "Regulated or highly sensitive (e.g. PII, health records, payment data, credentials)",
+          "Public",
+          "Internal",
+          "Confidential",
+          "Regulated/Highly sensitive",
           "Not sure",
         ]
       },
       {
-        question: "Does the system store or process sensitive or regulated personal data?",
+        question: "Will the solution handle sensitive or regulated data (e.g., personal data, credentials, payment data)?",
         options: [
-          "No personal data",
-          "Basic contact data only (e.g. name, work email)",
-          "Sensitive personal data (e.g. health, financial, biometric)",
-          "Special category or regulated data requiring formal privacy controls (GDPR, Privacy Act)",
-          "Not sure",
+          "No",
+          "Internal business data only",
+          "Confidential internal data",
+          "Regulated/highly sensitive data",
+          "Not Sure",
         ]
       },
       {
-        question: "Does this system depend on or contribute to master data domains (e.g. customer, product, supplier, employee)?",
+        question: "Does this solution depend on or contribute to master data domains (e.g. customer, product, employee, or supplier records)?",
         showPatternsLink: true,
         options: [
-          "No — fully self-contained data with no master data dependencies",
-          "Reads from master data but does not update it",
-          "Reads and writes to one or more master data domains",
-          "This system is itself a master data management or golden-record platform",
+          "No — the solution manages its own data independently with no master data dependencies",
+          "Reads from master data but does not update or contribute to it",
+          "Both reads and writes to one or more master data domains",
+          "This solution is itself a master data management or golden-record platform",
           "Not sure",
         ]
       },
       {
-        question: "Is data lineage tracking required — i.e. tracing where data originated, how it was transformed, and where it flows?",
+        question: "Is end-to-end data lineage required (source → transformation → consumers)?",
         options: [
-          "No — lineage traceability is not required",
-          "Informal documentation only (no automated tracking)",
-          "Automated lineage capture within this system",
-          "End-to-end lineage required across upstream sources and downstream consumers",
+          "No",
+          "Documented manually",
+          "Automated lineage within this solution",
+          "Cross-system lineage required",
           "Not sure",
         ]
       },
       {
-        question: "Are there data residency or data sovereignty constraints on where data can be stored or processed?",
+        question: "Are there data residency/sovereignty requirements?",
         showPatternsLink: true,
         options: [
-          "No constraints — data can be stored or processed anywhere",
-          "Soft preference for local storage — no legal or contractual obligation",
-          "Regulatory or contractual requirement for specific countries or regions",
-          "Strict government mandate with enforcement consequences for non-compliance",
+          "No",
+          "Preference only",
+          "Contractual/regulatory requirement",
+          "Strict mandate with enforcement",
           "Not sure",
         ]
       },
       {
-        question: "What is the expected data retention period for this system?",
+        question: "What are retention and deletion expectations?",
         options: [
-          "Short-term — less than 1 year",
-          "Standard — 1 to 5 years",
-          "Extended — 5 to 10 years",
-          "Long-term or permanent (e.g. legal or regulatory archival requirements)",
+          "< 1 year",
+          "1–5 years",
+          "5+ years",
+          "Regulatory/long-term retention",
           "Not sure",
         ]
       },
       {
-        question: "Will data be shared with or accessible by parties outside the organisation?",
+        question: "Will data be shared outside the organization?",
         options: [
-          "No — data remains entirely within the organisation",
-          "Shared only with approved internal subsidiaries",
-          "Shared with external partners under a formal data-sharing agreement",
-          "Accessible by government bodies, regulators, or the public",
+          "No",
+          "Internal only",
+          "Trusted partners under agreement",
+          "Regulators/public entities",
           "Not sure",
         ]
       },
@@ -239,44 +240,44 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-orange-100",
     questions: [
       {
-        question: "How many systems will this solution integrate with, and are any of them outside the organisation?",
+        question: "How many systems will this solution integrate with?",
         options: [
-          "None — the solution operates in complete isolation",
-          "1–2 internal systems only",
-          "3 or more internal systems, or one external system",
-          "Multiple systems including external parties (partners, government, cloud platforms)",
+          "None",
+          "1–2 internal systems",
+          "3+ internal systems",
+          "Includes external parties",
           "Not sure",
         ]
       },
       {
-        question: "What integration style best describes the data flows for this solution?",
+        question: "What integration style is required?",
         showPatternsLink: true,
         options: [
-          "No data flows — fully standalone system",
-          "Batch or file transfers (scheduled extracts or file drops)",
-          "API-based or event-driven integration (near-real-time)",
-          "Continuous high-volume event streaming",
+          "No integration",
+          "Batch/file transfer",
+          "API / near real-time",
+          "Event streaming / high frequency",
           "Not sure",
         ]
       },
       {
-        question: "Does this solution need to connect to legacy systems, on-premises infrastructure, or operational technology (OT)?",
+        question: "Are any integrations with legacy systems, OT/plant equipment, or industrial control systems required?",
         options: [
-          "No — all connected systems are modern and cloud-compatible",
-          "One or two legacy or on-premises components",
-          "Significant legacy or on-premises involvement requiring special handling",
-          "Direct integration with OT, plant equipment, or industrial control systems",
+          "No",
+          "Minor legacy involvement",
+          "Significant legacy/on-prem complexity",
+          "Direct OT/ICS integration",
           "Not sure",
         ]
       },
       {
-        question: "Does this solution expose APIs that will be consumed by other teams or external parties?",
+        question: "Will any APIs be exposed for other teams/partners to consume?",
         showPatternsLink: true,
         options: [
-          "No APIs exposed",
-          "Internal APIs consumed by known teams within the organisation",
-          "External-facing APIs or APIs registered in the enterprise API gateway",
-          "Public-facing APIs available to third parties or partners",
+          "No",
+          "Internal only (informal)",
+          "Formal APIs with versioning/deprecation",
+          "APIs for partners/public via API management",
           "Not sure",
         ]
       },
@@ -291,53 +292,53 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-teal-100",
     questions: [
       {
-        question: "Which category of regulation most closely applies to this initiative?",
+        question: "Are there external regulations or certifications applicable (privacy, food safety, SOX, etc.)?",
         showPatternsLink: true,
         options: [
-          "None — no external regulatory obligations apply",
-          "Internal governance and company policies only",
-          "Industry standards or certification frameworks (e.g. ISO 27001, SOC 2, food safety)",
-          "Government legislation or formal regulatory requirements (e.g. Privacy Act, GDPR, FDA)",
+          "No",
+          "Internal policy only",
+          "Industry standards/certifications",
+          "Government legislation/regulation",
           "Not sure",
         ]
       },
       {
-        question: "In how many jurisdictions will this system operate or process data?",
+        question: "Does this initiative span multiple countries/jurisdictions?",
         options: [
-          "Single country only",
-          "Multiple regions within the same country",
-          "Multiple countries with broadly comparable regulatory requirements",
-          "Multiple countries with significantly different or conflicting legal requirements",
+          "Single country",
+          "Multiple regions in one country",
+          "Multiple countries (similar rules)",
+          "Multiple countries (conflicting rules)",
           "Not sure",
         ]
       },
       {
-        question: "Does this system involve cross-border transfers of personal data?",
+        question: "Will personal data be transferred across borders?",
         options: [
-          "No — all data stays within the originating jurisdiction",
-          "Transfers to jurisdictions covered by an adequacy decision (e.g. EU–UK)",
-          "Transfers covered by Standard Contractual Clauses (SCCs) or Binding Corporate Rules",
-          "Cross-border transfers with no established legal mechanism — legal review required",
+          "No",
+          "Yes (adequacy decision)",
+          "Yes (SCC/BCR or approved mechanism)",
+          "Transfer mechanism unclear",
           "Not sure",
         ]
       },
       {
-        question: "What would be the consequence if this system were found to be non-compliant?",
+        question: "What is the consequence if the solution is non-compliant?",
         options: [
-          "Low — an internal governance matter only",
-          "Moderate — reputational damage or contractual breach",
-          "High — regulatory fines, financial penalties, or loss of certification",
-          "Severe — legal action, inability to operate, or direct harm to individuals",
+          "Low",
+          "Moderate",
+          "High (fines/penalties)",
+          "Severe (unable to operate/legal action)",
           "Not sure",
         ]
       },
       {
-        question: "Does this initiative introduce new audit controls, certifications, or regulatory reporting obligations?",
+        question: "Does the solution require auditable controls (logs, approvals, evidence) for audits?",
         options: [
-          "No new obligations — existing controls are sufficient",
-          "Minor additional internal controls or documentation required",
-          "New external reporting, audit, or certification requirements introduced",
-          "Formal regulatory approval or licence required before go-live",
+          "No",
+          "Some controls needed",
+          "Full audit trail required",
+          "Regulatory approval/license required before go-live",
           "Not sure",
         ]
       },
@@ -352,85 +353,86 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-indigo-100",
     questions: [
       {
-        question: "Will this system incorporate artificial intelligence or machine learning?",
+        question: "Does the solution include AI/ML or Generative AI?",
         showPatternsLink: true,
         options: [
-          "No — no AI/ML involved",
-          "Yes — a minor AI feature (vendor-provided or embedded)",
-          "Yes — AI is a significant component of the system",
-          "Yes — AI/ML is the primary function of this system",
-        ]
-      },
-      {
-        question: "How will the AI capability be sourced or developed?",
-        options: [
-          "Not applicable — no AI",
-          "Vendor-provided, off-the-shelf AI (embedded feature, API, or SaaS)",
-          "Open-source model integrated and deployed internally",
-          "Custom-built or internally trained model",
-          "Hybrid combination of the above",
+          "No",
+          "Embedded vendor feature",
+          "Custom model or fine-tuning",
+          "AI is a core function",
           "Not sure",
         ]
       },
       {
-        question: "What data will the AI use for training or inference?",
+        question: "How is the AI capability sourced?",
         options: [
-          "Not applicable — no AI",
-          "Public or fully synthetic data only",
-          "Anonymised or aggregated internal data",
-          "Identifiable internal business data (e.g. operational records)",
-          "Customer personal data or PII",
+          "Not applicable",
+          "Vendor managed (SaaS/API)",
+          "Open-source model deployed internally",
+          "Custom-built/trained internally",
+          "Hybrid",
           "Not sure",
         ]
       },
       {
-        question: "Will AI-generated outputs directly trigger automated decisions or actions without human review?",
+        question: "What data will the AI use for inference (and training/fine-tuning if applicable)?",
         options: [
-          "Not applicable — no AI",
-          "No — outputs are informational and reviewed by humans before any action",
-          "Partial automation — humans review significant or high-risk decisions",
-          "Yes — automated decisions with limited or no human review",
+          "Not applicable",
+          "Public/synthetic only",
+          "Anonymized/aggregated internal data",
+          "Identifiable internal business data",
+          "Customer personal data/PII",
           "Not sure",
         ]
       },
       {
-        question: "How serious would the impact be if the AI produced an incorrect or biased output?",
+        question: "Will AI outputs be used to make or trigger decisions/actions?",
         options: [
-          "Not applicable — no AI",
-          "Minimal — easily corrected with no business impact",
-          "Moderate — operational disruption or customer inconvenience",
-          "Significant — financial loss, regulatory breach, safety risk, or reputational harm",
+          "Not applicable",
+          "Informational only",
+          "Decision support (human reviews)",
+          "Automated actions with limited oversight",
           "Not sure",
         ]
       },
       {
-        question: "Will humans be able to review, override, or contest AI-generated outputs?",
+        question: "What is the impact if the AI output is wrong, biased, or unsafe?",
         options: [
-          "Not applicable — no AI",
-          "Yes — all outputs reviewed by humans before any action is taken",
-          "Partial oversight — humans review significant or high-stakes decisions",
-          "No — outputs are acted upon directly with no human intervention",
+          "Not applicable",
+          "Low (easy to correct)",
+          "Medium (rework / inconvenience)",
+          "High (financial/regulatory/safety/reputation)",
           "Not sure",
         ]
       },
       {
-        question: "Is the AI model's decision-making process explainable and auditable?",
+        question: "Is there human oversight (human-in-the-loop) and an override path?",
+        options: [
+          "Not applicable",
+          "No (fully automated)",
+          "Yes for exceptions only",
+          "Yes for all high-impact decisions",
+          "Not sure",
+        ]
+      },
+      {
+        question: "Can the AI output be explained and audited (inputs, prompts, model/version, rationale)?",
         showPatternsLink: true,
         options: [
-          "Not applicable — no AI",
-          "Fully explainable — human-readable rationale for every output",
-          "Partially explainable — summary-level reasoning available",
-          "Black box — outputs cannot be explained or attributed to specific inputs",
+          "Not applicable",
+          "Fully explainable + auditable",
+          "Partially explainable",
+          "Not explainable (black box)",
           "Not sure",
         ]
       },
       {
-        question: "Is there a plan for monitoring model performance, detecting drift, and managing retraining?",
+        question: "Is there a plan to monitor model quality and drift in production?",
         options: [
-          "Not applicable — no AI",
-          "Yes — a formal MLOps or model governance process is in place or planned",
-          "Partial — some monitoring exists but no formal drift detection or retraining plan",
-          "No — no model monitoring or maintenance plan defined",
+          "Not applicable",
+          "Basic monitoring",
+          "Formal MLOps (drift detection, retraining, approvals)",
+          "No monitoring plan",
           "Not sure",
         ]
       },
@@ -442,10 +444,10 @@ const IMPACT_AREA_CONFIG = [
 // Operational Readiness — Q34–Q37 (Yes/No with conditional details)
 // ---------------------------------------------------------------------------
 const OPERATIONAL_READINESS_QUESTIONS = [
-  "Has a logging, monitoring, and audit strategy been defined for this system?",
-  "Have expected transaction volumes and peak load scenarios been assessed?",
-  "Have availability requirements and DR targets (RTO/RPO) been defined?",
-  "Has a support ownership model and escalation path been established?",
+  "Are logging, monitoring and audit capabilities defined?",
+  "Are expected transaction volumes, throughput, and latency requirements documented?",
+  "Are Availability and DR (RTO/RPO) metrics been defined?",
+  "Have support and operational ownership models been defined?",
 ];
 
 // ---------------------------------------------------------------------------

@@ -55,41 +55,41 @@ const SYSTEM_PROMPT = `You are an Enterprise Architecture analyst helping to ass
 Given answers to scoping questions for a technology initiative, you must assess the impact level for each of six categories and provide a concise rationale for each.
 
 SOLUTION CONTEXT (Q1–Q4) — not scored, used to calibrate scoring accuracy:
-The initiative stage, solution type, user type, and user count inform risk calibration. A custom-build at scale for external users warrants higher scrutiny than a small internal SaaS pilot.
+The initiative stage, solution type, user type, and user count inform risk calibration. A custom build ("Build custom") at scale for external users ("Customers/public users", ">100") warrants higher scrutiny than a small internal SaaS pilot ("Buy SaaS/PaaS", "<10", "Internal employees only").
 
 Impact Level Definitions:
 
-- SECURITY (Q5–Q9: sign-in method, network exposure, privileged access, secrets management, third-party dependencies):
-  none = existing corporate SSO only, fully internal network, no elevated access, approved secrets platform, no supply-chain risk;
-  low = minor auth change within existing patterns, VPN/allowlist-only external access, limited admin elevation with approved controls, config-level secrets (low risk), standard commercial software only;
-  medium = new/separate auth mechanism OR third-party IdP OR partial internet-facing exposure OR no centralised secrets management (config/env vars) OR open-source components in supply chain;
-  high = fully public-facing internet access OR mixed/unmanaged authentication OR unmanaged privileged access (no PAM) OR hardcoded/manually distributed credentials OR significant third-party dependency with no supply-chain risk assessment
+- SECURITY (Q5–Q9: sign-in, network exposure, privileged access, secrets management, third-party dependencies):
+  none = "Existing corporate SSO (Entra ID)", "Internal only", "No" privileged access, "No secrets required", "No" third-party dependencies;
+  low = "SSO + MFA enforced", "Private access for externals (ZTNA/VPN)", "Limited admins with existing controls", "Enterprise secret manager (e.g., Key Vault)", "Approved vendor/SaaS";
+  medium = "New identity provider/SSO integration", "Internet-facing components", "Privileged access via PAM tooling", "App config/env vars without central manager", "Open-source/third-party packages";
+  high = "Local accounts / custom auth", "Fully public internet-facing", "Privileged access without PAM controls", "Hardcoded/manual credentials", "Significant dependencies without supply-chain assessment"
 
-- DATA (Q10–Q16: data classification, sensitive/regulated personal data, master data, lineage, residency, retention, external sharing):
-  none = public or internal-only data, no personal data, no master data, no lineage needed, no residency constraints, <1yr retention, no external sharing;
-  low = internal non-sensitive data, basic contact data only, reads master data, informal lineage, no residency constraint, 1–5yr standard retention, sharing with internal subsidiaries;
-  medium = confidential internal data OR anonymised/aggregated data OR automated lineage within system OR soft residency preference OR 5–10yr extended retention OR sharing with external partners under formal agreement;
-  high = regulated/PII/health/financial/credential data OR formal privacy controls required (GDPR, Privacy Act, HIPAA) OR master data write authority OR end-to-end cross-system lineage required OR strict data sovereignty mandate OR long-term/permanent archival OR government/regulator data access
+- DATA (Q10–Q16: data classification, sensitive/regulated data, master data, lineage, residency, retention, external sharing):
+  none = "Public" or "Internal" classification, "No" sensitive data, no master data dependency, "No" lineage required, "No" residency requirement, "< 1 year" retention, "No" external sharing;
+  low = "Internal" classification, "Internal business data only", reads master data only ("Reads from master data but does not update or contribute to it"), "Documented manually", "Preference only" residency, "1–5 years" retention, "Internal only" sharing;
+  medium = "Confidential" classification, "Confidential internal data", "Both reads and writes to one or more master data domains", "Automated lineage within this solution", "Contractual/regulatory requirement" residency, "5+ years" retention, "Trusted partners under agreement";
+  high = "Regulated/Highly sensitive" classification, "Regulated/highly sensitive data", golden-record platform ("This solution is itself a master data management or golden-record platform"), "Cross-system lineage required", "Strict mandate with enforcement" residency, "Regulatory/long-term retention", "Regulators/public entities"
 
-- INTEGRATION (Q17–Q20: number of integrations, integration style, legacy/OT involvement, API exposure):
-  none = fully standalone, no connections;
-  low = 1–2 internal systems only, batch/file transfer, no legacy or OT, internal-only APIs consumed by known teams;
-  medium = 3+ internal systems or one external, API/event-driven integration, minor legacy or on-premises components, APIs registered internally with the organisation;
-  high = multiple external systems (partners/government/cloud platforms) OR continuous high-volume event streaming OR significant legacy/on-premises involvement OR direct OT/industrial control system integration OR external-facing or public-facing APIs
+- INTEGRATION (Q17–Q20: number of integrations, integration style, legacy/OT, API exposure):
+  none = "None" integrations, "No integration" style, "No" legacy/OT, "No" APIs exposed;
+  low = "1–2 internal systems", "Batch/file transfer", "No" legacy/OT, "Internal only (informal)" APIs;
+  medium = "3+ internal systems", "API / near real-time", "Minor legacy involvement", "Formal APIs with versioning/deprecation";
+  high = "Includes external parties", "Event streaming / high frequency", "Significant legacy/on-prem complexity" or "Direct OT/ICS integration", "APIs for partners/public via API management"
 
-- REGULATORY (Q21–Q25: applicable regulation category, jurisdictions, cross-border data transfers, non-compliance consequences, new audit obligations):
-  none = no external obligations, single jurisdiction, no cross-border transfers, negligible consequences, no new audit/certification obligations;
-  low = internal policies only, single country, multi-region within same country, adequacy-covered cross-border transfers, moderate internal consequences only, no new external obligations;
-  medium = industry standards/certifications (ISO, SOC 2, food safety) OR multiple jurisdictions with comparable requirements OR SCC/BCR-covered cross-border transfers OR moderate external consequences (reputational/contractual) OR minor new external reporting or audit obligations;
-  high = government legislation (Privacy Act, GDPR, HIPAA, FDA, financial regulations) OR multiple jurisdictions with conflicting requirements OR cross-border transfers with no established legal mechanism OR regulatory fines/penalties/loss of certification/legal action OR formal regulatory approval or licence required before go-live
+- REGULATORY (Q21–Q25: applicable regulations, jurisdictions, cross-border transfers, non-compliance consequences, audit controls):
+  none = "No" regulations, "Single country", "No" cross-border transfers, "Low" non-compliance consequence, "No" audit controls required;
+  low = "Internal policy only", "Multiple regions in one country", "Yes (adequacy decision)", "Moderate" consequence, "Some controls needed";
+  medium = "Industry standards/certifications", "Multiple countries (similar rules)", "Yes (SCC/BCR or approved mechanism)", "High (fines/penalties)", "Full audit trail required";
+  high = "Government legislation/regulation", "Multiple countries (conflicting rules)", "Transfer mechanism unclear", "Severe (unable to operate/legal action)", "Regulatory approval/license required before go-live"
 
-- AI (Q26–Q33: AI inclusion, sourcing, training/inference data, decision automation, impact of errors, human oversight, explainability, monitoring):
-  none = no AI/ML involved;
-  low = minor vendor off-the-shelf AI feature only, public/synthetic data only, all outputs reviewed by humans, minimal consequence if wrong, full explainability, formal monitoring in place;
-  medium = AI is a significant component using anonymised or internal business data, partial human oversight on significant decisions, partial explainability or monitoring;
-  high = AI is primary function OR custom-built or open-source model OR customer PII or identifiable data used for training/inference OR automated decisions with limited or no human review OR significant financial/safety/regulatory harm if AI errors OR black-box with no explainability OR no model monitoring or maintenance plan
+- AI (Q26–Q33: AI inclusion, sourcing, inference data, decision automation, impact of errors, human oversight, explainability, monitoring):
+  none = "No" AI included (Q26);
+  low = "Embedded vendor feature", "Vendor managed (SaaS/API)" sourcing, "Public/synthetic only" data, "Informational only" decisions, "Low (easy to correct)" impact, "Yes for all high-impact decisions" oversight, "Fully explainable + auditable", "Formal MLOps (drift detection, retraining, approvals)" monitoring;
+  medium = "Custom model or fine-tuning" OR "Anonymized/aggregated internal data" OR "Identifiable internal business data" OR "Decision support (human reviews)" OR "Medium (rework / inconvenience)" OR "Yes for exceptions only" oversight OR "Partially explainable" OR "Basic monitoring";
+  high = "AI is a core function" OR "Open-source model deployed internally" OR "Custom-built/trained internally" OR "Hybrid" sourcing OR "Customer personal data/PII" OR "Automated actions with limited oversight" OR "High (financial/regulatory/safety/reputation)" OR "No (fully automated)" oversight OR "Not explainable (black box)" OR "No monitoring plan"
 
-- OPERATIONAL READINESS (Q34–Q37: logging/monitoring/audit strategy, transaction volumes assessed, availability/DR RTO/RPO defined, support ownership established):
+- OPERATIONAL READINESS (Q34–Q37: logging/monitoring/audit, transaction volumes, availability/DR RTO/RPO, support ownership):
   none = all four answered "Yes" with documented specifics (tool names, RTO/RPO values, owner names);
   low = mostly "Yes" with supporting detail, minor gaps in one area;
   medium = some "No" answers OR "Yes" answers without supporting detail provided;
@@ -115,67 +115,67 @@ You MUST respond with valid JSON only — no markdown, no explanation outside th
 
 // Q5–Q9
 const SECURITY_QUESTIONS = [
-  "How will users authenticate to sign in to this system?",
-  "What is the expected network exposure of this system?",
-  "Does this system require privileged or elevated access beyond standard user permissions?",
-  "How will secrets, credentials, and API keys be managed for this system?",
-  "Does this system rely on third-party software packages, open-source components, or vendor-managed services?",
+  "How will users sign in?",
+  "What is the expected network exposure?",
+  "Is privileged/admin access required?",
+  "How will access keys/secrets be managed?",
+  "Does the solution depend on third-party software/services or open-source packages?",
 ];
 
 // Q10–Q16
 const DATA_QUESTIONS = [
-  "What is the highest classification of data this system will store or process?",
-  "Does the system store or process sensitive or regulated personal data?",
-  "Does this system depend on or contribute to master data domains (e.g. customer, product, supplier, employee)?",
-  "Is data lineage tracking required — i.e. tracing where data originated, how it was transformed, and where it flows?",
-  "Are there data residency or data sovereignty constraints on where data can be stored or processed?",
-  "What is the expected data retention period for this system?",
-  "Will data be shared with or accessible by parties outside the organisation?",
+  "What is the highest data classification involved?",
+  "Will the solution handle sensitive or regulated data (e.g., personal data, credentials, payment data)?",
+  "Does this solution depend on or contribute to master data domains (e.g. customer, product, employee, or supplier records)?",
+  "Is end-to-end data lineage required (source → transformation → consumers)?",
+  "Are there data residency/sovereignty requirements?",
+  "What are retention and deletion expectations?",
+  "Will data be shared outside the organization?",
 ];
 
 // Q17–Q20
 const INTEGRATION_QUESTIONS = [
-  "How many systems will this solution integrate with, and are any of them outside the organisation?",
-  "What integration style best describes the data flows for this solution?",
-  "Does this solution need to connect to legacy systems, on-premises infrastructure, or operational technology (OT)?",
-  "Does this solution expose APIs that will be consumed by other teams or external parties?",
+  "How many systems will this solution integrate with?",
+  "What integration style is required?",
+  "Are any integrations with legacy systems, OT/plant equipment, or industrial control systems required?",
+  "Will any APIs be exposed for other teams/partners to consume?",
 ];
 
 // Q21–Q25
 const REGULATORY_QUESTIONS = [
-  "Which category of regulation most closely applies to this initiative?",
-  "In how many jurisdictions will this system operate or process data?",
-  "Does this system involve cross-border transfers of personal data?",
-  "What would be the consequence if this system were found to be non-compliant?",
-  "Does this initiative introduce new audit controls, certifications, or regulatory reporting obligations?",
+  "Are there external regulations or certifications applicable (privacy, food safety, SOX, etc.)?",
+  "Does this initiative span multiple countries/jurisdictions?",
+  "Will personal data be transferred across borders?",
+  "What is the consequence if the solution is non-compliant?",
+  "Does the solution require auditable controls (logs, approvals, evidence) for audits?",
 ];
 
 // Q26–Q33
 const AI_QUESTIONS = [
-  "Will this system incorporate artificial intelligence or machine learning?",
-  "How will the AI capability be sourced or developed?",
-  "What data will the AI use for training or inference?",
-  "Will AI-generated outputs directly trigger automated decisions or actions without human review?",
-  "How serious would the impact be if the AI produced an incorrect or biased output?",
-  "Will humans be able to review, override, or contest AI-generated outputs?",
-  "Is the AI model's decision-making process explainable and auditable?",
-  "Is there a plan for monitoring model performance, detecting drift, and managing retraining?",
+  "Does the solution include AI/ML or Generative AI?",
+  "How is the AI capability sourced?",
+  "What data will the AI use for inference (and training/fine-tuning if applicable)?",
+  "Will AI outputs be used to make or trigger decisions/actions?",
+  "What is the impact if the AI output is wrong, biased, or unsafe?",
+  "Is there human oversight (human-in-the-loop) and an override path?",
+  "Can the AI output be explained and audited (inputs, prompts, model/version, rationale)?",
+  "Is there a plan to monitor model quality and drift in production?",
 ];
 
 // Q34–Q37
 const OPERATIONAL_QUESTIONS = [
-  "Has a logging, monitoring, and audit strategy been defined for this system?",
-  "Have expected transaction volumes and peak load scenarios been assessed?",
-  "Have availability requirements and DR targets (RTO/RPO) been defined?",
-  "Has a support ownership model and escalation path been established?",
+  "Are logging, monitoring and audit capabilities defined?",
+  "Are expected transaction volumes, throughput, and latency requirements documented?",
+  "Are Availability and DR (RTO/RPO) metrics been defined?",
+  "Have support and operational ownership models been defined?",
 ];
 
 // Q1–Q4
 const CONTEXT_QUESTIONS = [
-  "What stage is this initiative currently at?",
-  "What type of solution is being delivered?",
-  "Who are the primary users of this system?",
-  "Approximately how many users are expected?",
+  "What is the initiative stage?",
+  "What is the solution type?",
+  "Who are the users of the solution?",
+  "How many users are expected?",
 ];
 
 function buildSection(label: string, questions: string[], answers: AreaAnswers): string {
