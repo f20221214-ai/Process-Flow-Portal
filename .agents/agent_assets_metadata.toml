@@ -12,3 +12,9 @@ id = "iUtTG-KcjPhdSboq00IlD"
 uri = "file://arr-form-questions.xlsx"
 type = "table"
 title = "ARR Form Questions — All 45 Questions & Answer Options"
+
+[[outputs]]
+id = "_GotSyE69ee4yJo-MAmao"
+uri = "file://ARC-Portal-Application-Architecture.md"
+type = "text"
+title = "ARC Portal — Application Architecture Document"
