@@ -1024,14 +1024,17 @@ export default function RequestForm() {
 
   const allContextAnswered = (["q1", "q2", "q3", "q4"] as const).every(k => !!contextAnswers[k]);
 
-  const allDomainQuestionsAnswered = IMPACT_AREA_CONFIG.every(a => {
+  const incompleteAreas = IMPACT_AREA_CONFIG.filter(a => {
     const ans = impactAnswers[a.key];
-    return ALL_Q_KEYS.slice(0, a.questions.length).every(k => !!ans[k]);
+    const qKeys = ALL_Q_KEYS.slice(0, a.questions.length);
+    return qKeys.some(k => !ans[k]);
   });
+  const allDomainQuestionsAnswered = incompleteAreas.length === 0;
 
   const allOperationalAnswered = (["q1", "q2", "q3", "q4"] as const).every(
     k => operationalAnswers[k].value !== ""
   );
+
 
   const hasBlockingRemarks = IMPACT_AREA_CONFIG.some(a => {
     const ans = impactAnswers[a.key];
@@ -1045,7 +1048,7 @@ export default function RequestForm() {
   const submitHint = !allContextAnswered
     ? "Please answer all 4 Solution Context questions."
     : !allDomainQuestionsAnswered
-    ? "Please answer all impact domain questions across each section."
+    ? `Please answer all impact domain questions — still missing: ${incompleteAreas.map(a => a.title).join(", ")}.`
     : !allOperationalAnswered
     ? "Please answer all 4 Operational Readiness questions."
     : hasBlockingRemarks
@@ -1054,6 +1057,7 @@ export default function RequestForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSubmit) return;
     const dataWithAnswers = {
       ...formData,
       // All six domain answer objects stored in full for reviewer access
