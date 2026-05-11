@@ -12,6 +12,7 @@ import {
   ExternalLink, Activity, Info
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { SECURITY_QUESTION_LABELS } from "@/lib/security-questions";
 
 interface LeanixInitiative {
   id: number;
@@ -97,7 +98,7 @@ const IMPACT_AREA_CONFIG = [
     borderColor: "border-blue-100",
     questions: [
       {
-        question: "How will users sign in?",
+        question: SECURITY_QUESTION_LABELS.q1,
         options: [
           "Existing corporate SSO (Entra ID)",
           "SSO + MFA enforced",
@@ -107,7 +108,7 @@ const IMPACT_AREA_CONFIG = [
         ]
       },
       {
-        question: "What is the expected network exposure?",
+        question: SECURITY_QUESTION_LABELS.q2,
         options: [
           "Internal only",
           "Private access for externals (ZTNA/VPN)",
@@ -117,7 +118,7 @@ const IMPACT_AREA_CONFIG = [
         ]
       },
       {
-        question: "Is privileged/admin access required?",
+        question: SECURITY_QUESTION_LABELS.q3,
         options: [
           "No",
           "Limited admins with existing controls",
@@ -127,7 +128,7 @@ const IMPACT_AREA_CONFIG = [
         ]
       },
       {
-        question: "How will access keys/secrets be managed?",
+        question: SECURITY_QUESTION_LABELS.q4,
         options: [
           "No secrets required",
           "Enterprise secret manager (e.g., Key Vault)",
@@ -137,7 +138,7 @@ const IMPACT_AREA_CONFIG = [
         ]
       },
       {
-        question: "Does the solution depend on third-party software/services or open-source packages?",
+        question: SECURITY_QUESTION_LABELS.q5,
         showPatternsLink: true,
         options: [
           "No",

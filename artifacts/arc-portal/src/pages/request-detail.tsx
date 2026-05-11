@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Calendar, User, AlignLeft, ShieldAlert, Layers, ExternalLink, ChevronDown, ChevronUp, Activity, Sparkles, BookOpen, CheckCircle2, Circle, ArrowRight, TrendingUp, FileDown, AlertTriangle } from "lucide-react";
 import { generateArchitectureTemplate } from "@/lib/generate-architecture-template";
 import { deriveAiRiskFlags } from "@/lib/derive-ai-risk-flags";
+import { SECURITY_QUESTION_LABELS, SECURITY_ANSWER_KEY_ORDER, parseSecurityAnswers } from "@/lib/security-questions";
 import { Link } from "wouter";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -81,6 +82,7 @@ export default function RequestDetail() {
   const updateMutation = useUpdateRequest();
 
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(true);
+  const [isSecurityAnswersExpanded, setIsSecurityAnswersExpanded] = useState(false);
   const [ratingWasAutoCalc, setRatingWasAutoCalc] = useState(false);
 
   // Fetch JIRA Initiative if linked
@@ -405,6 +407,45 @@ export default function RequestDetail() {
                         {request.securityImpactDetails && (
                           <p className="text-sm text-foreground/80">{request.securityImpactDetails}</p>
                         )}
+                        {(() => {
+                          const answers = parseSecurityAnswers(request.securityImpactAnswers);
+                          if (!answers) return null;
+                          const hasAnswers = SECURITY_ANSWER_KEY_ORDER.some(k => answers[k]);
+                          if (!hasAnswers) return null;
+                          return (
+                            <div className="mt-1 border-t border-border/40 pt-2">
+                              <button
+                                type="button"
+                                onClick={() => setIsSecurityAnswersExpanded(v => !v)}
+                                className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                {isSecurityAnswersExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                {isSecurityAnswersExpanded ? "Hide" : "Show"} question answers
+                              </button>
+                              {isSecurityAnswersExpanded && (
+                                <ol className="mt-2 space-y-2 list-none">
+                                  {SECURITY_ANSWER_KEY_ORDER.map((k, i) => {
+                                    const answer = answers[k];
+                                    if (!answer) return null;
+                                    const label = SECURITY_QUESTION_LABELS[k] ?? `Security question ${i + 1}`;
+                                    return (
+                                      <li key={k} className="text-xs">
+                                        <span className="font-medium text-foreground/70">{i + 1}. {label}</span>
+                                        <p className="mt-0.5 ml-3 text-foreground/90 bg-white/60 rounded px-2 py-1 border border-border/30">{answer}</p>
+                                      </li>
+                                    );
+                                  })}
+                                  {answers.remarks && (
+                                    <li className="text-xs">
+                                      <span className="font-medium text-foreground/70">Additional remarks</span>
+                                      <p className="mt-0.5 ml-3 text-foreground/90 bg-white/60 rounded px-2 py-1 border border-border/30 italic">{answers.remarks}</p>
+                                    </li>
+                                  )}
+                                </ol>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div className="bg-secondary/30 p-4 rounded-xl flex flex-col gap-2">
                         <div className="flex items-center justify-between">
