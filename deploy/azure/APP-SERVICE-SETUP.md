@@ -1,80 +1,94 @@
-# Azure App Service setup (ARC Portal)
+# Free Azure deployment (single Web App)
 
-## What to create in Azure Portal
+## Architecture
 
-**Do NOT use "Web App + Database"** — that template creates **Azure SQL**, but this app needs **PostgreSQL**.
+```
+GitHub Actions  -->  ONE Azure Web App (F1 Free)
+                         |
+                         +-- Node API (/api/*)
+                         +-- React UI (same URL)
+                         |
+                    Neon PostgreSQL (free, external — NOT on Azure)
+```
 
-Create these resources manually (same resource group):
+**Cost: $0** — App Service F1 (free) + Neon free tier Postgres.
 
-| # | Resource | Settings |
-|---|----------|----------|
-| 1 | **Azure Database for PostgreSQL Flexible Server** | Version 16, Burstable B1ms, database name `arc_portal`, allow Azure services |
-| 2 | **Container Registry** | Basic SKU, admin user enabled |
-| 3 | **App Service plan** | Linux, B1 or S1 |
-| 4 | **Web App (API)** | Linux, **Docker Container**, name e.g. `arcportal-api` |
-| 5 | **Web App (Portal)** | Linux, **Docker Container**, name e.g. `arcportal-portal` |
+---
 
-### API Web App settings (Configuration → Application settings)
+## Step 1 — Free database (Neon, not Azure)
+
+1. Go to [https://neon.tech](https://neon.tech) and sign up (free).
+2. Create a project and database named `arc_portal`.
+3. Copy the connection string (must include `?sslmode=require`).
+4. Save it — you will use it as `DATABASE_URL`.
+
+---
+
+## Step 2 — ONE Azure Web App (Free F1)
+
+1. [Azure Portal](https://portal.azure.com) → **Create a resource** → **Web App**.
+2. Settings:
+   - **Name**: e.g. `arcportal-yourname` (must be globally unique)
+   - **Publish**: **Code** (NOT Docker — Docker needs paid Basic plan)
+   - **Runtime stack**: **Node 22 LTS**
+   - **Operating System**: **Linux**
+   - **Region**: closest to you
+   - **Pricing plan**: **Free F1** (new App Service plan)
+3. Click **Review + create** → **Create**.
+
+### Application settings (Web App → Settings → Environment variables)
 
 | Name | Value |
 |------|-------|
 | `NODE_ENV` | `production` |
-| `PORT` | `8080` |
-| `WEBSITES_PORT` | `8080` |
-| `DATABASE_URL` | `postgresql://USER:PASS@HOST:5432/arc_portal?sslmode=require` |
+| `DATABASE_URL` | Your Neon connection string |
 | `LOG_LEVEL` | `info` |
+| `SCM_DO_BUILD_DURING_DEPLOYMENT` | `false` |
 
-### Portal Web App settings
+### Startup command (Web App → Settings → Configuration → General settings)
 
-| Name | Value |
-|------|-------|
-| `API_UPSTREAM` | `https://arcportal-api.azurewebsites.net` (your API app URL) |
-| `WEBSITES_PORT` | `80` |
-
-### Connect ACR to both Web Apps
-
-Each Web App → **Deployment Center** → Container Registry → select your ACR.
-
-Grant ACR pull access: Web App → **Identity** → System assigned **On**, then ACR → **Access control** → AcrPull role for the web app identity.
-
----
-
-## GitHub secrets (Settings → Secrets → Actions)
-
-| Secret | Example |
-|--------|---------|
-| `AZURE_CREDENTIALS` | JSON from `az ad sp create-for-rbac` |
-| `AZURE_RESOURCE_GROUP` | `rg-arc-portal` |
-| `AZURE_ACR_NAME` | `arcportalacr` |
-| `AZURE_WEBAPP_NAME_API` | `arcportal-api` |
-| `AZURE_WEBAPP_NAME_PORTAL` | `arcportal-portal` |
-| `DATABASE_URL` | Full Postgres connection string |
-
----
-
-## Deploy from GitHub
-
-1. Push code to `main` branch
-2. Go to **Actions** → **Deploy to Azure App Service** → **Run workflow**
-3. Open `https://arcportal-portal.azurewebsites.net`
-
-### First-time database setup (run once from your PC)
-
-```powershell
-$env:DATABASE_URL = "postgresql://arcadmin:PASSWORD@your-server.postgres.database.azure.com:5432/arc_portal?sslmode=require"
-pnpm db:schema
-pnpm seed:all
+```
+node dist/index.mjs
 ```
 
-Add your IP to Postgres firewall: Server → Networking → Add current client IP.
+---
+
+## Step 3 — GitHub secrets (only 2 required)
+
+Repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+
+| Secret | How to get it |
+|--------|----------------|
+| `AZURE_WEBAPP_NAME` | Your web app name only, e.g. `arcportal-yourname` |
+| `AZURE_WEBAPP_PUBLISH_PROFILE` | Azure Portal → your Web App → **Download publish profile** → open XML file → copy **entire contents** into the secret |
+| `DATABASE_URL` | Neon connection string (recommended) |
+
+Optional variable (not secret): **Settings → Variables** → `SEED_DEMO_DATA` = `true` to load demo data on each deploy.
+
+**You do NOT need** `AZURE_CREDENTIALS`, ACR, or a second Web App.
 
 ---
 
-## Create Azure service principal (for AZURE_CREDENTIALS)
+## Step 4 — Deploy
 
-```powershell
-az login
-az ad sp create-for-rbac --name "arc-portal-github" --role contributor --scopes /subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/rg-arc-portal --sdk-auth
-```
+1. Push code to the `main` branch, **or**
+2. GitHub → **Actions** → **Deploy to Azure App Service** → **Run workflow**
 
-Copy the entire JSON output into GitHub secret `AZURE_CREDENTIALS`.
+Your app will be at: `https://YOUR-APP-NAME.azurewebsites.net`
+
+---
+
+## Troubleshooting
+
+| Error | Fix |
+|-------|-----|
+| `client-id and tenant-id are not supplied` | Old workflow used service principal. Use the updated workflow with **Publish Profile** only. |
+| App shows default Azure page | Wait 2–3 min after deploy; check **Startup command** is `node dist/index.mjs` |
+| API 500 / DB errors | Check `DATABASE_URL` in Azure app settings matches Neon string |
+| F1 app sleeps / slow | Free tier limits CPU; first request after idle may take ~30s |
+
+---
+
+## Why not "Web App + Database"?
+
+That Azure template creates **Azure SQL Server**, not PostgreSQL. This app uses PostgreSQL. Neon is free and avoids Azure database cost.

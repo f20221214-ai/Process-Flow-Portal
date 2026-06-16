@@ -1,19 +1,18 @@
 name: Deploy to Azure App Service
 
+# Free-tier friendly: ONE Web App (F1), no Azure DB, no service principal.
+# Uses Publish Profile auth — only 2 GitHub secrets required.
+
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      deploy_api:
-        description: "Deploy API web app"
-        type: boolean
-        default: true
-      deploy_portal:
-        description: "Deploy Portal web app"
-        type: boolean
-        default: true
+
+permissions:
+  contents: read
 
 env:
-  NODE_VERSION: "22"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-deploy:
@@ -22,73 +21,72 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Azure login
-        uses: azure/login@v2
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          version: 9
 
-      - name: Build API image in ACR
-        if: inputs.deploy_api
-        run: |
-          az acr build \
-            --registry "${{ secrets.AZURE_ACR_NAME }}" \
-            --image arc-api:${{ github.sha }} \
-            --image arc-api:latest \
-            --file deploy/docker/api.Dockerfile \
-            .
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
 
-      - name: Build Portal image in ACR
-        if: inputs.deploy_portal
-        run: |
-          az acr build \
-            --registry "${{ secrets.AZURE_ACR_NAME }}" \
-            --image arc-portal:${{ github.sha }} \
-            --image arc-portal:latest \
-            --file deploy/docker/portal.Dockerfile \
-            .
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Deploy API to Web App
-        if: inputs.deploy_api
+      - name: Build API and frontend
+        env:
+          PORT: "8080"
+          BASE_PATH: "/"
+          NODE_ENV: production
         run: |
-          ACR_LOGIN=$(az acr show --name "${{ secrets.AZURE_ACR_NAME }}" --query loginServer -o tsv)
-          az webapp config container set \
-            --name "${{ secrets.AZURE_WEBAPP_NAME_API }}" \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --docker-custom-image-name "${ACR_LOGIN}/arc-api:latest" \
-            --docker-registry-server-url "https://${ACR_LOGIN}"
-          az webapp config appsettings set \
-            --name "${{ secrets.AZURE_WEBAPP_NAME_API }}" \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --settings \
-              NODE_ENV=production \
-              PORT=8080 \
-              WEBSITES_PORT=8080 \
-              DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              LOG_LEVEL=info
-          az webapp restart \
-            --name "${{ secrets.AZURE_WEBAPP_NAME_API }}" \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}"
+          pnpm --filter @workspace/api-server build
+          pnpm --filter @workspace/arc-portal build
 
-      - name: Deploy Portal to Web App
-        if: inputs.deploy_portal
+      - name: Package for Azure (single app)
         run: |
-          ACR_LOGIN=$(az acr show --name "${{ secrets.AZURE_ACR_NAME }}" --query loginServer -o tsv)
-          API_URL="https://${{ secrets.AZURE_WEBAPP_NAME_API }}.azurewebsites.net"
-          az webapp config container set \
-            --name "${{ secrets.AZURE_WEBAPP_NAME_PORTAL }}" \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --docker-custom-image-name "${ACR_LOGIN}/arc-portal:latest" \
-            --docker-registry-server-url "https://${ACR_LOGIN}"
-          az webapp config appsettings set \
-            --name "${{ secrets.AZURE_WEBAPP_NAME_PORTAL }}" \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --settings \
-              API_UPSTREAM="${API_URL}" \
-              WEBSITES_PORT=80
-          az webapp restart \
-            --name "${{ secrets.AZURE_WEBAPP_NAME_PORTAL }}" \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}"
+          mkdir -p deploy-package/dist deploy-package/public
+          cp -r artifacts/api-server/dist/* deploy-package/dist/
+          cp -r artifacts/arc-portal/dist/public/* deploy-package/public/
+          printf '%s\n' \
+            '{' \
+            '  "name": "arc-portal",' \
+            '  "private": true,' \
+            '  "type": "module",' \
+            '  "engines": { "node": ">=22" },' \
+            '  "scripts": { "start": "node dist/index.mjs" }' \
+            '}' > deploy-package/package.json
 
-      - name: Apply database schema
+      - name: Apply database schema (Neon / external Postgres)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          curl -fsS "https://${{ secrets.AZURE_WEBAPP_NAME_API }}.azurewebsites.net/api/healthz" || true
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL not set — skip schema (add GitHub secret to enable)"
+            exit 0
+          fi
+          pnpm db:schema
+
+      - name: Seed demo data
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ "${{ vars.SEED_DEMO_DATA }}" != "true" ] || [ -z "$DATABASE_URL" ]; then
+            echo "Skipping seed"
+            exit 0
+          fi
+          pnpm seed:all
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: deploy-package
+
+      - name: Health check
+        continue-on-error: true
+        run: |
+          sleep 30
+          curl -fsS "https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/healthz"
