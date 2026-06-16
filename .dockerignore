@@ -1,0 +1,14 @@
+node_modules
+.data
+dist
+**/dist
+.git
+.env
+.env.*
+!.env.example
+config/backups
+*.md
+!deploy/**
+attached_assets
+coverage
+.turbo

@@ -11,6 +11,7 @@ import {
 import {
   FileCheck, Timer, Activity, BarChart2,
 } from "lucide-react";
+import { fetchJsonArray } from "@/lib/utils";
 
 type KpiMetric = {
   id: number;
@@ -135,12 +136,12 @@ const CustomPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }:
 export default function ExecutiveDashboardPage() {
   const { data: kpis = [], isLoading: kpisLoading } = useQuery<KpiMetric[]>({
     queryKey: ["/api/kpis"],
-    queryFn: () => fetch("/api/kpis").then(r => r.json()),
+    queryFn: () => fetchJsonArray<KpiMetric>("/api/kpis"),
   });
 
   const { data: requests = [], isLoading: reqLoading } = useQuery<ArchRequest[]>({
     queryKey: ["/api/requests"],
-    queryFn: () => fetch("/api/requests").then(r => r.json()),
+    queryFn: () => fetchJsonArray<ArchRequest>("/api/requests"),
   });
 
   const kpiLastUpdated = useMemo(() => {

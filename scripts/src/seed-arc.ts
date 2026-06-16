@@ -5,8 +5,8 @@ import {
   reviewOutcomesTable,
 } from "@workspace/db";
 
-async function seed() {
-  console.log("Seeding ARC portal data...");
+export async function seedArcData() {
+  console.log("Seeding architecture requests, sessions, and outcomes...");
 
   await db.delete(reviewOutcomesTable);
   await db.delete(arcSessionsTable);
@@ -174,11 +174,15 @@ async function seed() {
     },
   ]);
 
-  console.log("Seed complete!");
+  console.log("ARC sample requests, sessions, and outcomes seeded.");
+}
+
+async function main() {
+  await seedArcData();
   process.exit(0);
 }
 
-seed().catch(err => {
+main().catch((err) => {
   console.error("Seed failed:", err);
   process.exit(1);
 });

@@ -1,0 +1,47 @@
+name: Deploy to Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: "Unique app name prefix (lowercase, e.g. arcportal-br)"
+        required: true
+        default: "arcportal-br"
+      location:
+        description: "Azure region"
+        required: true
+        default: "canadacentral"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy
+        env:
+          APP_NAME: ${{ github.event.inputs.app_name }}
+          LOCATION: ${{ github.event.inputs.location }}
+          POSTGRES_PASSWORD: ${{ secrets.AZURE_POSTGRES_PASSWORD }}
+        run: bash deploy/azure/deploy.sh

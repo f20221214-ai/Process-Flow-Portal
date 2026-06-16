@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle, Badge } from "@/components/ui-primitives";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchJsonArray } from "@/lib/utils";
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp, TrendingUp, AlertTriangle, XCircle, Clock, CheckCircle2, Edit3, Save, X } from "lucide-react";
 
@@ -218,7 +219,7 @@ export default function KpisPage() {
 
   const { data: kpis = [], isLoading } = useQuery<KpiMetric[]>({
     queryKey: ["/api/kpis"],
-    queryFn: () => fetch("/api/kpis").then(r => r.json()),
+    queryFn: () => fetchJsonArray<KpiMetric>("/api/kpis"),
   });
 
   const updateMutation = useMutation({

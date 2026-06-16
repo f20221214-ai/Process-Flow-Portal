@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { RefreshCw, LayoutGrid, AlertTriangle, ShieldX, WifiOff, KeyRound, ServerCrash, AlertCircle, Plus } from "lucide-react";
 import { format } from "date-fns";
+import { fetchJsonArray } from "@/lib/utils";
 
 interface LeanixInitiative {
   id: number;
@@ -98,7 +99,7 @@ export default function LeanixInitiatives() {
 
   const { data: initiatives, isLoading } = useQuery<LeanixInitiative[]>({
     queryKey: ["/api/leanix/initiatives"],
-    queryFn: () => fetch("/api/leanix/initiatives").then(res => res.json()),
+    queryFn: () => fetchJsonArray<LeanixInitiative>("/api/leanix/initiatives"),
   });
 
   const syncMutation = useMutation<LeanixSyncResult, SyncError>({
@@ -129,6 +130,32 @@ export default function LeanixInitiatives() {
           : err.kind === "config" ? "Configuration Required"
           : "Sync Failed",
         description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const seedDemoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/leanix/seed-demo", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to load demo initiatives.");
+      }
+      return data as { added: number; updated: number; total: number };
+    },
+    onSuccess: (data) => {
+      setSyncError(null);
+      toast({
+        title: "Demo Data Loaded",
+        description: `${data.total} test initiatives are ready (${data.added} added, ${data.updated} updated).`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/leanix/initiatives"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Load Demo Data",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -182,15 +209,24 @@ export default function LeanixInitiatives() {
           </div>
 
           <div className="flex flex-col items-end gap-2">
-            <Button
-              onClick={() => { setSyncError(null); syncMutation.mutate(); }}
-              disabled={syncMutation.isPending}
-              className="text-white"
-              style={{ backgroundColor: LEANIX_BRAND }}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${syncMutation.isPending ? "animate-spin" : ""}`} />
-              {syncMutation.isPending ? "Syncing..." : "Sync from LeanIX"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => seedDemoMutation.mutate()}
+                disabled={seedDemoMutation.isPending}
+              >
+                {seedDemoMutation.isPending ? "Loading..." : "Load Demo Data"}
+              </Button>
+              <Button
+                onClick={() => { setSyncError(null); syncMutation.mutate(); }}
+                disabled={syncMutation.isPending}
+                className="text-white"
+                style={{ backgroundColor: LEANIX_BRAND }}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+                {syncMutation.isPending ? "Syncing..." : "Sync from LeanIX"}
+              </Button>
+            </div>
             {lastSyncResult && !syncError && (
               <span className="text-xs text-muted-foreground">
                 Last synced: {format(new Date(lastSyncResult.lastSyncedAt), "p")}
@@ -256,17 +292,26 @@ export default function LeanixInitiatives() {
             </div>
             <h3 className="text-lg font-bold">No initiatives synced yet</h3>
             <p className="text-muted-foreground max-w-sm mt-2 mb-6">
-              Click "Sync from LeanIX" to pull your enterprise initiatives into the portal.
+              Load demo initiatives for local testing, or sync from your LeanIX workspace.
             </p>
-            <Button
-              onClick={() => { setSyncError(null); syncMutation.mutate(); }}
-              disabled={syncMutation.isPending}
-              style={{ backgroundColor: LEANIX_BRAND }}
-              className="text-white"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${syncMutation.isPending ? "animate-spin" : ""}`} />
-              {syncMutation.isPending ? "Syncing..." : "Sync Now"}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => seedDemoMutation.mutate()}
+                disabled={seedDemoMutation.isPending}
+              >
+                {seedDemoMutation.isPending ? "Loading..." : "Load Demo Data"}
+              </Button>
+              <Button
+                onClick={() => { setSyncError(null); syncMutation.mutate(); }}
+                disabled={syncMutation.isPending}
+                style={{ backgroundColor: LEANIX_BRAND }}
+                className="text-white"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+                {syncMutation.isPending ? "Syncing..." : "Sync from LeanIX"}
+              </Button>
+            </div>
           </Card>
         ) : filteredInitiatives.length === 0 && search ? (
           <div className="text-center py-16 text-muted-foreground">

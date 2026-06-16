@@ -1,0 +1,94 @@
+name: Deploy to Azure App Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_api:
+        description: "Deploy API web app"
+        type: boolean
+        default: true
+      deploy_portal:
+        description: "Deploy Portal web app"
+        type: boolean
+        default: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build API image in ACR
+        if: inputs.deploy_api
+        run: |
+          az acr build \
+            --registry "${{ secrets.AZURE_ACR_NAME }}" \
+            --image arc-api:${{ github.sha }} \
+            --image arc-api:latest \
+            --file deploy/docker/api.Dockerfile \
+            .
+
+      - name: Build Portal image in ACR
+        if: inputs.deploy_portal
+        run: |
+          az acr build \
+            --registry "${{ secrets.AZURE_ACR_NAME }}" \
+            --image arc-portal:${{ github.sha }} \
+            --image arc-portal:latest \
+            --file deploy/docker/portal.Dockerfile \
+            .
+
+      - name: Deploy API to Web App
+        if: inputs.deploy_api
+        run: |
+          ACR_LOGIN=$(az acr show --name "${{ secrets.AZURE_ACR_NAME }}" --query loginServer -o tsv)
+          az webapp config container set \
+            --name "${{ secrets.AZURE_WEBAPP_NAME_API }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --docker-custom-image-name "${ACR_LOGIN}/arc-api:latest" \
+            --docker-registry-server-url "https://${ACR_LOGIN}"
+          az webapp config appsettings set \
+            --name "${{ secrets.AZURE_WEBAPP_NAME_API }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --settings \
+              NODE_ENV=production \
+              PORT=8080 \
+              WEBSITES_PORT=8080 \
+              DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              LOG_LEVEL=info
+          az webapp restart \
+            --name "${{ secrets.AZURE_WEBAPP_NAME_API }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}"
+
+      - name: Deploy Portal to Web App
+        if: inputs.deploy_portal
+        run: |
+          ACR_LOGIN=$(az acr show --name "${{ secrets.AZURE_ACR_NAME }}" --query loginServer -o tsv)
+          API_URL="https://${{ secrets.AZURE_WEBAPP_NAME_API }}.azurewebsites.net"
+          az webapp config container set \
+            --name "${{ secrets.AZURE_WEBAPP_NAME_PORTAL }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --docker-custom-image-name "${ACR_LOGIN}/arc-portal:latest" \
+            --docker-registry-server-url "https://${ACR_LOGIN}"
+          az webapp config appsettings set \
+            --name "${{ secrets.AZURE_WEBAPP_NAME_PORTAL }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --settings \
+              API_UPSTREAM="${API_URL}" \
+              WEBSITES_PORT=80
+          az webapp restart \
+            --name "${{ secrets.AZURE_WEBAPP_NAME_PORTAL }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}"
+
+      - name: Apply database schema
+        run: |
+          curl -fsS "https://${{ secrets.AZURE_WEBAPP_NAME_API }}.azurewebsites.net/api/healthz" || true

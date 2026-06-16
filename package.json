@@ -3,10 +3,24 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "dev:db": "pnpm --filter @workspace/scripts start-local-db",
+    "dev:api": "pnpm --filter @workspace/api-server dev",
+    "dev:portal": "pnpm --filter @workspace/arc-portal dev",
+    "db:schema": "pnpm --filter @workspace/scripts apply-schema",
+    "db:setup": "pnpm --filter @workspace/scripts setup-system-postgres",
+    "db:configure-system": "pnpm --filter @workspace/scripts configure-system-postgres",
+    "env:setup-pgadmin": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-pgadmin.ps1",
+    "db:migrate-pgadmin": "powershell -ExecutionPolicy Bypass -File ./scripts/migrate-to-pgadmin.ps1",
+    "env:restore-embedded": "powershell -ExecutionPolicy Bypass -File ./scripts/restore-embedded-env.ps1",
+    "seed:all": "pnpm --filter @workspace/scripts seed-all",
+    "seed:initiatives": "pnpm --filter @workspace/scripts seed-initiatives",
+    "seed:demo": "pnpm --filter @workspace/scripts seed-demo",
+    "seed:direct": "pnpm --filter @workspace/scripts seed-direct",
+    "db:status": "pnpm --filter @workspace/scripts db-status",
+    "deploy:azure": "powershell -ExecutionPolicy Bypass -File ./deploy/azure/deploy-container-apps.ps1"
   },
   "private": true,
   "devDependencies": {

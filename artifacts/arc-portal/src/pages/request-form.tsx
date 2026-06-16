@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Textarea, Select, Label, Badge } from "@/components/ui-primitives";
-import { useCreateRequest } from "@workspace/api-client-react";
+import { useCreateRequest, getListRequestsQueryKey } from "@workspace/api-client-react";
 import type { CreateArchitectureRequest } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, X, Sparkles, Shield, Database, GitBranch, Scale, Bot,
   CheckCircle2, AlertCircle, ChevronRight, RotateCcw, MessageSquare,
@@ -820,6 +821,7 @@ const OPERATIONAL_AREA_CONFIG: AreaConfig = {
 export default function RequestForm() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const createMutation = useCreateRequest();
 
   const [formData, setFormData] = useState<CreateArchitectureRequest & {
@@ -1075,6 +1077,7 @@ export default function RequestForm() {
     };
     createMutation.mutate({ data: dataWithAnswers as CreateArchitectureRequest }, {
       onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: getListRequestsQueryKey() });
         toast({ title: "Request Submitted", description: "Your architecture review request has been created." });
         setLocation(`/requests/${data.id}`);
       },

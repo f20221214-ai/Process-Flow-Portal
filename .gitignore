@@ -48,5 +48,14 @@ Thumbs.db
 .cache/
 .local/
 
+# Local embedded PostgreSQL data
+.data/
+
 # Environment variables
 .env
+
+# Automatic .env backups when switching database mode
+config/backups/.env.backup-*
+
+# Azure deployment output (contains URLs, not secrets)
+config/deployment-info.json

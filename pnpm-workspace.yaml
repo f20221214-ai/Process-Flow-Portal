@@ -1,8 +1,12 @@
 packages:
   - artifacts/*
   - lib/*
-  - lib/integrations/*
   - scripts
+
+allowBuilds:
+  '@embedded-postgres/windows-x64': true
+  embedded-postgres: true
+  esbuild: true
 
 autoInstallPeers: false
 
@@ -36,7 +40,9 @@ minimumReleaseAgeExclude:
   - stripe-replit-sync
 
 onlyBuiltDependencies:
+  - '@embedded-postgres/windows-x64'
   - '@swc/core'
+  - embedded-postgres
   - esbuild
   - msw
   - unrs-resolver

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { jiraInitiativesTable, architectureRequestsTable, kpiMetricsTable, knowledgeBaseArticlesTable } from "@workspace/db";
+import { jiraInitiativesTable, leanixInitiativesTable, architectureRequestsTable, kpiMetricsTable, knowledgeBaseArticlesTable } from "@workspace/db";
 import { eq, inArray } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -398,6 +398,59 @@ ML models degrade over time (data drift, concept drift). Without structured life
 ];
 
 
+const LEANIX_SEED = [
+  {
+    leanixId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    name: "Digital Agriculture Platform",
+    description: "Enterprise initiative to build an IoT-enabled smart farming platform with sensor telemetry, agronomic analytics, and mobile grower advisory services.",
+    lifecycle: "active",
+    status: "Active",
+    responsible: "Sarah Chen",
+    tags: '["IoT","Cloud","Agriculture","Analytics"]',
+    leanixUrl: "https://demo.leanix.net/pathfinder/factsheet/Project/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  },
+  {
+    leanixId: "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    name: "MES Modernisation Programme",
+    description: "Replace legacy SCADA-linked MES with a cloud-connected Manufacturing Execution System integrating OT/IT boundaries, SAP ERP, and quality management.",
+    lifecycle: "plan",
+    status: "Active",
+    responsible: "James Walker",
+    tags: '["Manufacturing","OT/IT","ERP","Integration"]',
+    leanixUrl: "https://demo.leanix.net/pathfinder/factsheet/Project/b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  },
+  {
+    leanixId: "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    name: "E-Invoicing Regulatory Compliance",
+    description: "Implement government-mandated electronic invoicing across all operating regions to meet statutory compliance deadlines.",
+    lifecycle: "plan",
+    status: "Active",
+    responsible: "Priya Nair",
+    tags: '["Regulatory","Finance","Compliance"]',
+    leanixUrl: "https://demo.leanix.net/pathfinder/factsheet/Project/c3d4e5f6-a7b8-9012-cdef-123456789012",
+  },
+  {
+    leanixId: "d4e5f6a7-b8c9-0123-def0-234567890123",
+    name: "AI Marketing Personalisation Pilot",
+    description: "Proof-of-concept AI/ML engine for customer-segment personalisation, content recommendations, and campaign targeting at scale.",
+    lifecycle: "plan",
+    status: "Active",
+    responsible: "Tom Reilly",
+    tags: '["AI","ML","Marketing","Pilot"]',
+    leanixUrl: "https://demo.leanix.net/pathfinder/factsheet/Project/d4e5f6a7-b8c9-0123-def0-234567890123",
+  },
+  {
+    leanixId: "e5f6a7b8-c9d0-1234-ef01-345678901234",
+    name: "Zero Trust Network Access Rollout",
+    description: "Replace VPN-based remote access with identity-aware zero trust network access across the enterprise perimeter.",
+    lifecycle: "active",
+    status: "Active",
+    responsible: "Mehak Singh",
+    tags: '["Security","Zero Trust","Identity","Network"]',
+    leanixUrl: "https://demo.leanix.net/pathfinder/factsheet/Project/e5f6a7b8-c9d0-1234-ef01-345678901234",
+  },
+];
+
 const JIRA_SEED = [
   { jiraKey: "DAG-101", summary: "Digital Agriculture Platform", description: "End-to-end IoT-enabled platform for smart farming: sensor telemetry ingestion, agronomic analytics, and mobile advisory services for growers.", projectKey: "DAG", projectName: "Digital Agriculture", status: "In Progress", priority: "High", assignee: "sarah.chen@company.com", issueType: "Epic", labels: '["IoT","Cloud","Analytics"]', jiraUrl: "https://jira.company.com/browse/DAG-101" },
   { jiraKey: "MES-001", summary: "MES Modernisation – OT/IT Integration", description: "Replace legacy SCADA-linked MES with a cloud-connected Manufacturing Execution System integrating real-time production data with ERP and quality systems.", projectKey: "MES", projectName: "Manufacturing Execution System", status: "In Progress", priority: "Critical", assignee: "james.walker@company.com", issueType: "Epic", labels: '["OT","Manufacturing","ERP","Integration"]', jiraUrl: "https://jira.company.com/browse/MES-001" },
@@ -707,7 +760,25 @@ Required attendees: James Walker (PM), Deepak Sharma (SA), Angela Ross (Sponsor)
       results.kpiMetrics = 0;
     }
 
-    // 6. Seed Architecture Patterns — always delete and re-insert to ensure sample data is present
+    // 6. Seed LeanIX initiatives — upsert demo data for initiatives page / Submit ARR flow
+    const now = new Date();
+    for (const item of LEANIX_SEED) {
+      const existing = await db
+        .select({ id: leanixInitiativesTable.id })
+        .from(leanixInitiativesTable)
+        .where(eq(leanixInitiativesTable.leanixId, item.leanixId));
+      if (existing.length === 0) {
+        await db.insert(leanixInitiativesTable).values({ ...item, syncedAt: now });
+      } else {
+        await db
+          .update(leanixInitiativesTable)
+          .set({ ...item, syncedAt: now })
+          .where(eq(leanixInitiativesTable.leanixId, item.leanixId));
+      }
+    }
+    results.leanixInitiatives = LEANIX_SEED.length;
+
+    // 7. Seed Architecture Patterns — always delete and re-insert to ensure sample data is present
     const patternsToInsert = PATTERNS_SEED.map(p => ({
       ...p,
       tags: JSON.stringify(p.tags),

@@ -6,6 +6,7 @@ import { Search, Plus, ExternalLink, BookOpen, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import type { KbArticle } from "@/types/knowledge-base";
+import { fetchJsonArray } from "@/lib/utils";
 
 const CATEGORIES = [
   { value: "all", label: "All Categories" },
@@ -33,7 +34,7 @@ export default function KnowledgeBaseIndex() {
 
   const { data: articles = [], isLoading } = useQuery<KbArticle[]>({
     queryKey: ["/api/knowledge-base"],
-    queryFn: () => fetch("/api/knowledge-base").then(r => r.json()),
+    queryFn: () => fetchJsonArray<KbArticle>("/api/knowledge-base"),
   });
 
   const allTags = Array.from(new Set(articles.flatMap(a => a.tags)));

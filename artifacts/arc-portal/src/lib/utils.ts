@@ -12,3 +12,11 @@ export function formatLabel(str: string) {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
+
+/** Fetch a JSON array from the API; returns [] on error or non-array responses. */
+export async function fetchJsonArray<T>(url: string): Promise<T[]> {
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}

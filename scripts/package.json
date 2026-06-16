@@ -4,12 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "hello": "tsx ./src/hello.ts",
     "seed-arc": "tsx ./src/seed-arc.ts",
+    "start-local-db": "tsx ./src/start-local-db.ts",
+    "apply-schema": "tsx ./src/apply-schema.ts",
+    "setup-system-postgres": "tsx ./src/setup-system-postgres.ts",
+    "configure-system-postgres": "tsx ./src/configure-system-postgres.ts",
+    "seed-initiatives": "tsx ./src/seed-initiatives.ts",
+    "seed-demo": "tsx ./src/seed-demo.ts",
+    "seed-all": "tsx ./src/seed-all.ts",
+    "seed-direct": "tsx ./src/seed-direct.ts",
+    "db-status": "tsx ./src/db-status.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@workspace/db": "workspace:*"
+    "@workspace/db": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "embedded-postgres": "^18.4.0-beta.17",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
