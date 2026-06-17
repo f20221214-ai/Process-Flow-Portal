@@ -33,7 +33,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm config set ignore-scripts true && pnpm install --frozen-lockfile && pnpm config set ignore-scripts false
 
       - name: Build API and frontend
         env:
