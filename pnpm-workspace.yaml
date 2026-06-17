@@ -41,6 +41,7 @@ minimumReleaseAgeExclude:
 
 onlyBuiltDependencies:
   - '@embedded-postgres/windows-x64'
+  - '@embedded-postgres/linux-x64'
   - '@swc/core'
   - embedded-postgres
   - esbuild
